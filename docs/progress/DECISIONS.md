@@ -47,3 +47,6 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 ## 2026-11-13 · Refinamento do portão da Fase 2 (revisão adversarial das métricas)
 - **Problema:** com as métricas iniciais, um modelo que falha muito (scans excluídos dos denominadores) ou que cita frases inteiras (achados gigantes) passaria no portão.
 - **Decisão (manager, a partir da recomendação do reviewer opus; Fable revisa no portão):** veredito sobre taxas **agregadas (pooled) nas 3 execuções**, com média/mín/máx e a pior execução exibidas (`unstable` se a pior estourar). Critérios no split de teste: `strictRecallAll` ≥ 0,70 (achados gigantes não contam; scans que falharam contam como perdidos); ACCUSED ≤ 0,05; INCIDENT_FACT ≤ 0,10; saída inválida ≤ 0,05; **falha de scan ≤ 0,05**; **achados gigantes ≤ 0,25**. Atribuição de origem (regra/modelo) calculada antes da junção dos achados.
+
+## 2026-11-13 · /eval: avaliação completa por estratégia
+- **Desvio do desenho §4 ("full = todas as estratégias ×3"):** o botão "Full" roda só a estratégia selecionada. Motivo: no aparelho Medium, `grouped2` leva cerca de 2× mais tempo. O desenho §1 já diz para lançar com `single` e testar `grouped2` só se o recall ficar abaixo da meta. O guia do participante segue essa ordem.

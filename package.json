@@ -20,13 +20,15 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "verify:no-debug-token": "node scripts/verify-no-debug-token.mjs",
+    "verify:no-eval": "node scripts/verify-no-eval-in-dist.mjs",
+    "eval": "vite --open /eval",
     "verify:prod-config": "node scripts/verify-prod-config.mjs",
     "emulators": "firebase emulators:start --project demo-traceless",
     "deploy:hosting": "npm run verify:prod-config && npm run build && firebase deploy --only hosting --project traceless-92f85",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes --project traceless-92f85",
     "deploy:config": "firebase deploy --only remoteconfig --project traceless-92f85",
     "deploy": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes,remoteconfig --project traceless-92f85",
-    "ci": "npm run format:check && npm run lint && npm test && npm run build && npm run verify:no-debug-token",
+    "ci": "npm run format:check && npm run lint && npm test && npm run build && npm run verify:no-debug-token && npm run verify:no-eval",
     "prepare": "husky"
   },
   "dependencies": {

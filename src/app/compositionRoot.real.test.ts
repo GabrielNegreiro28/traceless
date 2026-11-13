@@ -1,7 +1,7 @@
 import { InferenceSource, type HybridParams } from 'firebase/ai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toRawText } from '../domain/text/brandedText';
-import { createServices } from './compositionRoot';
+import { createServices, createStrategyServices } from './compositionRoot';
 import type { AppEnv } from './env';
 
 /**
@@ -114,6 +114,25 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       const result = await createServices(REAL_ENV).deviceCapability.prepare(() => undefined);
       expect(result.ok).toBe(true);
       expect(sdk.initializeDeviceModel).toHaveBeenCalledTimes(1);
+    });
+
+    it('shares one queue and stuck tracker across strategies', async () => {
+      vi.useFakeTimers();
+      try {
+        sdk.generateContent.mockImplementation(() => new Promise(() => undefined));
+        const servicesFor = createStrategyServices(REAL_ENV);
+        const pending = servicesFor('single').scanReport(REPORT);
+        await vi.advanceTimersByTimeAsync(121_000);
+        const first = await pending;
+        expect(!first.ok && first.error.kind).toBe('OnDeviceStuck');
+
+        const calls = sdk.generateContent.mock.calls.length;
+        const second = await servicesFor('grouped2').scanReport(REPORT);
+        expect(!second.ok && second.error.kind).toBe('OnDeviceStuck');
+        expect(sdk.generateContent.mock.calls.length).toBe(calls);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

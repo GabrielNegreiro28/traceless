@@ -1,85 +1,38 @@
 import { detectByRules } from '../../domain/detection/ruleDetector';
-import { aggregateRuns, type AggregatedMetrics } from '../../domain/evaluation/aggregateRuns';
-import type { Dataset, Split } from '../../domain/evaluation/datasetSchema';
-import { evaluateGate, type GateResult } from '../../domain/evaluation/gate';
+import { aggregateRuns } from '../../domain/evaluation/aggregateRuns';
+import type { Dataset } from '../../domain/evaluation/datasetSchema';
+import { evaluateGate } from '../../domain/evaluation/gate';
 import {
   countReport,
   type EvalFinding,
-  type ReportCounts,
   type ScanOutcome,
 } from '../../domain/evaluation/reportCounts';
 import { resolveReport, type ResolvedReport } from '../../domain/evaluation/resolveSpans';
-import { summarizeCounts, type MetricSet } from '../../domain/evaluation/summary';
+import { summarizeCounts } from '../../domain/evaluation/summary';
 import { toRawText, type RawText } from '../../domain/text/brandedText';
-import { createAppError, type AppError, type AppErrorKind } from '../../shared/appError';
+import { createAppError, type AppError } from '../../shared/appError';
 import { err, ok, type Result } from '../../shared/result';
-import type { Clock } from '../ports/Clock';
 import type { ScanReportResult } from './scanReport';
+import type {
+  EvalRunResult,
+  EvalScan,
+  EvalSplit,
+  EvalSummary,
+  EvaluateDetectionParams,
+  ReportRunResult,
+  SingleRunResult,
+} from './evaluateDetection.types';
 
-export type EvalSplit = Split | 'all';
-
-export type EvalScan = (text: RawText) => Promise<Result<ScanReportResult, AppError>>;
-
-export interface EvalProgress {
-  /** 1-based run number. */
-  readonly run: number;
-  readonly runs: number;
-  /** Number of reports finished in this run. */
-  readonly reportsDone: number;
-  readonly reports: number;
-  readonly reportId: string;
-}
-
-export interface EvaluateDetectionParams {
-  readonly dataset: Dataset;
-  readonly split: EvalSplit;
-  /** Wraps scanReport with any scanner; the use case never sees scanners or prompts. */
-  readonly scan: EvalScan;
-  readonly clock: Clock;
-  readonly runs: number;
-  /** Labels copied into the result (application must not import ai/prompts). */
-  readonly promptVersion: string;
-  readonly strategy: string;
-  readonly onProgress?: (progress: EvalProgress) => void;
-}
-
-/** Per-report outcome. Holds spans and counts only, never report text or quotes. */
-export interface ReportRunResult {
-  readonly reportId: string;
-  readonly split: Split;
-  readonly ok: boolean;
-  readonly errorKind: AppErrorKind | null;
-  readonly findings: readonly EvalFinding[];
-  readonly counts: ReportCounts;
-  readonly metrics: MetricSet;
-}
-
-export interface SingleRunResult {
-  readonly run: number;
-  readonly reports: readonly ReportRunResult[];
-  readonly metrics: MetricSet;
-}
-
-export interface EvalSummary {
-  readonly reports: number;
-  /** Rates pooled over all runs (sum of numerators / sum of denominators). */
-  readonly pooled: MetricSet;
-  /** Mean, min, max and missing-run count of each per-run metric. */
-  readonly metrics: AggregatedMetrics;
-}
-
-/** JSON-serialisable result of an evaluation (all fields are plain data). */
-export interface EvalRunResult {
-  readonly datasetVersion: string;
-  readonly promptVersion: string;
-  readonly strategy: string;
-  readonly split: EvalSplit;
-  readonly startedAt: number;
-  readonly runs: readonly SingleRunResult[];
-  readonly summary: EvalSummary;
-  /** Only evaluated on the test split; null otherwise. */
-  readonly gate: GateResult | null;
-}
+export type {
+  EvalProgress,
+  EvalRunResult,
+  EvalScan,
+  EvalSplit,
+  EvalSummary,
+  EvaluateDetectionParams,
+  ReportRunResult,
+  SingleRunResult,
+} from './evaluateDetection.types';
 
 function misconfigured(missing: string[], message: string): AppError {
   return createAppError('Misconfigured', { message, missing });

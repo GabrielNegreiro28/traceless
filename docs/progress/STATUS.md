@@ -18,16 +18,13 @@ _Atualizado pelo manager a cada iteração._
 - Estrutura de agentes: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`.
 
 ## Em andamento
-- **Tarefa 2 commitada** (`9f50798`, 416 testes): camada on-device fail-closed. Revisão adversarial (opus) com sonda no SDK real: nenhum caminho do texto bruto para a rede em produção; a CSP também bloqueia `*.invalid`.
-- **Endurecimento commitado** (`94b7cfe`, 447 testes; teste de contrato com o SDK real verificado por mutações).
-- Em paralelo: tarefa 3 (sonnet, métricas + `evaluateDetection`) e tarefa 4 (opus, dataset de 24 relatos — só conteúdo em `eval/datasets/`).
+- **Tarefa 2** (`9f50798`) + **endurecimento** (`94b7cfe`): camada on-device fail-closed; revisão adversarial com sonda no SDK real; teste de contrato verificado por mutações.
+- **Tarefas 3+4 commitadas** (`e51d2ee`, 491 testes): métricas + portão (refinado após revisão adversarial: pooled, strictRecallAll, falhas de scan, achados gigantes) e dataset de 24 relatos (88 gold, 150 must-not; revisado e corrigido).
+- Implementer (sonnet): **tarefa 5** — router, `devRoutes` (só em dev), `EvalPage`, plugin Vite que salva em `eval/results/`, canário `verify-no-eval-in-dist`, script `npm run eval`.
 
 ## Próximos passos
-1. Revisar/commitar o endurecimento.
-2. Tarefa 3 (sonnet): métricas de avaliação, schema zod do dataset, `evaluateDetection`.
-3. Tarefa 4 (opus): dataset de 24 relatos sintéticos + teste de validação (disjunto dos few-shots: farmacêutico da Elm Street / Dana Ruiz; faturas do irmão do diretor financeiro).
-4. Tarefa 5 (sonnet): router, `devRoutes`, `EvalPage`, plugin Vite que salva resultados, canário `verify-no-eval-in-dist`.
-5. Passo humano: rodar `/eval` no Chrome (meta 14/11 à noite) → portão das Fases 1+2 com o Fable (15/11).
+1. Revisar/commitar a tarefa 5 → escrever o guia em português no HUMAN_TODO para o participante rodar `/eval`.
+2. Passo humano: rodar `/eval` no Chrome (meta 14/11 à noite) → portão das Fases 1+2 com o Fable (15/11).
 6. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
 
 ## Firebase

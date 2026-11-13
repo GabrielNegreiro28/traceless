@@ -177,6 +177,25 @@ describe('evaluateDetection with a fake model', () => {
   });
 });
 
+describe('evaluateDetection pooling', () => {
+  it('pools as sum of hits over sum of gold, not the mean of per-run rates', async () => {
+    const error = createAppError('InvalidModelOutput', { message: 'bad json' });
+    const scanner = new FakeIdentityScanner({
+      respond: (c, i) => {
+        if (i === 0) return { error }; // run 1: report a fails and is not scanned
+        if (i === 3) return { findings: [] }; // run 2: report a is scanned, model finds nothing
+        return respond(c);
+      },
+    });
+    const result = await run(wrap(scanner), 'all', 2);
+    const [run1, run2] = result.runs;
+    expect(run1?.metrics.combinedRecall).toBe(2 / 2);
+    expect(run2?.metrics.combinedRecall).toBe(3 / 4);
+    expect(result.summary.metrics.combinedRecall?.mean).toBeCloseTo(0.875);
+    expect(result.summary.pooled.combinedRecall).toBeCloseTo(5 / 6);
+  });
+});
+
 describe('evaluateDetection origin attribution', () => {
   const datedDataset = (mustNotKind: 'gold' | 'mustNot'): Dataset => ({
     version: 'dated',

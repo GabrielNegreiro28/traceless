@@ -61,6 +61,8 @@ const ENV_READER_FILES = [
   'src/app/env.ts',
   // Shared logger needs the build mode but must not depend on src/app; it reads only DEV/MODE.
   'src/shared/logger.ts',
+  // Dev-only route table: the literal `import.meta.env.DEV` lets the bundler drop the eval page.
+  'src/app/devRoutes.tsx',
 ];
 const restrictSyntax = (/** @type {object[]} */ ...selectors) => ({
   'no-restricted-syntax': ['error', ...selectors],
@@ -177,6 +179,10 @@ export default defineConfig([
   // Node-side config files.
   {
     files: ['*.config.{js,ts}'],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['scripts/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
   {

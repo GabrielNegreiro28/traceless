@@ -1,4 +1,4 @@
-import { MODEL_CHUNK_CHARS, STRATEGIES } from '../ai/prompts/identityScan.v1';
+import { MODEL_CHUNK_CHARS, STRATEGIES, type StrategyName } from '../ai/prompts/identityScan.v1';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
@@ -10,8 +10,8 @@ import { getAiService } from '../infrastructure/ai/aiService';
 import { createDeviceCapability } from '../infrastructure/ai/deviceCapability';
 import { createOnDeviceModel } from '../infrastructure/ai/modelFactory';
 import { createOnDevicePromptRunner } from '../infrastructure/ai/onDevicePromptRunner';
-import { createSerialQueue } from '../infrastructure/ai/serialQueue';
-import { createStuckTracker } from '../infrastructure/ai/stuckTracker';
+import { createSerialQueue, type SerialQueue } from '../infrastructure/ai/serialQueue';
+import { createStuckTracker, type StuckTracker } from '../infrastructure/ai/stuckTracker';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
 import { FakeIdentityScanner } from '../infrastructure/fakes/FakeIdentityScanner';
@@ -39,7 +39,14 @@ export interface Services {
 type AiServices = Pick<Services, 'identityScanner' | 'deviceCapability'>;
 
 /** Shipped prompt strategy (design §1: switch to grouped2 only if eval justifies it). */
-const SCAN_GROUPS = STRATEGIES.single;
+const DEFAULT_STRATEGY: StrategyName = 'single';
+
+type ScanGroups = readonly (readonly ModelFindingCategory[])[];
+
+export interface ServiceOptions {
+  /** Prompt strategy; only the developer evaluation page overrides the default. */
+  readonly strategy?: StrategyName;
+}
 
 /** Caller-facing limit for one on-device call; to be tuned from eval latency (p50/max). */
 const ON_DEVICE_TIMEOUT_MS = 120_000;
@@ -51,15 +58,27 @@ function createFakeAi(): AiServices {
   };
 }
 
-function createRealAi(env: AppEnv): AiServices {
+/** Shared by every strategy: one Chrome session at a time (queue), one stuck state. */
+interface OnDeviceInfra {
+  readonly queue: SerialQueue;
+  readonly stuck: StuckTracker;
+  readonly chrome: ReturnType<typeof createDeviceCapability>;
+}
+
+function createOnDeviceInfra(): OnDeviceInfra {
+  return {
+    queue: createSerialQueue(),
+    stuck: createStuckTracker(),
+    chrome: createDeviceCapability(),
+  };
+}
+
+function createRealAi(env: AppEnv, scanGroups: ScanGroups, infra: OnDeviceInfra): AiServices {
   const ai = getAiService(bootstrapFirebase(env));
-  // One queue and one stuck tracker for ALL on-device runners (one Chrome session at a time).
-  const queue = createSerialQueue();
-  const stuck = createStuckTracker();
-  const chrome = createDeviceCapability();
+  const { queue, stuck, chrome } = infra;
   const modelFor = (group: readonly ModelFindingCategory[]) =>
     createOnDeviceModel(ai, identityScanModelSpec(group));
-  const identityScanner = new OnDeviceIdentityScanner(SCAN_GROUPS, (group) =>
+  const identityScanner = new OnDeviceIdentityScanner(scanGroups, (group) =>
     createOnDevicePromptRunner({
       queue,
       stuck,
@@ -72,7 +91,7 @@ function createRealAi(env: AppEnv): AiServices {
     check: () => chrome.check(),
     // Chrome downloads one model per browser, so the first group's model prepares all.
     prepare: async (onProgress) => {
-      const model = modelFor(SCAN_GROUPS[0]);
+      const model = modelFor(scanGroups[0] ?? []);
       return model.ok ? chrome.prepare(model.value, onProgress) : model;
     },
   };
@@ -88,8 +107,29 @@ function bindScanReport(scanner: IdentityScanner): Services['scanReport'] {
     );
 }
 
-/** Builds the app services: deterministic fakes for `fake` AI mode, Chrome + Firebase otherwise. */
-export function createServices(env: AppEnv): Services {
-  const ai = env.aiMode === 'fake' ? createFakeAi() : createRealAi(env);
+function buildServices(ai: AiServices): Services {
   return { ...ai, scanReport: bindScanReport(ai.identityScanner) };
+}
+
+/**
+ * Services for any prompt strategy over ONE shared on-device queue and stuck tracker, so
+ * switching strategy can never open a second Chrome session. Instances are cached per strategy.
+ */
+export function createStrategyServices(env: AppEnv): (strategy: StrategyName) => Services {
+  const infra = env.aiMode === 'fake' ? null : createOnDeviceInfra();
+  const cache = new Map<StrategyName, Services>();
+  return (strategy) => {
+    const cached = cache.get(strategy);
+    if (cached !== undefined) return cached;
+    const groups: ScanGroups = STRATEGIES[strategy];
+    const ai = infra === null ? createFakeAi() : createRealAi(env, groups, infra);
+    const services = buildServices(ai);
+    cache.set(strategy, services);
+    return services;
+  };
+}
+
+/** Builds the app services: deterministic fakes for `fake` AI mode, Chrome + Firebase otherwise. */
+export function createServices(env: AppEnv, options: ServiceOptions = {}): Services {
+  return createStrategyServices(env)(options.strategy ?? DEFAULT_STRATEGY);
 }
