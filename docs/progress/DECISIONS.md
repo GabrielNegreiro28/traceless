@@ -72,3 +72,14 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
   - ACCUSED acima de 0,15 = Plano C (checagem de sujeito em lote).
 - **Integridade:** o split de teste é rodado **uma única vez** com a variante escolhida no dev (15/11). Os briefs dos implementadores usam só exemplos do dev. Os artefatos de métrica são divulgados, e o dataset de teste não é editado.
 - **Rejeitado:** relaxar a meta de ACCUSED porque "dispensar é um clique" (apagar o acusado por engano prejudica o relato). Também rejeitado: tornar obrigatório o campo "quem você denuncia?" antes do scan (vira chip editável na revisão).
+
+## 2026-11-13 · Dev matrix → rodada 2 do portão (consulta ao Fable)
+- **Dev matrix (dev ×3):** v1 recall 0,581 / ACCUSED 0,50; v2-single 0,476 / 0,033; v2-grouped2 0,276 / 0; v2-single2 0,571 / 0,083 (precisão 0,72). Os rótulos de escape resolveram ACCUSED; o recall continua abaixo da meta (erros = frases simples em 1ª pessoa).
+- **Robustez:** um `OnDeviceStuck` derruba todas as análises seguintes até recarregar (e recarregar apaga o rascunho, ADR 0005).
+- **Decisão (manager, aceita a recomendação do Fable):** desenho congelado em `docs/design/fase2-gate-iteration.md` §G **antes** dos dados da variante final:
+  1. padrão do produto = v2-single2 (por dominância, não é aprovação no portão);
+  2. recuperação de travamento (AbortController por sessão, `abandon()`, limite de 2 por página, UI "Try again"/"Continue with basic checks");
+  3. pacote de regras de 1ª pessoa (6 famílias, léxicos fechados, âncora de 1ª pessoa, teste-gêmeo em 3ª pessoa, guarda de precisão só no dev; o implementer não abre o dataset);
+  4. um clique do participante: dev ×3 de single2+regras e single3+regras; depois teste ×3 **uma vez**, mesmo com recall de dev < 0,72;
+  5. limiares do §D inalterados; resultado de teste com recall 0,55–0,70 = "ship with disclosed miss" (portão NÃO atingido, números publicados, Second look obrigatório).
+- **Rejeitado:** chunk 1.500 (os erros não são de texto longo), v3 com campo `subject`, mover limiares.
