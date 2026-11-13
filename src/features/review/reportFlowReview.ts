@@ -1,3 +1,4 @@
+import type { ApprovedReport } from '../../application/usecases/approveReport';
 import { propagateDecision, undoDecision } from '../../domain/review/decisionPropagation';
 import { isDecisionValid, remainingRisk } from '../../domain/review/reviewState';
 import {
@@ -5,6 +6,7 @@ import {
   type ReviewChoice,
   type ReviewDecision,
 } from '../../domain/rewrite/rewriteApplier';
+import { createAppError } from '../../shared/appError';
 import type {
   ApprovedState,
   FlowEvent,
@@ -37,7 +39,7 @@ function undo(state: ReviewingState, findingId: string): ReviewingState {
   return withDecisions(state, undoDecision(state.decisions, findingId));
 }
 
-function toReviewing(state: OutboxState): ReviewingState {
+export function toReviewing(state: OutboxState): ReviewingState {
   const { text, findings, protectedSpans, decisions, risk } = state;
   return { status: 'reviewing', text, findings, protectedSpans, decisions, risk };
 }
@@ -72,11 +74,27 @@ export function onReviewing(state: ReviewingState, event: FlowEvent): FlowState 
   }
 }
 
+/** Fixed message: never includes report text. */
+const MISMATCH = createAppError('ApprovalMismatch', {
+  message: 'The approved text differs from the previewed text; the approval was discarded.',
+});
+
+/** Compares as plain strings: the two texts carry different privacy brands. */
+function isSameText(approved: string, previewed: string): boolean {
+  return approved === previewed;
+}
+
+/** Only the exact text the reporter saw may become the approved report. */
+function approve(state: OutboxState, report: ApprovedReport): FlowState {
+  if (!isSameText(report.text, state.preview)) return toError(MISMATCH, state);
+  return { ...state, status: 'approved', report };
+}
+
 /** The reporter sees exactly what will leave the device and approves it here. */
 export function onOutbox(state: OutboxState, event: FlowEvent): FlowState {
   switch (event.type) {
     case 'APPROVE_OK':
-      return { ...state, status: 'approved', report: event.report };
+      return approve(state, event.report);
     case 'APPROVE_FAILED':
       return toError(event.error, state);
     case 'BACK_TO_EDIT':

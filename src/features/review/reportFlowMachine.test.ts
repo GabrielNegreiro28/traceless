@@ -38,6 +38,7 @@ const ALL_EVENTS: readonly FlowEvent[] = [
   { type: 'APPROVE_OK', report: approvedReport() },
   { type: 'APPROVE_FAILED', error: FAILURE },
   { type: 'BACK_TO_EDIT' },
+  { type: 'BACK_TO_REVIEW' },
   { type: 'OPEN_OUTBOX' },
   { type: 'SUBMIT' },
   { type: 'SUBMIT_OK', caseKeyPresent: true },

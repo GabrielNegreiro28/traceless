@@ -1,9 +1,5 @@
 import type { Finding } from '../../domain/detection/types';
-import {
-  assessDirectIdentifiers,
-  type DirectIdentifierStatus,
-} from '../../domain/review/directIdentifiers';
-import { remainingRisk } from '../../domain/review/reviewState';
+import { assessApproval, type ApprovalAssessment } from '../../domain/review/approvalCheck';
 import { applyDecisions, type ReviewDecision } from '../../domain/rewrite/rewriteApplier';
 import type { RiskAssessment } from '../../domain/risk/riskScorer';
 import {
@@ -36,10 +32,10 @@ export interface ApprovedReport {
 /** Fixed messages: never include report text. */
 function checkApprovable(
   finalText: string,
-  direct: DirectIdentifierStatus,
-  risk: RiskAssessment,
+  assessment: ApprovalAssessment,
   acknowledged: boolean,
 ): Result<void, AppError> {
+  const { direct, risk } = assessment;
   if (finalText.trim() === '') {
     return err(createAppError('EmptyReport', { message: 'The approved report would be empty.' }));
   }
@@ -47,8 +43,7 @@ function checkApprovable(
     const message = 'Every direct identifier must be rewritten or explicitly kept before approval.';
     return err(createAppError('DirectIdentifierRemains', { message, count: direct.undecided }));
   }
-  const riskyLevel = risk.level === 'MEDIUM' || risk.level === 'HIGH';
-  if ((riskyLevel || direct.keptAtRisk > 0) && !acknowledged) {
+  if (assessment.acknowledgementRequired && !acknowledged) {
     const message = 'The remaining identification risk must be acknowledged before approval.';
     return err(createAppError('RiskNotAcknowledged', { message, level: risk.level }));
   }
@@ -63,7 +58,8 @@ function checkApprovable(
  *    direct identifier is undecided (pending, mangled or new); KEPT_RISK/NOT_ABOUT_ME
  *    ones stay (see assessDirectIdentifiers).
  * 3. Residual risk = scoreRisk(pending + KEPT_RISK findings). A kept direct identifier or
- *    a MEDIUM/HIGH residual risk requires `acknowledgedRemainingRisk`.
+ *    a MEDIUM/HIGH residual risk requires `acknowledgedRemainingRisk` (isAcknowledgementRequired,
+ *    the same rule the outbox uses to show its checkbox).
  */
 export function approveReport(
   input: ApproveReportInput,
@@ -72,13 +68,12 @@ export function approveReport(
   const { text, findings, decisions } = input;
   const rewritten = applyDecisions(text, findings, decisions);
   if (!rewritten.ok) return rewritten;
-  const direct = assessDirectIdentifiers(text, rewritten.value, findings, decisions);
-  const risk = remainingRisk(findings, decisions);
-  const check = checkApprovable(rewritten.value, direct, risk, input.acknowledgedRemainingRisk);
+  const assessment = assessApproval(text, rewritten.value, findings, decisions);
+  const check = checkApprovable(rewritten.value, assessment, input.acknowledgedRemainingRisk);
   if (!check.ok) return check;
   return ok({
     text: unsafeCreateSanitizedText(rewritten.value),
-    remainingRisk: risk,
+    remainingRisk: assessment.risk,
     approvedAt: deps.clock.now(),
   });
 }

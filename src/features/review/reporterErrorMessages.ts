@@ -28,6 +28,8 @@ const MESSAGES: Readonly<Record<AppErrorKind, string>> = {
     'The report still contains a direct identifier, such as an email address or phone number.',
   RiskNotAcknowledged: 'The report still carries identifying details you have not decided on yet.',
   EmptyReport: 'There is no text left in the report.',
+  ApprovalMismatch:
+    'The approved text did not match the text you were shown, so it was not approved. Nothing was sent anywhere.',
   Cancelled: 'The check was stopped. Nothing was sent anywhere.',
   Unknown: 'Something went wrong. Nothing was sent anywhere. Please try again.',
 };

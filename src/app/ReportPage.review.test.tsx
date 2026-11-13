@@ -77,7 +77,7 @@ async function reachReview(overrides: Partial<Services>): Promise<void> {
 }
 
 describe('/report review on fake services', () => {
-  it('goes sample, scan, review, decide every card, Continue, outbox placeholder', async () => {
+  it('goes sample, scan, review, decide every card, Continue, outbox', async () => {
     const { services } = scannerServices();
     await reachReview(services);
     const cards = screen.getAllByRole('article');
@@ -99,7 +99,7 @@ describe('/report review on fake services', () => {
     await waitFor(() => expect(screen.queryByText(/still undecided/)).toBeNull());
 
     await click('Continue');
-    await heading("This step isn't ready yet");
+    await heading('Only this text will leave your device');
   });
 
   it('lists protected mentions as display-only chips', async () => {

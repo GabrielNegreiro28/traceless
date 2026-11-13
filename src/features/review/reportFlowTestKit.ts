@@ -1,7 +1,8 @@
-import { approveReport, type ApprovedReport } from '../../application/usecases/approveReport';
+import { createFakeServices } from '../../app/services/renderWithServices';
+import type { ApprovedReport } from '../../application/usecases/approveReport';
 import { findingOf } from '../../domain/rewrite/rewriteTestKit';
 import { scoreRisk } from '../../domain/risk/riskScorer';
-import { toRawText } from '../../domain/text/brandedText';
+import { toRawText, type RawText } from '../../domain/text/brandedText';
 import { createAppError } from '../../shared/appError';
 import type {
   ApprovedState,
@@ -20,12 +21,24 @@ export const NAME_2 = findingOf(TEXT, 'Mr. Alvarez', { category: 'PERSONAL_TRAIT
 export const FINDINGS = [ROLE, DOCK, NAME_1, NAME_2];
 export const FAILURE = createAppError('Offline', { message: 'offline' });
 
-export function approvedReport(): ApprovedReport {
-  const result = approveReport(
-    { text: TEXT, findings: [], decisions: [], acknowledgedRemainingRisk: false },
-    { clock: { now: () => 42 } },
-  );
+const SERVICES = createFakeServices();
+const APPROVALS = new Map<string, ApprovedReport>();
+
+/**
+ * Approves `text` unchanged through the services (features never call the use case directly).
+ * Cached per text, so fixtures built from it are deep-equal (approvedAt comes from the clock).
+ */
+export function approvedReport(text: RawText = TEXT): ApprovedReport {
+  const cached = APPROVALS.get(text);
+  if (cached !== undefined) return cached;
+  const result = SERVICES.approveReport({
+    text,
+    findings: [],
+    decisions: [],
+    acknowledgedRemainingRisk: false,
+  });
   if (!result.ok) throw new Error('fixture approval failed');
+  APPROVALS.set(text, result.value);
   return result.value;
 }
 

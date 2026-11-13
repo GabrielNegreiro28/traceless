@@ -15,6 +15,7 @@ import {
   type FlowEvent,
   type FlowState,
 } from './reportFlowMachine';
+import { useApproval } from './useApproval';
 import { useOnDeviceScan } from './useOnDeviceScan';
 
 export interface ReportFlow {
@@ -31,8 +32,12 @@ export interface ReportFlow {
   readonly undoDecision: (findingId: string) => void;
   /** Review: "Continue" (the outbox is where approveReport gates what is sent). */
   readonly openOutbox: () => void;
+  /** Outbox: approves the previewed text; `acknowledged` is the residual-risk checkbox. */
+  readonly approve: (acknowledged: boolean) => void;
   /** Back to the previous editable state (dismisses an error, leaves consent or review). */
   readonly backToEdit: () => void;
+  /** From an approval error: reopens the review the outbox came from. */
+  readonly backToReview: () => void;
   readonly reset: () => void;
 }
 
@@ -83,6 +88,7 @@ export function useReportFlow(): ReportFlow {
   }, []);
 
   useOnDeviceScan(state, dispatch, scanReport);
+  const approve = useApproval(state, dispatch);
 
   const nextScanId = useCallback((): string => {
     scanCounter.current += 1;
@@ -155,6 +161,7 @@ export function useReportFlow(): ReportFlow {
     abandonPrepare();
     dispatch({ type: 'BACK_TO_EDIT' });
   }, [abandonPrepare]);
+  const backToReview = useCallback(() => dispatch({ type: 'BACK_TO_REVIEW' }), []);
   const reset = useCallback(() => {
     abandonPrepare();
     dispatch({ type: 'RESET' });
@@ -170,7 +177,9 @@ export function useReportFlow(): ReportFlow {
     decide,
     undoDecision,
     openOutbox,
+    approve,
     backToEdit,
+    backToReview,
     reset,
   };
 }

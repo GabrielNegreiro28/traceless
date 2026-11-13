@@ -39,6 +39,17 @@ const FORBID_SANITIZED_FACTORY = {
   message: 'Only src/application/usecases/approveReport.ts may create SanitizedText.',
 };
 
+/**
+ * Features approve only through `useServices().approveReport` (the composition root binds the
+ * clock and records the privacy ledger); they may import the use case's types, never its value.
+ */
+const FORBID_APPROVE_USE_CASE = {
+  regex: '(^|/)usecases/approveReport$',
+  importNames: ['approveReport'],
+  allowTypeImports: true,
+  message: 'Features call approveReport via useServices(), never the use case directly.',
+};
+
 const brandAssertion = (/** @type {string} */ kind) => ({
   selector: `${kind}[typeAnnotation.type='TSTypeReference'][typeAnnotation.typeName.name=/^(SanitizedText|ConsentedRawText)$/]`,
   message:
@@ -150,7 +161,7 @@ export default defineConfig([
   },
   {
     files: ['src/features/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}'],
-    rules: restrict(...PRESENTATION, FORBID_SANITIZED_FACTORY),
+    rules: restrict(...PRESENTATION, FORBID_SANITIZED_FACTORY, FORBID_APPROVE_USE_CASE),
   },
   { files: ['src/ai/**/*.{ts,tsx}'], rules: restrict(...AI, FORBID_SANITIZED_FACTORY) },
   // The single place allowed to create SanitizedText (keeps the application rules).

@@ -132,6 +132,8 @@ export type FlowEvent =
   | { readonly type: 'APPROVE_OK'; readonly report: ApprovedReport }
   | { readonly type: 'APPROVE_FAILED'; readonly error: AppError }
   | { readonly type: 'BACK_TO_EDIT' }
+  /** Only accepted from an error raised in the outbox: reopens the review it came from. */
+  | { readonly type: 'BACK_TO_REVIEW' }
   | { readonly type: 'OPEN_OUTBOX' }
   | { readonly type: 'SUBMIT' }
   | { readonly type: 'SUBMIT_OK'; readonly caseKeyPresent: boolean }

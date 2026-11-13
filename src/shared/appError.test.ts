@@ -71,6 +71,7 @@ describe('APP_ERROR_KINDS', () => {
       DirectIdentifierRemains: true,
       RiskNotAcknowledged: true,
       EmptyReport: true,
+      ApprovalMismatch: true,
       Cancelled: true,
       Unknown: true,
     };

@@ -68,7 +68,7 @@ function Resolved(props: FindingCardProps) {
   return (
     <div className="mt-3">
       <p>{outcomeText(props)}</p>
-      {identical > 0 && (
+      {identical > 0 && state !== 'covered' && (
         <p className="mt-1 text-sm text-muted">
           Also applied to {identical} identical {identical === 1 ? 'mention' : 'mentions'}.
         </p>

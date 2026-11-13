@@ -154,6 +154,33 @@ describe('reportFlowReducer: outbox, approval and submission', () => {
     expect(reportFlowReducer(next, { type: 'BACK_TO_EDIT' })).toBe(outbox);
   });
 
+  it('outbox: APPROVE_OK for a text other than the preview is an error, never approved', () => {
+    const report = approvedReport(toRawText('I am somebody else entirely.'));
+    const next = reportFlowReducer(outbox, { type: 'APPROVE_OK', report });
+    expect(next).toMatchObject({ status: 'error', error: { kind: 'ApprovalMismatch' } });
+    expect(next).toEqual({
+      status: 'error',
+      error: expect.anything() as unknown,
+      previous: outbox,
+    });
+    expect(JSON.stringify(next.status === 'error' ? next.error : null)).not.toContain('somebody');
+  });
+
+  it('error from the outbox: BACK_TO_REVIEW reopens the review, BACK_TO_EDIT the outbox', () => {
+    const next = reportFlowReducer(outbox, { type: 'APPROVE_FAILED', error: FAILURE });
+    expect(reportFlowReducer(next, { type: 'BACK_TO_REVIEW' })).toEqual(reviewing);
+    expect(reportFlowReducer(next, { type: 'BACK_TO_EDIT' })).toBe(outbox);
+  });
+
+  it('error from elsewhere ignores BACK_TO_REVIEW', () => {
+    const errored = reportFlowReducer(
+      { ...reviewing, decisions: [{ findingId: 'ghost', action: 'ACCEPTED' }] },
+      { type: 'OPEN_OUTBOX' },
+    );
+    expect(errored.status).toBe('error');
+    expect(reportFlowReducer(errored, { type: 'BACK_TO_REVIEW' })).toBe(errored);
+  });
+
   it('outbox: BACK_TO_EDIT reopens the review with its decisions', () => {
     expect(reportFlowReducer(outbox, { type: 'BACK_TO_EDIT' })).toEqual(reviewing);
   });

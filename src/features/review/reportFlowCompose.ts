@@ -7,6 +7,7 @@ import type {
   NeedsConsentState,
   ScanningState,
 } from './reportFlowTypes';
+import { toReviewing } from './reportFlowReview';
 import { composing, toError } from './reportFlowTypes';
 
 /** Transitions before review: writing, scanning, consent and error recovery (pure). */
@@ -92,7 +93,14 @@ export function onNeedsConsent(state: NeedsConsentState, event: FlowEvent): Flow
   }
 }
 
-/** BACK_TO_EDIT dismisses the error and returns to the state it interrupted. */
+/**
+ * BACK_TO_EDIT dismisses the error and returns to the state it interrupted. BACK_TO_REVIEW
+ * goes one step further for an approval refused in the outbox (the fix is in the review).
+ */
 export function onError(state: ErrorState, event: FlowEvent): FlowState {
-  return event.type === 'BACK_TO_EDIT' ? state.previous : state;
+  if (event.type === 'BACK_TO_EDIT') return state.previous;
+  if (event.type === 'BACK_TO_REVIEW' && state.previous.status === 'outbox') {
+    return toReviewing(state.previous);
+  }
+  return state;
 }

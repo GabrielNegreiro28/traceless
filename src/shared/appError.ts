@@ -33,6 +33,8 @@ export type AppError =
     })
   /** Approval refused: the rewritten report has no text left. */
   | BaseError<'EmptyReport'>
+  /** The approved text differs from the preview the reporter saw; the approval was discarded. */
+  | BaseError<'ApprovalMismatch'>
   /** The caller stopped the work (for example the reporter cancelled a scan). Not a failure. */
   | BaseError<'Cancelled'>
   | BaseError<'Unknown'>;
@@ -54,6 +56,7 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'DirectIdentifierRemains',
   'RiskNotAcknowledged',
   'EmptyReport',
+  'ApprovalMismatch',
   'Cancelled',
   'Unknown',
 ];

@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { ComposeScreen } from '../features/compose/ComposeScreen';
 import { PrepareScreen } from '../features/onboarding/PrepareScreen';
+import { ApprovalErrorPanel } from '../features/outbox/ApprovalErrorPanel';
+import { ApprovedScreen } from '../features/outbox/ApprovedScreen';
+import { OutboxScreen } from '../features/outbox/OutboxScreen';
+import { PrivacyLedgerPanel } from '../features/privacy/PrivacyLedgerPanel';
 import { ConsentPlaceholder } from '../features/review/ConsentPlaceholder';
 import { FlowErrorPanel } from '../features/review/FlowErrorPanel';
 import type { FlowState } from '../features/review/reportFlowMachine';
@@ -19,7 +23,7 @@ function useFocusHeadingOnTransition(status: FlowState['status']): void {
   }, [status]);
 }
 
-/** Steps after review exist in the reducer but have no screen yet. */
+/** Sending (Fase 4) exists in the reducer but has no screen yet. */
 function NotReady({ onReset }: { readonly onReset: () => void }) {
   return (
     <section className="max-w-xl">
@@ -69,19 +73,47 @@ function screenFor(flow: ReportFlow) {
           onContinue={flow.openOutbox}
         />
       );
-    case 'error':
-      return <FlowErrorPanel error={state.error} onTryAgain={flow.backToEdit} />;
     case 'outbox':
+      return (
+        <OutboxScreen state={state} onApprove={flow.approve} onBackToReview={flow.backToEdit} />
+      );
     case 'approved':
+      return <ApprovedScreen state={state} onBack={flow.backToEdit} />;
+    case 'error':
+      return state.previous.status === 'outbox' ? (
+        <ApprovalErrorPanel
+          error={state.error}
+          onBackToReview={flow.backToReview}
+          onBackToOutbox={flow.backToEdit}
+        />
+      ) : (
+        <FlowErrorPanel error={state.error} onTryAgain={flow.backToEdit} />
+      );
     case 'submitting':
     case 'submitted':
       return <NotReady onReset={flow.reset} />;
   }
 }
 
+/** Screens where the text has been touched, so the privacy ledger has something to say. */
+const LEDGER_STATUSES: ReadonlySet<FlowState['status']> = new Set([
+  'reviewing',
+  'outbox',
+  'approved',
+]);
+
 /** /report route: the reporter's flow, one screen per state of the reducer. */
 export function ReportPage() {
   const flow = useReportFlow();
   useFocusHeadingOnTransition(flow.state.status);
-  return screenFor(flow);
+  return (
+    <>
+      {screenFor(flow)}
+      {LEDGER_STATUSES.has(flow.state.status) && (
+        <div className="mt-8">
+          <PrivacyLedgerPanel />
+        </div>
+      )}
+    </>
+  );
 }
