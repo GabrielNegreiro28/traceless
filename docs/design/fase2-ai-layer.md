@@ -87,3 +87,13 @@ User prompt: `Report:\n"""\n{chunk}\n"""`.
 5. sonnet — router, `devRoutes`, `EvalPage`, Vite plugin, canary.
 6. Human — run `/eval` in Chrome (target 2026-11-14 evening); gate consult 2026-11-15.
 7. Conditional — `subject` (WRITER/OTHER) filter if accused violations; `grouped2` or two-run union if recall is short.
+
+## 6. Hardening after adversarial review (2026-11-13)
+
+- **SDK contract test** (`src/infrastructure/ai/sdkContract.test.ts`): runs the real browser build of `@firebase/ai` (`dist/esm/index.esm.js`; Vitest otherwise resolves the node build, which has no Chrome adapter) with `fetch` spied and a sentinel report string. It proves: Prompt API available → `on_device`, zero network requests; Prompt API missing with layer 1 bypassed → requests only reach `on-device-only.invalid` (removing layer 2 makes it fail); Prompt API present but unusable → zero requests. A firebase upgrade that changes this behaviour fails CI.
+- **Narrow model surface:** `createOnDeviceModel` returns a runtime wrapper exposing only `generateContent(prompt)` and `initializeDeviceModel`. Per-call request options, which would override the dead `baseUrl`, streaming, chat and `countTokens` are unreachable.
+- **Dead `baseUrl` keyed on mode** (`only_on_device`), not on data class.
+- **Hung inference:** a deadline expiry returns `OnDeviceStuck`. While the timed-out inference is still running, new runs fail fast with the same error, and the flag clears when it settles.
+- **Errors:** Prompt API `QuotaExceededError` → `InputTooLong`.
+- **CSP test:** `connect-src` must contain no wildcards or bare schemes, so `*.invalid` stays blocked in production as a fourth barrier.
+- **Assumption:** the app is browser-only. In the node build of `@firebase/ai`, only layer 2 would protect.

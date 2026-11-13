@@ -11,6 +11,7 @@ import { createDeviceCapability } from '../infrastructure/ai/deviceCapability';
 import { createOnDeviceModel } from '../infrastructure/ai/modelFactory';
 import { createOnDevicePromptRunner } from '../infrastructure/ai/onDevicePromptRunner';
 import { createSerialQueue } from '../infrastructure/ai/serialQueue';
+import { createStuckTracker } from '../infrastructure/ai/stuckTracker';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
 import { FakeIdentityScanner } from '../infrastructure/fakes/FakeIdentityScanner';
@@ -52,13 +53,16 @@ function createFakeAi(): AiServices {
 
 function createRealAi(env: AppEnv): AiServices {
   const ai = getAiService(bootstrapFirebase(env));
+  // One queue and one stuck tracker for ALL on-device runners (one Chrome session at a time).
   const queue = createSerialQueue();
+  const stuck = createStuckTracker();
   const chrome = createDeviceCapability();
   const modelFor = (group: readonly ModelFindingCategory[]) =>
     createOnDeviceModel(ai, identityScanModelSpec(group));
   const identityScanner = new OnDeviceIdentityScanner(SCAN_GROUPS, (group) =>
     createOnDevicePromptRunner({
       queue,
+      stuck,
       capability: chrome,
       getModel: () => modelFor(group),
       timeoutMs: ON_DEVICE_TIMEOUT_MS,

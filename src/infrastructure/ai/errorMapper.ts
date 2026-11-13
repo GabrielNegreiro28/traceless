@@ -50,6 +50,14 @@ const DOM_ERRORS: ReadonlyMap<string, AppError> = new Map<string, AppError>([
       language: 'und',
     }),
   ],
+  [
+    // The Prompt API rejects a prompt larger than the session's token quota this way
+    // (in recent Chrome, a QuotaExceededError subclass of DOMException).
+    'QuotaExceededError',
+    createAppError('InputTooLong', {
+      message: 'The input is too long for the on-device model (QuotaExceededError).',
+    }),
+  ],
 ]);
 
 const UNKNOWN: AppError = createAppError('Unknown', { message: 'Unexpected AI error.' });

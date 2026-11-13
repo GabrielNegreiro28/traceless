@@ -10,8 +10,12 @@ import { err, ok, type Result } from '../../shared/result';
 import { withDeadline } from './deadline';
 import { mapAiError } from './errorMapper';
 import type { SerialQueue } from './serialQueue';
+import type { StuckTracker } from './stuckTracker';
 
-/** The slice of GenerativeModel the runner uses (GenerativeModel satisfies it). */
+/**
+ * The slice of the model the runner uses (`OnDeviceModel` from modelFactory satisfies it).
+ * One argument only: per-call request options are never passed.
+ */
 export interface PromptableModel {
   generateContent(prompt: string): Promise<{
     readonly response: { readonly inferenceSource?: InferenceSource; text(): string };
@@ -31,10 +35,15 @@ export interface PromptRunner {
 export interface OnDevicePromptRunnerDeps {
   /** The ONE queue shared by every on-device runner (see serialQueue.ts). */
   readonly queue: SerialQueue;
+  /** The ONE stuck tracker shared by every runner on that queue (see stuckTracker.ts). */
+  readonly stuck: StuckTracker;
   readonly capability: Pick<DeviceCapability, 'check'>;
   /** Lazily creates/returns the memoized model (createOnDeviceModel: layers 1 and 2). */
   readonly getModel: () => Result<PromptableModel, AppError>;
-  /** Optional: answer the caller with an error after this long (the queue still waits). */
+  /**
+   * Optional: answer the caller with `OnDeviceStuck` after this long. The queue still waits
+   * for the inference, and later calls fail fast until it ends.
+   */
   readonly timeoutMs?: number;
 }
 
@@ -55,7 +64,10 @@ const OFF_DEVICE_RESULT = createAppError('PrivacyViolation', {
   message: 'An on-device-only inference did not run on this device; its result was discarded.',
 });
 
-const TIMED_OUT = createAppError('Unknown', { message: 'On-device inference timed out.' });
+/** Fixed, user-facing: deadline expired, or an earlier timed-out inference still runs. */
+const STUCK = createAppError('OnDeviceStuck', {
+  message: 'On-device AI is not responding. Reload the page to try again.',
+});
 
 /**
  * Required before every call: with 'downloadable', the SDK would still call
@@ -105,22 +117,41 @@ async function attempt(
 }
 
 /**
+ * Answers the caller with `work`, or with STUCK once the deadline expires. On expiry the
+ * still-running inference marks the tracker stuck until it settles.
+ */
+function answerWithin(
+  deps: OnDevicePromptRunnerDeps,
+  work: Promise<Result<OnDeviceRunOutput, AppError>>,
+): Promise<Result<OnDeviceRunOutput, AppError>> {
+  const { timeoutMs } = deps;
+  if (timeoutMs === undefined) return work;
+  return withDeadline(work, timeoutMs, () => {
+    deps.stuck.holdUntilSettled(work);
+    logger.warn('on-device inference timed out; failing fast until it ends');
+    return err(STUCK);
+  });
+}
+
+/**
  * Runs prompts on the device, one at a time through the shared queue. With a timeout,
- * the caller gets an error once it expires, but the queue is held until the underlying
- * inference really ends (it cannot be aborted), so sessions never overlap.
+ * the caller gets `OnDeviceStuck` once it expires, but the queue is held until the
+ * underlying inference really ends (it cannot be aborted), so sessions never overlap;
+ * meanwhile new calls fail fast with `OnDeviceStuck` instead of waiting behind it.
+ * (A call already queued when the deadline fires still waits; the app scans one chunk
+ * at a time, so nothing is queued behind a running inference in practice.)
  */
 export function createOnDevicePromptRunner(deps: OnDevicePromptRunnerDeps): PromptRunner {
   return {
-    run: (prompt) =>
-      new Promise((resolve) => {
+    run: (prompt) => {
+      if (deps.stuck.isStuck()) return Promise.resolve(err(STUCK));
+      return new Promise((resolve) => {
         void deps.queue.enqueue(async () => {
           const work = attempt(deps, prompt);
-          const { timeoutMs } = deps;
-          resolve(
-            timeoutMs === undefined ? work : withDeadline(work, timeoutMs, () => err(TIMED_OUT)),
-          );
+          resolve(answerWithin(deps, work));
           await work;
         });
-      }),
+      });
+    },
   };
 }

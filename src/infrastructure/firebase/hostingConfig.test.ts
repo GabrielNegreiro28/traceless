@@ -49,6 +49,21 @@ describe('firebase.json hosting', () => {
     expect(csp).toContain("frame-ancestors 'none'");
   });
 
+  it('allows no wildcard or scheme-only source in connect-src', () => {
+    const csp = headerOn('**', 'Content-Security-Policy') ?? '';
+    const connectSrc = csp.split(';').find((part) => part.trim().startsWith('connect-src')) ?? '';
+    const sources = connectSrc.trim().split(/\s+/).slice(1);
+
+    expect(sources.length).toBeGreaterThan(0);
+    expect(sources).not.toContain('*');
+    expect(sources).not.toContain('https:');
+    for (const source of sources) {
+      expect(source).not.toContain('*');
+      // A bare scheme such as `https:` or `wss:` allows every host on it.
+      expect(source).not.toMatch(/^[a-z][a-z0-9+.-]*:$/i);
+    }
+  });
+
   it('allows reCAPTCHA scripts and frames', () => {
     const csp = headerOn('**', 'Content-Security-Policy') ?? '';
     const directive = (name: string): string[] =>

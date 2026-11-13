@@ -53,6 +53,8 @@ describe('APP_ERROR_KINDS', () => {
       QuotaExceeded: true,
       PermissionDenied: true,
       PrivacyViolation: true,
+      OnDeviceStuck: true,
+      InputTooLong: true,
       Misconfigured: true,
       Unknown: true,
     };

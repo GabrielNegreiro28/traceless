@@ -18,10 +18,11 @@ _Atualizado pelo manager a cada iteração._
 - Estrutura de agentes: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`.
 
 ## Em andamento
-- Implementer (opus, esforço alto): **tarefa 2** do desenho — `aiService`, `serialQueue`, `deviceCapability`, `errorMapper`, `modelFactory`, `onDevicePromptRunner`, `OnDeviceIdentityScanner`, `compositionRoot` mínimo, com as **três camadas fail-closed** (guarda antes de criar o modelo; baseUrl morto; descarte se a fonte não for on-device). Inclui as pendências da revisão da tarefa 1 (`allowCloud` + `PrivacyViolation` no `scanReport`, neutralizar `"""` no prompt, `chunkChars` obrigatório, CONSENTED_RAW só nuvem).
+- **Tarefa 2 commitada** (`9f50798`, 416 testes): camada on-device fail-closed. Revisão adversarial (opus) com sonda no SDK real: nenhum caminho do texto bruto para a rede em produção; a CSP também bloqueia `*.invalid`.
+- Implementer (opus): endurecimento pedido pela revisão — teste de contrato contra o SDK real (fetch espionado), `OnDeviceStuck` para inferência travada, tipo de retorno estreito do modelFactory, baseUrl morto por modo, CSP sem curingas, `QuotaExceededError`.
 
 ## Próximos passos
-1. Revisão da tarefa 2 (checar explicitamente as três camadas fail-closed) → commit.
+1. Revisar/commitar o endurecimento.
 2. Tarefa 3 (sonnet): métricas de avaliação, schema zod do dataset, `evaluateDetection`.
 3. Tarefa 4 (opus): dataset de 24 relatos sintéticos + teste de validação (disjunto dos few-shots: farmacêutico da Elm Street / Dana Ruiz; faturas do irmão do diretor financeiro).
 4. Tarefa 5 (sonnet): router, `devRoutes`, `EvalPage`, plugin Vite que salva resultados, canário `verify-no-eval-in-dist`.

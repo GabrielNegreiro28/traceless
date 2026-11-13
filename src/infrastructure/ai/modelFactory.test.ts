@@ -10,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createOnDeviceModel,
   ON_DEVICE_ONLY_BASE_URL,
+  onDeviceModelConfig,
+  type OnDeviceModel,
   type OnDeviceModelSpec,
 } from './modelFactory';
 
@@ -139,6 +141,15 @@ describe('createOnDeviceModel', () => {
       );
     });
 
+    it('builds exactly the config it passes to getGenerativeModel', () => {
+      createOnDeviceModel(fakeAi(), spec());
+      const [, params, requestOptions] = lastCall();
+      const config = onDeviceModelConfig(spec());
+      expect(params).toEqual(config.params);
+      expect(requestOptions).toEqual(config.requestOptions);
+      expect(onDeviceModelConfig(spec()).requestOptions).not.toBe(config.requestOptions);
+    });
+
     it('maps an SDK exception to an AppError and does not memoize the failure', () => {
       const ai = fakeAi();
       sdk.getGenerativeModel.mockImplementationOnce(() => {
@@ -147,6 +158,52 @@ describe('createOnDeviceModel', () => {
       const failed = createOnDeviceModel(ai, spec());
       expect(!failed.ok && failed.error.kind).toBe('Unknown');
       expect(createOnDeviceModel(ai, spec()).ok).toBe(true);
+    });
+  });
+
+  describe('narrowed model', () => {
+    beforeEach(stubPromptApi);
+
+    function sdkModel() {
+      return {
+        generateContent: vi.fn(() => Promise.resolve({ response: { text: () => '{}' } })),
+        generateContentStream: vi.fn(),
+        countTokens: vi.fn(),
+        startChat: vi.fn(),
+        initializeDeviceModel: vi.fn(() => Promise.resolve()),
+      };
+    }
+
+    it('exposes only generateContent and initializeDeviceModel', () => {
+      sdk.getGenerativeModel.mockImplementation(sdkModel);
+      const result = createOnDeviceModel(fakeAi(), spec());
+      if (!result.ok) throw new Error('expected a model');
+      expect(Object.keys(result.value).sort()).toEqual([
+        'generateContent',
+        'initializeDeviceModel',
+      ]);
+    });
+
+    it('forwards generateContent with the prompt only, never request options', async () => {
+      const underlying = sdkModel();
+      sdk.getGenerativeModel.mockImplementation(() => underlying);
+      const result = createOnDeviceModel(fakeAi(), spec());
+      if (!result.ok) throw new Error('expected a model');
+      const model: OnDeviceModel = result.value;
+      // @ts-expect-error per-call request options could override the dead baseUrl
+      await model.generateContent('prompt', { baseUrl: 'https://firebasevertexai.googleapis.com' });
+      expect(underlying.generateContent).toHaveBeenCalledTimes(1);
+      expect(underlying.generateContent.mock.calls[0]).toEqual(['prompt']);
+    });
+
+    it('forwards initializeDeviceModel with the progress callback', async () => {
+      const underlying = sdkModel();
+      sdk.getGenerativeModel.mockImplementation(() => underlying);
+      const result = createOnDeviceModel(fakeAi(), spec());
+      if (!result.ok) throw new Error('expected a model');
+      const onProgress = vi.fn();
+      await result.value.initializeDeviceModel(onProgress);
+      expect(underlying.initializeDeviceModel).toHaveBeenCalledWith(onProgress);
     });
   });
 });

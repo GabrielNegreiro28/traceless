@@ -10,6 +10,7 @@ import {
   type PromptableModel,
 } from './onDevicePromptRunner';
 import { createSerialQueue } from './serialQueue';
+import { createStuckTracker } from './stuckTracker';
 
 const PROMPT = toRawText('Report:\n"""\nI am the only night nurse.\n"""');
 const MODEL_TEXT = '{"findings":[]}';
@@ -66,6 +67,7 @@ function setup(
   const getModel = vi.fn(options.getModel ?? (() => ok(model)));
   const deps: OnDevicePromptRunnerDeps = {
     queue: createSerialQueue(),
+    stuck: createStuckTracker(),
     capability: { check },
     getModel,
     ...(timeoutMs === undefined ? {} : { timeoutMs }),
@@ -160,10 +162,10 @@ describe('createOnDevicePromptRunner', () => {
     const gate = deferred();
     const a = fakeModel([{ gate: gate.promise }]);
     const b = fakeModel([{}]);
-    const queue = createSerialQueue();
+    const shared = { queue: createSerialQueue(), stuck: createStuckTracker() };
     const capability = { check: () => Promise.resolve<DeviceAvailability>('available') };
-    const runA = createOnDevicePromptRunner({ queue, capability, getModel: () => ok(a.model) });
-    const runB = createOnDevicePromptRunner({ queue, capability, getModel: () => ok(b.model) });
+    const runA = createOnDevicePromptRunner({ ...shared, capability, getModel: () => ok(a.model) });
+    const runB = createOnDevicePromptRunner({ ...shared, capability, getModel: () => ok(b.model) });
     const first = runA.run(PROMPT);
     const second = runB.run(PROMPT);
     await vi.waitFor(() => expect(a.events).toEqual(['start:0']));
@@ -173,23 +175,103 @@ describe('createOnDevicePromptRunner', () => {
     expect(b.events).toEqual(['start:0', 'end:0']);
   });
 
-  it('times out for the caller but holds the queue until the inference really ends', async () => {
-    vi.useFakeTimers();
-    const gate = deferred();
-    const fake = fakeModel([{ gate: gate.promise }, {}]);
-    const { runner } = setup(fake.model, {}, 1000);
-    const first = runner.run(PROMPT);
-    await vi.advanceTimersByTimeAsync(1000);
-    const timedOut = await first;
-    expect(!timedOut.ok && timedOut.error).toMatchObject({
-      kind: 'Unknown',
-      message: expect.stringContaining('timed out') as unknown,
+  describe('deadline and a hung inference', () => {
+    const STUCK = {
+      kind: 'OnDeviceStuck',
+      message: 'On-device AI is not responding. Reload the page to try again.',
+    };
+
+    it('answers OnDeviceStuck at the deadline, with a fixed message only', async () => {
+      vi.useFakeTimers();
+      const gate = deferred();
+      const fake = fakeModel([{ gate: gate.promise }]);
+      const { runner } = setup(fake.model, {}, 1000);
+      const first = runner.run(PROMPT);
+      await vi.advanceTimersByTimeAsync(1000);
+      await expect(first).resolves.toEqual(err(STUCK));
+      gate.resolve();
     });
-    const second = runner.run(PROMPT);
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(fake.events).toEqual(['start:0']);
-    gate.resolve();
-    await expect(second).resolves.toEqual(ok({ text: MODEL_TEXT, source: 'ON_DEVICE' }));
-    expect(fake.events).toEqual(['start:0', 'end:0', 'start:1', 'end:1']);
+
+    it('fails later calls fast while the timed-out inference still runs', async () => {
+      vi.useFakeTimers();
+      const gate = deferred();
+      const fake = fakeModel([{ gate: gate.promise }, {}]);
+      const { runner, check, getModel } = setup(fake.model, {}, 1000);
+      void runner.run(PROMPT);
+      await vi.advanceTimersByTimeAsync(1000);
+      check.mockClear();
+      getModel.mockClear();
+      await expect(runner.run(PROMPT)).resolves.toEqual(err(STUCK));
+      expect(check).not.toHaveBeenCalled();
+      expect(getModel).not.toHaveBeenCalled();
+      expect(fake.events).toEqual(['start:0']);
+      gate.resolve();
+    });
+
+    it('holds the queue until the hung inference ends, then runs normally again', async () => {
+      vi.useFakeTimers();
+      const gate = deferred();
+      const fake = fakeModel([{ gate: gate.promise }, {}]);
+      const { runner } = setup(fake.model, {}, 1000);
+      void runner.run(PROMPT);
+      await vi.advanceTimersByTimeAsync(1000);
+      gate.resolve();
+      await vi.waitFor(() => expect(fake.events).toEqual(['start:0', 'end:0']));
+      await expect(runner.run(PROMPT)).resolves.toEqual(
+        ok({ text: MODEL_TEXT, source: 'ON_DEVICE' }),
+      );
+      expect(fake.events).toEqual(['start:0', 'end:0', 'start:1', 'end:1']);
+    });
+
+    it('clears the stuck state when the hung inference fails', async () => {
+      vi.useFakeTimers();
+      const gate = deferred();
+      const fake = fakeModel([{ gate: gate.promise, error: new Error('late failure') }, {}]);
+      const { runner } = setup(fake.model, {}, 1000);
+      void runner.run(PROMPT);
+      await vi.advanceTimersByTimeAsync(1000);
+      gate.resolve();
+      await vi.waitFor(() => expect(fake.events).toEqual(['start:0', 'end:0']));
+      const after = await runner.run(PROMPT);
+      expect(after.ok).toBe(true);
+    });
+
+    it('fails fast on every runner that shares the stuck tracker', async () => {
+      vi.useFakeTimers();
+      const gate = deferred();
+      const a = fakeModel([{ gate: gate.promise }]);
+      const b = fakeModel([{}]);
+      const shared = { queue: createSerialQueue(), stuck: createStuckTracker() };
+      const capability = { check: () => Promise.resolve<DeviceAvailability>('available') };
+      const runA = createOnDevicePromptRunner({
+        ...shared,
+        capability,
+        getModel: () => ok(a.model),
+        timeoutMs: 1000,
+      });
+      const runB = createOnDevicePromptRunner({
+        ...shared,
+        capability,
+        getModel: () => ok(b.model),
+      });
+      void runA.run(PROMPT);
+      await vi.advanceTimersByTimeAsync(1000);
+      await expect(runB.run(PROMPT)).resolves.toEqual(err(STUCK));
+      expect(b.events).toEqual([]);
+      gate.resolve();
+    });
+
+    it('does not mark anything stuck when the inference beats the deadline', async () => {
+      vi.useFakeTimers();
+      const fake = fakeModel([{}, {}]);
+      const { runner } = setup(fake.model, {}, 1000);
+      await expect(runner.run(PROMPT)).resolves.toEqual(
+        ok({ text: MODEL_TEXT, source: 'ON_DEVICE' }),
+      );
+      await vi.advanceTimersByTimeAsync(5000);
+      await expect(runner.run(PROMPT)).resolves.toEqual(
+        ok({ text: MODEL_TEXT, source: 'ON_DEVICE' }),
+      );
+    });
   });
 });

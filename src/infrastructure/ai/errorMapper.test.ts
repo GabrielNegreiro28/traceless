@@ -31,6 +31,11 @@ describe('mapAiError', () => {
       new DOMException(SDK_TEXT, 'NotSupportedError'),
       'LanguageNotSupported',
     ],
+    [
+      'DOMException QuotaExceededError',
+      new DOMException(SDK_TEXT, 'QuotaExceededError'),
+      'InputTooLong',
+    ],
     ['DOMException AbortError', new DOMException(SDK_TEXT, 'AbortError'), 'Unknown'],
     [
       'DOMException named like a prototype key',
@@ -58,6 +63,7 @@ describe('mapAiError', () => {
     new AIError(AIErrorCode.API_NOT_ENABLED, SDK_TEXT),
     new AIError(AIErrorCode.FETCH_ERROR, SDK_TEXT),
     new DOMException(SDK_TEXT, 'NotSupportedError'),
+    new DOMException(SDK_TEXT, 'QuotaExceededError'),
     new Error(SDK_TEXT),
   ])('never copies SDK text or attaches the original error (%#)', (error) => {
     const mapped = mapAiError(error);

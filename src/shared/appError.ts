@@ -20,6 +20,10 @@ export type AppError =
   | BaseError<'PermissionDenied'>
   /** A raw-text inference did not run on this device; its result was discarded. */
   | BaseError<'PrivacyViolation'>
+  /** A timed-out on-device inference is still running; new calls fail fast until it ends. */
+  | BaseError<'OnDeviceStuck'>
+  /** The input is larger than the on-device model accepts (Prompt API QuotaExceededError). */
+  | BaseError<'InputTooLong'>
   | (BaseError<'Misconfigured'> & { readonly missing: readonly string[] })
   | BaseError<'Unknown'>;
 
@@ -34,6 +38,8 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'QuotaExceeded',
   'PermissionDenied',
   'PrivacyViolation',
+  'OnDeviceStuck',
+  'InputTooLong',
   'Misconfigured',
   'Unknown',
 ];
