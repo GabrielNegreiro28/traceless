@@ -76,6 +76,7 @@ describe('scanReport', () => {
       rawModelFindings: 4,
       locatedModelFindings: 3,
       unlocatedModelFindings: 1,
+      suppressed: 0,
       retries: 0,
       durationMs: 25,
     });
@@ -191,12 +192,15 @@ describe('scanReport', () => {
       value: {
         findings: [],
         modelFindings: [],
+        raw: { findings: [], modelFindings: [] },
+        protectedSpans: [],
         source: 'ON_DEVICE',
         stats: {
           chunks: 0,
           rawModelFindings: 0,
           locatedModelFindings: 0,
           unlocatedModelFindings: 0,
+          suppressed: 0,
           retries: 0,
           durationMs: 25,
         },

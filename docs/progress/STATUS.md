@@ -19,14 +19,15 @@ _Atualizado pelo manager a cada iteração._
 
 ## Em andamento
 - **Fase 3 núcleo commitado** (`a46f044`, 817 testes; 2 rodadas de revisão adversarial): rewriteApplier, propagação de decisões, approveReport (bloqueia identificador direto não decidido, mutilado ou digitado), reducer do fluxo com outbox. Pendências menores para a tarefa de UI: scanId ausente em runtime = stale; APPROVE_OK conferir texto = preview; cancelar scan; CONSENT_REQUIRED com scanId; removalJoin com aspas raras.
-- Implementer (sonnet): **T1 da iteração do portão** — eval-inspect, registro de variantes, presets dev3/devMatrix, critérios novos do portão (precisão, latência, faixa ACCUSED).
+- **T1 commitado** (`f60ae34`, 835 testes): registro de variantes, Dev matrix, eval-inspect, critérios novos do portão (revisado; as 3 travas intactas).
+- **T2 commitado** (13/11, 1024 testes; implementer opus + 2 rodadas de revisão opus): identityScan.v2 (rótulos REPORTED_PERSON/OTHER_PERSON → menções protegidas + filtro de 3ª pessoa; nunca suprime REGRA nem 1ª pessoa), single2, regra de assinatura (`signOffRule.ts`), 3 few-shots inventados (checagem lexical e semântica contra o split de teste), sobras do T1. Variantes: v1-single, v2-single, v2-grouped2, v2-single2. Padrão do produto continua v1/single até o portão. Limitações conhecidas documentadas no §B.3 do desenho (sobrenome/primeiro nome compartilhado com o acusado).
 - **Tarefa 2** (`9f50798`) + **endurecimento** (`94b7cfe`): camada on-device fail-closed; revisão adversarial com sonda no SDK real; teste de contrato verificado por mutações.
 - **Tarefas 3+4 commitadas** (`e51d2ee`, 491 testes): métricas + portão (refinado após revisão adversarial: pooled, strictRecallAll, falhas de scan, achados gigantes) e dataset de 24 relatos (88 gold, 150 must-not; revisado e corrigido).
 - **Tarefa 5 commitada** (`f752b72`, 533 testes): página `/eval` só em dev (canário confirma ausência no build), plugin que salva em `eval/results/` (só mesma origem; testado: POST de outra origem → 403), fila on-device compartilhada entre estratégias. Servidor de dev testado: `/eval` responde 200.
 
 ## Próximos passos
-1. **Portão da Fase 2 reprovado na 1ª rodada** → Fable decide a correção (subject WRITER/OTHER, verificação em 2ª passada, "quem você está denunciando?" na UI, grouped2…). Depois: implementar identityScan.v2 e pedir nova rodada ao participante.
-2. Passo humano: rodar `/eval` no Chrome (meta 14/11 à noite) → portão das Fases 1+2 com o Fable (15/11).
+1. **Passo humano (HUMAN_TODO):** Dev matrix no Chrome (14/11) → manager escolhe a variante pelas regras do §E do desenho → split de teste ×3 **uma única vez** (15/11) → portão com o Fable.
+2. Enquanto espera: Fase 3 UI (tela de revisão do denunciante) sobre o núcleo já commitado, usando o FakeIdentityScanner.
 6. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
 
 ## Firebase
@@ -49,7 +50,7 @@ _Atualizado pelo manager a cada iteração._
 - npm 12 bloqueia scripts de instalação de dependências (re2, protobufjs, @firebase/util postinstall) — sem impacto.
 
 ## Métricas
-- Testes: 533 (13/11).
+- Testes: 1024 (13/11).
 - **1ª avaliação real (13/11, identityScan.v1, single, teste 16×3, pooled):** strictRecallAll **0,604** (meta ≥ 0,70) · violações ACCUSED **0,632** (meta ≤ 0,05; todas do modelo) · INCIDENT_FACT 0,091 (passa, instável) · OTHER_PERSON 0,267 · precisão 0,387 · acurácia de categoria 0,724 · aspas inventadas 0,083 · falhas 0 · saída inválida 0 · latência p50 ~7,1 s / máx ~19,3 s por relato. **Portão: REPROVADO** (recall e ACCUSED). Latência baixa deixa margem para mais inferência por relato.
 
 ## Riscos

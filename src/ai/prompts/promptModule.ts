@@ -1,6 +1,8 @@
 import type { LanguageModelMessage, ObjectSchemaRequest } from 'firebase/ai';
 import type { RawText } from '../../domain/text/brandedText';
-import type { ModelFindingCategory } from '../schemas/identityScan';
+import type { AppError } from '../../shared/appError';
+import type { Result } from '../../shared/result';
+import type { IdentityScanOutput, ModelFindingCategory } from '../schemas/identityScan';
 
 /** Everything that differs between identity-scan prompt versions (v1, v2, ...). */
 export interface PromptModule {
@@ -10,4 +12,9 @@ export interface PromptModule {
     categories: readonly ModelFindingCategory[],
   ) => LanguageModelMessage[];
   readonly buildSchema: (categories: readonly ModelFindingCategory[]) => ObjectSchemaRequest;
+  /** Validates one call's output for its group (v1: no outlets; v2: both outlets). */
+  readonly parse: (
+    text: string,
+    categories: readonly ModelFindingCategory[],
+  ) => Result<IdentityScanOutput, AppError>;
 }

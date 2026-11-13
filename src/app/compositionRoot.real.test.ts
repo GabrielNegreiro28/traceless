@@ -121,7 +121,11 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       try {
         sdk.generateContent.mockImplementation(() => new Promise(() => undefined));
         const servicesFor = createVariantServices(REAL_ENV);
-        const variant = { promptVersion: 'identityScan.v1', chunkChars: 3000 } as const;
+        const variant = {
+          promptVersion: 'identityScan.v1',
+          chunkChars: 3000,
+          postFilters: [],
+        } as const;
         const pending = servicesFor({ ...variant, strategy: 'single' }).scanReport(REPORT);
         await vi.advanceTimersByTimeAsync(121_000);
         const first = await pending;
@@ -134,6 +138,19 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+
+    it('throws on an unregistered prompt version without creating a model', () => {
+      sdk.getGenerativeModel.mockClear();
+      const servicesFor = createVariantServices(REAL_ENV);
+      const unknown = {
+        promptVersion: 'identityScan.v0',
+        strategy: 'single',
+        chunkChars: 3000,
+        postFilters: [],
+      } as const;
+      expect(() => servicesFor(unknown)).toThrow('Unknown prompt version: identityScan.v0');
+      expect(sdk.getGenerativeModel).not.toHaveBeenCalled();
     });
   });
 });

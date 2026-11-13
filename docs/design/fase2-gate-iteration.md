@@ -31,6 +31,15 @@ Decision: **ITERATE, no pivot** (advisor review of `eval/results/identityScan.v1
      - `suppressProtected(text, modelFindings, terms)` returns `{ kept, suppressed, protectedSpans }`. It drops a MODEL finding when a protected-term occurrence covers ≥ 50% of it, or when it contains a protected name token and no first-person singular token.
    - `thirdPersonFilter.ts`: drops MODEL findings that start with He/She/They and contain no first-person singular token.
    - Safety: **never** suppress RULE findings, and never suppress a finding containing I, I'm, I've, me, my or myself.
+   - **Narrowed after the T2 review (2026-11-13):**
+     - Name tokens are only the tokens after an honorific or job title ("Site Manager Gary Holt" gives Gary, Holt), or the last 1–2 tokens of the quote's final capitalised run (the "[title], [Name]" introduction). A run with a place, organisation or department word ("Riverside Depot", "Ward 7") gives none, and ALL-CAPS acronyms are never names.
+     - Name tokens suppress a finding only when the finding **opens** with them: its leading capitalised run (after an optional honorific) must be made only of protected name tokens ("Wade had…", "Mr. Wade knows…"). An unprotected capitalised token ("Tom Alvarez works…") or a place word ("Jordan Street branch…") in that run keeps the finding. A name elsewhere in the finding does not count. Coverage ≥ 50% is measured against occurrences of the full protected quotes only.
+     - A protected quote containing a first-person singular token is ignored entirely.
+     - The third-person filter also keeps findings with a first-person plural token (we, us, our, ours, ourselves), e.g. "They put only two of us on the desk".
+   - **Known limitations:**
+     - Shared surname: a writer finding that starts with a surname shared with a protected person is suppressed (protected "Dr. Patel", writer finding "Patel, the only nurse on the ward"). It is rare, and the writer's first-person sentences are always kept.
+     - Shared first name: likewise, a writer finding whose leading run is only a first name shared with a protected person is suppressed (protected "Supervisor Lena Ortiz", writer finding "Lena and the night porter are the only two"). Same mitigation as above.
+     - Sign-off rule: a bare one-word name after a blank line ("\n\nMarco") is a known miss, because it can't be told apart from an ordinary word. The model may still catch it.
 4. **scanReport**:
    - Collect `protectedQuotes` from all chunks first, then filter, so chunk 1's introduction protects chunk 2's bare name.
    - Return `protectedSpans` (used for Fase 3 "Kept: who you're reporting" chips) and `stats.suppressed`.

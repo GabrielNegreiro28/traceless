@@ -44,6 +44,9 @@ function doneState(checks: GateCheck[] | null, save: SaveState = SAVED): DoneSta
       pooled: { strictRecallAll: 0.8, latencyP50Ms: 1234 },
       metrics: { strictRecallAll: { mean: 0.8, min: 0.75, max: 0.85, missingRuns: 0 } },
     },
+    views: {
+      raw: { summary: { pooled: { strictRecallAll: 0.62, 'violation:ACCUSED': 0.4 } } },
+    },
     gate:
       checks === null
         ? null
@@ -68,6 +71,15 @@ describe('EvalResults', () => {
     expect(row).toHaveTextContent('75.0%');
     expect(row).toHaveTextContent('85.0%');
     expect(screen.getByRole('row', { name: /Median scan time/ })).toHaveTextContent('1234 ms');
+  });
+
+  it('shows the raw model value next to the shipped (filtered) one', () => {
+    render(<EvalResults state={doneState(null)} />);
+    expect(screen.getByRole('columnheader', { name: 'Raw' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /Strict recall/ })).toHaveTextContent('62.0%');
+    expect(screen.getByRole('row', { name: /Accused people flagged/ })).toHaveTextContent('40.0%');
+    expect(screen.getByText(/after the post-filters/)).toBeInTheDocument();
+    expect(screen.getByText(/filters: none/)).toBeInTheDocument();
   });
 
   it('marks gate criteria as pass, unstable or fail', () => {

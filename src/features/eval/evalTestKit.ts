@@ -23,12 +23,15 @@ export const EMPTY_SCAN: EvalScan = () =>
     ok({
       findings: [],
       modelFindings: [],
+      raw: { findings: [], modelFindings: [] },
+      protectedSpans: [],
       source: 'ON_DEVICE' as const,
       stats: {
         chunks: 1,
         rawModelFindings: 0,
         locatedModelFindings: 0,
         unlocatedModelFindings: 0,
+        suppressed: 0,
         retries: 0,
         durationMs: 5,
       },

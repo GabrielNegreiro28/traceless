@@ -31,16 +31,22 @@ function gateLabel(check: GateCheck): string {
   return check.unstable ? 'UNSTABLE' : 'PASS';
 }
 
+/** Shipped (post-filtered) pooled/min/max, plus the raw model's pooled value for contrast. */
 function SummaryTable({ outcome }: { readonly outcome: VariantOutcome }) {
   const { pooled, metrics } = outcome.result.summary;
+  const rawPooled = outcome.result.views.raw.summary.pooled;
   return (
     <table className="mt-3 w-full text-left text-sm">
+      <caption className="text-left text-muted">
+        Pooled, Min and Max: after the post-filters (what ships). Raw: the same scans before them.
+      </caption>
       <thead>
         <tr className="text-muted">
           <th scope="col">Metric</th>
           <th scope="col">Pooled</th>
           <th scope="col">Min</th>
           <th scope="col">Max</th>
+          <th scope="col">Raw</th>
         </tr>
       </thead>
       <tbody>
@@ -50,6 +56,7 @@ function SummaryTable({ outcome }: { readonly outcome: VariantOutcome }) {
             <td>{formatMetric(key, pooled[key])}</td>
             <td>{formatMetric(key, metrics[key]?.min)}</td>
             <td>{formatMetric(key, metrics[key]?.max)}</td>
+            <td>{formatMetric(key, rawPooled[key])}</td>
           </tr>
         ))}
       </tbody>
@@ -105,7 +112,8 @@ function VariantResults({ outcome }: { readonly outcome: VariantOutcome }) {
     <div className="mt-4 border-t border-border pt-3">
       <h3 className="font-semibold">
         Variant {variant.id} ({variant.promptVersion}, {variant.strategy}, {variant.chunkChars}{' '}
-        chars)
+        chars, filters: {variant.postFilters.length === 0 ? 'none' : variant.postFilters.join(', ')}
+        )
       </h3>
       <SummaryTable outcome={outcome} />
       <GateList outcome={outcome} />

@@ -232,6 +232,9 @@ describe('evaluateGate', () => {
     expect(band(0.16)).toBe('FAIL');
     expect(band(null)).toBe('FAIL');
     expect(accusedBand(0)).toBe('PASS');
+    // The PASS band and the ACCUSED gate criterion share one threshold.
+    expect(accusedBand(GATE_THRESHOLDS.accusedViolations)).toBe('PASS');
+    expect(accusedBand(GATE_THRESHOLDS.accusedViolations + 0.001)).toBe('CONDITIONAL');
   });
 
   it('reports each failing criterion on the pooled value', () => {

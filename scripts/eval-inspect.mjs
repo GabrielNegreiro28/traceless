@@ -19,21 +19,30 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const USAGE =
   'Usage: npm run eval:inspect -- <resultFile> [--report rXX] [--run N] [--view raw|filtered]';
 
+function fail(message) {
+  console.error(`${message}\n${USAGE}`);
+  process.exit(1);
+}
+
+/** A 1-based run number; anything else (missing, "abc", "1.5", "0") is a usage error. */
+function parseRun(value) {
+  const run = Number(value);
+  if (value === undefined || !Number.isInteger(run) || run < 1) {
+    fail('--run needs a positive integer.');
+  }
+  return run;
+}
+
 function parseArgs(argv) {
   const args = { file: null, report: null, run: null, view: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--report') args.report = argv[++i] ?? null;
-    else if (arg === '--run') args.run = Number(argv[++i]);
+    else if (arg === '--run') args.run = parseRun(argv[++i]);
     else if (arg === '--view') args.view = argv[++i] ?? null;
     else if (args.file === null) args.file = arg;
   }
   return args;
-}
-
-function fail(message) {
-  console.error(`${message}\n${USAGE}`);
-  process.exit(1);
 }
 
 async function readJson(path) {
@@ -85,7 +94,7 @@ async function main() {
       inspectReport(report, run, reportRun, tally, violations);
     }
   }
-  console.log('\n== Recall by category (scanned reports only)');
+  console.log('\n== Soft recall by category (span overlap, any category)');
   for (const line of recallTable(tally)) console.log(line);
   console.log('\n== ACCUSED violations');
   if (violations.size === 0) console.log('none');

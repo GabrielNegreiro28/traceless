@@ -14,6 +14,19 @@ export function spanContains(outer: TextSpan, inner: TextSpan): boolean {
   return outer.start <= inner.start && inner.end <= outer.end;
 }
 
+/** Sorted spans with overlapping or touching spans joined into one. */
+export function mergeSpans(spans: readonly TextSpan[]): TextSpan[] {
+  const sorted = [...spans].sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: TextSpan[] = [];
+  for (const span of sorted) {
+    const last = merged.at(-1);
+    if (last !== undefined && span.start <= last.end) {
+      merged[merged.length - 1] = { start: last.start, end: Math.max(last.end, span.end) };
+    } else merged.push(span);
+  }
+  return merged;
+}
+
 export function shiftSpan(span: TextSpan, offset: number): TextSpan {
   return { start: span.start + offset, end: span.end + offset };
 }

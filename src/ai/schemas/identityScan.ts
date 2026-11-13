@@ -19,32 +19,50 @@ function isModelCategory(category: FindingCategory): category is ModelFindingCat
 export const MODEL_FINDING_CATEGORIES: readonly ModelFindingCategory[] =
   FINDING_CATEGORIES.filter(isModelCategory);
 
+/**
+ * Outlet labels (docs/design/fase2-gate-iteration.md §B.1): the model may put the people
+ * it must NOT flag here instead of forcing them into a category. Outlet items never
+ * become findings; their quotes become protected quotes. Not domain categories.
+ */
+export const OUTLET_LABELS = ['REPORTED_PERSON', 'OTHER_PERSON'] as const;
+
+export type OutletLabel = (typeof OUTLET_LABELS)[number];
+
+/** Every label a scan item may carry: a model category or an outlet. */
+export type IdentityScanLabel = ModelFindingCategory | OutletLabel;
+
 export const MAX_MODEL_FINDINGS = 12;
+/** Extra array slots when outlets are on, so protected quotes do not crowd out findings. */
+export const MAX_PROTECTED_QUOTES = 8;
 export const MAX_QUOTE_CHARS = 120;
 export const MAX_REASON_CHARS = 200;
 
 const FINDING_FIELDS = ['quote', 'category', 'reason', 'suggestion'];
 
 /**
- * Structured-output schema for one identity-scan call, restricted to `categories`.
- * Plain JSON Schema (no `nullable`/`additionalProperties`/`maxLength`; lengths are
- * clamped in code). Used as the on-device `responseConstraint` and the cloud
- * `responseSchema`. Returns a fresh object on every call (the SDK may mutate params).
+ * Structured-output schema for one identity-scan call, restricted to `categories` plus
+ * the given `outlets`. Plain JSON Schema (no `nullable`/`additionalProperties`/
+ * `maxLength`; lengths are clamped in code). With no outlets the output is exactly the
+ * v1 schema (byte-identical, parity-tested). Returns a fresh object on every call (the
+ * SDK may mutate params).
  */
 export function buildIdentityScanSchema(
   categories: readonly ModelFindingCategory[],
+  outlets: readonly OutletLabel[] = [],
 ): ObjectSchemaRequest {
+  const maxItems =
+    outlets.length === 0 ? MAX_MODEL_FINDINGS : MAX_MODEL_FINDINGS + MAX_PROTECTED_QUOTES;
   return {
     type: 'object',
     properties: {
       findings: {
         type: 'array',
-        maxItems: MAX_MODEL_FINDINGS,
+        maxItems,
         items: {
           type: 'object',
           properties: {
             quote: { type: 'string' },
-            category: { type: 'string', enum: [...categories] },
+            category: { type: 'string', enum: [...categories, ...outlets] },
             reason: { type: 'string' },
             suggestion: { type: 'string' },
           },
@@ -58,14 +76,26 @@ export function buildIdentityScanSchema(
 
 export const modelCategorySchema = z.enum(MODEL_FINDING_CATEGORIES);
 
+/** Zod enum of every scan label (categories, then outlets), parity-tested with the schema. */
+export const scanLabelSchema = z.enum([...MODEL_FINDING_CATEGORIES, ...OUTLET_LABELS]);
+
 const topLevelSchema = z.object({ findings: z.array(z.unknown()) });
 
 const itemSchema = z.object({
   quote: z.string(),
-  category: modelCategorySchema,
+  category: scanLabelSchema,
   reason: z.string(),
   suggestion: z.string(),
 });
+
+type ScanItem = z.infer<typeof itemSchema>;
+
+/** What one identity-scan call yields once validated. */
+export interface IdentityScanOutput {
+  readonly findings: ModelFinding[];
+  /** Quotes of outlet items (people not to flag). Raw report text: never log or persist. */
+  readonly protectedQuotes: string[];
+}
 
 const FENCED = /^\s*```(?:json)?\s*([\s\S]*?)\s*```\s*$/i;
 
@@ -85,40 +115,59 @@ function parseJson(text: string): Result<unknown, AppError> {
   }
 }
 
-/** One raw item → a ModelFinding, or null when it must be dropped. */
-function salvageItem(item: unknown, allowed: readonly ModelFindingCategory[]): ModelFinding | null {
-  const parsed = itemSchema.safeParse(item);
-  if (!parsed.success) return null;
-  const { quote, category, reason, suggestion } = parsed.data;
-  const trimmedQuote = quote.trim();
-  if (trimmedQuote === '' || trimmedQuote.length > MAX_QUOTE_CHARS) return null;
-  if (!allowed.includes(category)) return null;
-  const trimmedSuggestion = suggestion.trim();
+function isOutlet(label: IdentityScanLabel): label is OutletLabel {
+  return (OUTLET_LABELS as readonly string[]).includes(label);
+}
+
+/** The trimmed quote, or null when it is empty or longer than 120 characters. */
+function cleanQuote(quote: string): string | null {
+  const trimmed = quote.trim();
+  return trimmed === '' || trimmed.length > MAX_QUOTE_CHARS ? null : trimmed;
+}
+
+function toModelFinding(quote: string, item: ScanItem, category: ModelFindingCategory) {
+  const suggestion = item.suggestion.trim();
   return {
-    quote: trimmedQuote,
+    quote,
     category,
-    reason: reason.trim().slice(0, MAX_REASON_CHARS),
-    suggestion: trimmedSuggestion === '' ? null : trimmedSuggestion,
-  };
+    reason: item.reason.trim().slice(0, MAX_REASON_CHARS),
+    suggestion: suggestion === '' ? null : suggestion,
+  } satisfies ModelFinding;
 }
 
 /**
  * Validates identity-scan model output. Invalid items are dropped one by one (wrong
- * types, unknown or disallowed category, empty or >120-char quote); the reason is
- * clamped to 200 chars, an empty suggestion means "remove" (null), and at most 12 valid
- * items are kept. Only bad JSON or a bad top-level shape is an InvalidModelOutput error.
- * Error messages never contain model or report text.
+ * types, unknown or disallowed label, empty or >120-char quote). Items labelled with
+ * one of `outlets` become protected quotes, never findings; outlet items are dropped
+ * when `outlets` is empty (v1). Findings: the reason is clamped to 200 chars, an empty
+ * suggestion means "remove" (null), at most 12 are kept; at most 8 protected quotes.
+ * Only bad JSON or a bad top-level shape is an InvalidModelOutput error. Error messages
+ * never contain model or report text.
  */
 export function parseIdentityScanOutput(
   text: string,
   allowed: readonly ModelFindingCategory[],
-): Result<ModelFinding[], AppError> {
+  outlets: readonly OutletLabel[] = [],
+): Result<IdentityScanOutput, AppError> {
   const json = parseJson(text);
   if (!json.ok) return json;
   const top = topLevelSchema.safeParse(json.value);
   if (!top.success) return err(invalidOutput('Identity scan output has an unexpected shape.'));
-  const findings = top.data.findings
-    .map((item) => salvageItem(item, allowed))
-    .filter((finding): finding is ModelFinding => finding !== null);
-  return ok(findings.slice(0, MAX_MODEL_FINDINGS));
+  const findings: ModelFinding[] = [];
+  const protectedQuotes: string[] = [];
+  for (const raw of top.data.findings) {
+    const item = itemSchema.safeParse(raw);
+    const quote = item.success ? cleanQuote(item.data.quote) : null;
+    if (!item.success || quote === null) continue;
+    const { category } = item.data;
+    if (isOutlet(category)) {
+      if (outlets.includes(category)) protectedQuotes.push(quote);
+    } else if (allowed.includes(category)) {
+      findings.push(toModelFinding(quote, item.data, category));
+    }
+  }
+  return ok({
+    findings: findings.slice(0, MAX_MODEL_FINDINGS),
+    protectedQuotes: protectedQuotes.slice(0, MAX_PROTECTED_QUOTES),
+  });
 }

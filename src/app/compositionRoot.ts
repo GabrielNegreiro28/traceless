@@ -1,10 +1,12 @@
-import { MODEL_CHUNK_CHARS, STRATEGIES, type StrategyName } from '../ai/prompts/identityScan.v1';
+import { MODEL_CHUNK_CHARS } from '../ai/prompts/identityScan.v1';
 import type { PromptModule } from '../ai/prompts/promptModule';
 import { DEFAULT_PROMPT_MODULE, getPromptModule } from '../ai/prompts/promptRegistry';
+import { STRATEGIES, type StrategyName } from '../ai/prompts/strategies';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import { scanReport, type ScanReportResult } from '../application/usecases/scanReport';
+import type { PostFilterName } from '../domain/detection/postFilters';
 import type { RawText } from '../domain/text/brandedText';
 import { OnDeviceIdentityScanner } from '../infrastructure/ai/adapters/OnDeviceIdentityScanner';
 import { identityScanModelSpec } from '../infrastructure/ai/adapters/identityScanModelSpec';
@@ -50,12 +52,15 @@ export interface ScanVariantSpec {
   readonly promptVersion: string;
   readonly strategy: StrategyName;
   readonly chunkChars: number;
+  /** Deterministic filters applied to the model findings (src/domain/detection/postFilters). */
+  readonly postFilters: readonly PostFilterName[];
 }
 
 const DEFAULT_VARIANT: ScanVariantSpec = {
   promptVersion: DEFAULT_PROMPT_MODULE.version,
   strategy: DEFAULT_STRATEGY,
   chunkChars: MODEL_CHUNK_CHARS,
+  postFilters: [],
 };
 
 export interface ServiceOptions {
@@ -108,7 +113,7 @@ function createRealAi(
         getModel: () => modelFor(group),
         timeoutMs: ON_DEVICE_TIMEOUT_MS,
       }),
-    prompt.buildUserPrompt,
+    prompt,
   );
   const deviceCapability: DeviceCapability = {
     check: () => chrome.check(),
@@ -121,21 +126,25 @@ function createRealAi(
   return { identityScanner, deviceCapability };
 }
 
-function bindScanReport(scanner: IdentityScanner, chunkChars: number): Services['scanReport'] {
+function bindScanReport(
+  scanner: IdentityScanner,
+  variant: ScanVariantSpec,
+): Services['scanReport'] {
+  const { chunkChars, postFilters } = variant;
   return (text, onProgress) =>
     scanReport(
       text,
-      { scanner, clock: systemClock, chunkChars },
+      { scanner, clock: systemClock, chunkChars, postFilters },
       onProgress === undefined ? {} : { onProgress },
     );
 }
 
-function buildServices(ai: AiServices, chunkChars: number): Services {
-  return { ...ai, scanReport: bindScanReport(ai.identityScanner, chunkChars) };
+function buildServices(ai: AiServices, variant: ScanVariantSpec): Services {
+  return { ...ai, scanReport: bindScanReport(ai.identityScanner, variant) };
 }
 
 function variantKey(v: ScanVariantSpec): string {
-  return `${v.promptVersion}|${v.strategy}|${v.chunkChars}`;
+  return `${v.promptVersion}|${v.strategy}|${v.chunkChars}|${v.postFilters.join(',')}`;
 }
 
 /**
@@ -154,7 +163,7 @@ export function createVariantServices(env: AppEnv): (variant: ScanVariantSpec) =
     if (prompt === undefined) throw new Error(`Unknown prompt version: ${variant.promptVersion}`);
     const groups: ScanGroups = STRATEGIES[variant.strategy];
     const ai = infra === null ? createFakeAi() : createRealAi(env, groups, prompt, infra);
-    const services = buildServices(ai, variant.chunkChars);
+    const services = buildServices(ai, variant);
     cache.set(key, services);
     return services;
   };

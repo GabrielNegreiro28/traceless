@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Dataset } from '../../domain/evaluation/datasetSchema';
-import type { ModelFinding } from '../../domain/detection/types';
 import { FakeClock } from '../../infrastructure/fakes/FakeClock';
-import {
-  FakeIdentityScanner,
-  type FakeScanStep,
-} from '../../infrastructure/fakes/FakeIdentityScanner';
+import { FakeIdentityScanner } from '../../infrastructure/fakes/FakeIdentityScanner';
 import { createAppError } from '../../shared/appError';
-import { ok } from '../../shared/result';
 import type { IdentityScanner } from '../ports/IdentityScanner';
 import {
   evaluateDetection,
@@ -15,96 +10,18 @@ import {
   type EvalRunResult,
   type EvalScan,
 } from './evaluateDetection';
+import { DATASET, VARIANT, mf, respond, runEval as run } from './evaluateDetection.testKit';
 import { scanReport } from './scanReport';
-
-const DATASET: Dataset = {
-  version: 'test-v1',
-  reports: [
-    {
-      id: 'a',
-      sector: 'health',
-      split: 'dev',
-      text: 'I am the only night nurse. Mail me at jane@example.com. Dr Smith took the drugs.',
-      gold: [
-        { quote: 'only night nurse', category: 'ROLE_UNIQUE' },
-        { quote: 'jane@example.com', category: 'DIRECT_IDENTIFIER' },
-      ],
-      mustNotFlag: [{ quote: 'Dr Smith', kind: 'ACCUSED' }],
-    },
-    {
-      id: 'b',
-      sector: 'finance',
-      split: 'test',
-      text: 'I sit at desk 14. Contact bob@corp.com please. The invoice was for big money.',
-      gold: [
-        { quote: 'desk 14', category: 'LOCATION' },
-        { quote: 'bob@corp.com', category: 'DIRECT_IDENTIFIER' },
-      ],
-      mustNotFlag: [{ quote: 'big money', kind: 'INCIDENT_FACT' }],
-    },
-    {
-      id: 'c',
-      sector: 'retail',
-      split: 'test',
-      text: 'Nothing here points to me at all.',
-      gold: [],
-      mustNotFlag: [{ quote: 'Nothing here', kind: 'INCIDENT_FACT' }],
-    },
-  ],
-};
-
-const mf = (quote: string, category: ModelFinding['category']): ModelFinding => ({
-  quote,
-  category,
-  reason: 'r',
-  suggestion: null,
-});
 
 function wrap(scanner: IdentityScanner, clock = new FakeClock(0, 5)): EvalScan {
   return (text) => scanReport(text, { scanner, clock, chunkChars: 3000 });
 }
 
-function respond(chunk: string): FakeScanStep {
-  if (chunk.includes('night nurse')) {
-    return {
-      findings: [mf('only night nurse', 'ROLE_UNIQUE'), mf('Dr Smith', 'DIRECT_IDENTIFIER')],
-    };
-  }
-  if (chunk.includes('desk 14'))
-    return { findings: [mf('desk 14', 'LOCATION'), mf('ghost', 'LOCATION')] };
-  return { findings: [] };
-}
-
-async function run(
-  scan: EvalScan,
-  split: 'dev' | 'test' | 'all',
-  runs = 1,
-  progress?: EvalProgress[],
-) {
-  const result = await evaluateDetection({
-    dataset: DATASET,
-    split,
-    scan,
-    clock: new FakeClock(1000),
-    runs,
-    variant: { ...VARIANT, id: 'v-test', promptVersion: 'p-test' },
-    ...(progress ? { onProgress: (p: EvalProgress) => progress.push(p) } : {}),
-  });
-  if (!result.ok) throw new Error('evaluation failed');
-  return result.value;
-}
-
-const VARIANT = {
-  id: 'v',
-  promptVersion: 'p',
-  strategy: 'single',
-  chunkChars: 3000,
-  postFilters: [],
-} as const;
+const fakeModel = () => new FakeIdentityScanner({ respond: (c) => respond(c) });
 
 describe('evaluateDetection with a fake model', () => {
   it('runs the split sequentially and summarises exact metrics', async () => {
-    const scanner = new FakeIdentityScanner({ respond: (c) => respond(c) });
+    const scanner = fakeModel();
     const progress: EvalProgress[] = [];
     const result = await run(wrap(scanner), 'all', 2, progress);
 
@@ -143,7 +60,7 @@ describe('evaluateDetection with a fake model', () => {
   });
 
   it('filters by split and keeps the result JSON-serialisable without text', async () => {
-    const result = await run(wrap(new FakeIdentityScanner({ respond: (c) => respond(c) })), 'test');
+    const result = await run(wrap(fakeModel()), 'test');
     expect(result.runs[0]?.reports.map((r) => r.reportId)).toEqual(['b', 'c']);
     const json = JSON.stringify(result);
     expect(JSON.parse(json)).toEqual(result);
@@ -152,10 +69,7 @@ describe('evaluateDetection with a fake model', () => {
   });
 
   it('fails the gate on the test split when there is no ACCUSED data', async () => {
-    const result: EvalRunResult = await run(
-      wrap(new FakeIdentityScanner({ respond: (c) => respond(c) })),
-      'test',
-    );
+    const result: EvalRunResult = await run(wrap(fakeModel()), 'test');
     const accused = result.gate?.checks.find((c) => c.metric === 'violation:ACCUSED');
     expect(accused?.pooled).toBeNull();
     expect(result.gate?.pass).toBe(false);
@@ -180,7 +94,7 @@ describe('evaluateDetection with a fake model', () => {
     const throwing: EvalScan = (text) => {
       calls += 1;
       if (calls === 2) return Promise.reject(new Error('secret raw text ' + text));
-      return wrap(new FakeIdentityScanner({ respond: (c) => respond(c) }))(text);
+      return wrap(fakeModel())(text);
     };
     const result = await run(throwing, 'all');
     expect(result.runs[0]?.reports.map((r) => r.errorKind)).toEqual([null, 'Unknown', null]);
@@ -231,16 +145,8 @@ describe('evaluateDetection origin attribution', () => {
     );
 
   async function runDated(mode: 'gold' | 'mustNot') {
-    const result = await evaluateDetection({
-      dataset: datedDataset(mode),
-      split: 'test',
-      scan: swallowing(),
-      clock: new FakeClock(),
-      runs: 1,
-      variant: VARIANT,
-    });
-    if (!result.ok) throw new Error('evaluation failed');
-    return result.value.runs[0]?.metrics;
+    const result = await run(swallowing(), 'test', 1, undefined, datedDataset(mode));
+    return result.runs[0]?.metrics;
   }
 
   it('credits a date to the rules even when a model quote swallows the rule hit', async () => {
@@ -254,21 +160,6 @@ describe('evaluateDetection origin attribution', () => {
     expect(metrics?.['violation:INCIDENT_FACT']).toBe(1);
     expect(metrics?.['violation:INCIDENT_FACT:RULE']).toBe(1);
     expect(metrics?.['violation:INCIDENT_FACT:MODEL']).toBe(1);
-  });
-});
-
-describe('evaluateDetection rules-only baseline', () => {
-  it('is deterministic with a scanner that finds nothing', async () => {
-    const first = await run(wrap(new FakeIdentityScanner()), 'all');
-    const second = await run(wrap(new FakeIdentityScanner()), 'all');
-    expect(second).toEqual(first);
-    const metrics = first.runs[0]?.metrics;
-    expect(metrics?.combinedRecall).toBe(2 / 4);
-    expect(metrics?.modelOnlyRecall).toBe(0);
-    expect(metrics?.['recall:DIRECT_IDENTIFIER']).toBe(1);
-    expect(metrics?.['recall:ROLE_UNIQUE']).toBe(0);
-    expect(metrics?.['violation:ACCUSED']).toBe(0);
-    expect(metrics?.hallucinatedQuoteRate).toBeNull();
   });
 });
 
@@ -295,21 +186,5 @@ describe('evaluateDetection configuration errors', () => {
     };
     const result = await evaluateDetection({ ...base, dataset: broken, split: 'all', runs: 1 });
     expect(result.ok).toBe(false);
-  });
-});
-
-describe('evaluateDetection raw and filtered views', () => {
-  it('computes each view from its own findings of the same scan', async () => {
-    const scan: EvalScan = async (text) => {
-      const base = await wrap(new FakeIdentityScanner({ respond: (c) => respond(c) }))(text);
-      if (!base.ok) return base;
-      return ok({ ...base.value, filtered: { findings: [], modelFindings: [] } });
-    };
-    const result = await run(scan, 'all');
-    const raw = result.views.raw.summary.pooled;
-    const filtered = result.views.filtered.summary.pooled;
-    expect(result.summary.pooled).toEqual(filtered);
-    expect(raw.softPrecision).not.toBe(filtered.softPrecision);
-    expect(raw.latencyP50Ms).toBe(filtered.latencyP50Ms);
   });
 });

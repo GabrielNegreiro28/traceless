@@ -10,7 +10,7 @@ import { toRawText, type RawText } from '../../domain/text/brandedText';
 import { createAppError, type AppError } from '../../shared/appError';
 import { err, type Result } from '../../shared/result';
 import type { EvalScan, ReportRunResult } from './evaluateDetection.types';
-import type { ScanReportResult } from './scanReport';
+import type { ScanReportResult, UnfilteredFindings } from './scanReport';
 
 export type ViewName = 'raw' | 'filtered';
 
@@ -20,10 +20,9 @@ const toEvalFinding = ({ span, category, origin }: EvalFinding): EvalFinding => 
   origin,
 });
 
-/** The findings of one view; without post-filters both views are the same findings. */
-function findingsOf(value: ScanReportResult, view: ViewName): ScanReportResult {
-  if (view === 'raw' || value.filtered === undefined) return value;
-  return { ...value, ...value.filtered };
+/** `filtered` = what ships (post-filtered); `raw` = the same scan before the post-filters. */
+function findingsOf(value: ScanReportResult, view: ViewName): UnfilteredFindings {
+  return view === 'raw' ? value.raw : value;
 }
 
 function toOutcome(

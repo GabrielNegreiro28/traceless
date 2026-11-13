@@ -12,6 +12,8 @@ import { err, ok, type Result } from '../../shared/result';
 export type FakeScanStep =
   | {
       readonly findings: readonly ModelFinding[];
+      /** Quotes labelled as people not to flag (default: none). */
+      readonly protectedQuotes?: readonly string[];
       readonly source?: InferenceSourceKind;
       readonly retries?: number;
     }
@@ -73,6 +75,7 @@ export class FakeIdentityScanner implements IdentityScanner {
     if ('error' in step) return err(step.error);
     return ok({
       findings: [...step.findings],
+      protectedQuotes: [...(step.protectedQuotes ?? [])],
       source: step.source ?? this.options.source ?? 'ON_DEVICE',
       retries: step.retries ?? 0,
     });

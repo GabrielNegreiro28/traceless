@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { FINDING_CATEGORIES } from '../../domain/detection/types';
 import {
   MAX_MODEL_FINDINGS,
+  MAX_PROTECTED_QUOTES,
   MAX_REASON_CHARS,
   MODEL_FINDING_CATEGORIES,
+  OUTLET_LABELS,
   buildIdentityScanSchema,
   modelCategorySchema,
   parseIdentityScanOutput,
+  scanLabelSchema,
 } from './identityScan';
 
 const ALL = MODEL_FINDING_CATEGORIES;
@@ -25,9 +28,13 @@ function parse(value: unknown, allowed = ALL) {
   return parseIdentityScanOutput(JSON.stringify(value), allowed);
 }
 
-function values(result: ReturnType<typeof parse>) {
+function output(result: ReturnType<typeof parse>) {
   if (!result.ok) throw new Error(`expected ok, got ${result.error.kind}`);
   return result.value;
+}
+
+function values(result: ReturnType<typeof parse>) {
+  return output(result).findings;
 }
 
 describe('MODEL_FINDING_CATEGORIES', () => {
@@ -43,6 +50,13 @@ describe('MODEL_FINDING_CATEGORIES', () => {
     const categoryEnum = schema.properties?.findings?.items?.properties?.category?.enum;
     expect(categoryEnum).toEqual([...ALL]);
     expect(modelCategorySchema.options).toEqual([...ALL]);
+  });
+
+  it('has parity between the JSON Schema enum and the zod enum with outlets', () => {
+    const schema = buildIdentityScanSchema(ALL, OUTLET_LABELS);
+    const labelEnum = schema.properties?.findings?.items?.properties?.category?.enum;
+    expect(labelEnum).toEqual([...ALL, 'REPORTED_PERSON', 'OTHER_PERSON']);
+    expect(scanLabelSchema.options).toEqual(labelEnum);
   });
 });
 
@@ -70,6 +84,20 @@ describe('buildIdentityScanSchema', () => {
     });
   });
 
+  it('adds outlets after the categories and room for protected quotes', () => {
+    const schema = buildIdentityScanSchema(['SCHEDULE'], OUTLET_LABELS);
+    const findings = schema.properties?.findings;
+    expect(findings?.maxItems).toBe(MAX_MODEL_FINDINGS + MAX_PROTECTED_QUOTES);
+    expect(findings?.items?.properties?.category?.enum).toEqual([
+      'SCHEDULE',
+      'REPORTED_PERSON',
+      'OTHER_PERSON',
+    ]);
+    expect(buildIdentityScanSchema(['SCHEDULE'], [])).toEqual(
+      buildIdentityScanSchema(['SCHEDULE']),
+    );
+  });
+
   it('returns a fresh object on every call', () => {
     const a = buildIdentityScanSchema(ALL);
     const b = buildIdentityScanSchema(ALL);
@@ -80,10 +108,11 @@ describe('buildIdentityScanSchema', () => {
 
 describe('parseIdentityScanOutput', () => {
   it('parses valid output and maps an empty suggestion to null', () => {
-    const result = values(
+    const result = output(
       parse({ findings: [item(), item({ quote: 'my desk', suggestion: '' })] }),
     );
-    expect(result).toEqual([
+    expect(result.protectedQuotes).toEqual([]);
+    expect(result.findings).toEqual([
       {
         quote: 'the only night nurse',
         category: 'ROLE_UNIQUE',
@@ -100,7 +129,7 @@ describe('parseIdentityScanOutput', () => {
   });
 
   it('accepts an empty findings list', () => {
-    expect(values(parse({ findings: [] }))).toEqual([]);
+    expect(output(parse({ findings: [] }))).toEqual({ findings: [], protectedQuotes: [] });
   });
 
   it('drops invalid items and keeps the valid ones', () => {

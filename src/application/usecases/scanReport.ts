@@ -1,13 +1,14 @@
 import { mergeFindings } from '../../domain/detection/findingMerger';
+import { applyPostFilters, type PostFilterName } from '../../domain/detection/postFilters';
 import { detectByRules } from '../../domain/detection/ruleDetector';
-import { locateModelFindingsWithStats } from '../../domain/detection/spanLocator';
-import { chunkText, shiftFindings, type TextChunk } from '../../domain/detection/textChunker';
-import type { Finding } from '../../domain/detection/types';
-import { toRawText, type RawText } from '../../domain/text/brandedText';
-import { createAppError, type AppError } from '../../shared/appError';
-import { err, ok, type Result } from '../../shared/result';
+import { chunkText } from '../../domain/detection/textChunker';
+import type { Finding, TextSpan } from '../../domain/detection/types';
+import type { RawText } from '../../domain/text/brandedText';
+import type { AppError } from '../../shared/appError';
+import { ok, type Result } from '../../shared/result';
 import type { Clock } from '../ports/Clock';
 import type { IdentityScanner, InferenceSourceKind } from '../ports/IdentityScanner';
+import { scanChunksSequentially, type ModelPass } from './scanChunks';
 
 export interface ScanReportDeps {
   readonly scanner: IdentityScanner;
@@ -20,6 +21,8 @@ export interface ScanReportDeps {
    * cloud scan (explicit reporter consent) sets this.
    */
   readonly allowCloud?: boolean;
+  /** Deterministic filters on the model findings (none by default). */
+  readonly postFilters?: readonly PostFilterName[];
 }
 
 export interface ScanReportOptions {
@@ -30,105 +33,65 @@ export interface ScanReportOptions {
 export interface ScanStats {
   readonly chunks: number;
   readonly rawModelFindings: number;
+  /** Located model findings before the post-filters. */
   readonly locatedModelFindings: number;
   /** Raw model findings whose quote matched nowhere in the text (hallucinated or too short). */
   readonly unlocatedModelFindings: number;
+  /** Located model findings removed by the post-filters (0 without filters). */
+  readonly suppressed: number;
   readonly retries: number;
   readonly durationMs: number;
 }
 
-/** Findings after the optional post-filters (protected mentions etc.), for evaluation. */
-export interface FilteredFindings {
+/** The same scan before the post-filters (for the raw evaluation view). */
+export interface UnfilteredFindings {
   readonly findings: Finding[];
   readonly modelFindings: Finding[];
 }
 
 export interface ScanReportResult {
+  /** What ships to the reporter: rule findings merged with the post-filtered model findings. */
   readonly findings: Finding[];
-  /** Located model findings before merging with the rule findings (for evaluation). */
+  /** Post-filtered located model findings, before merging with the rule findings. */
   readonly modelFindings: Finding[];
-  /** Post-filtered view; absent means no filter ran, so it equals the raw findings above. */
-  readonly filtered?: FilteredFindings;
+  /** Unfiltered view of the same scan; equal to the fields above when no filter is enabled. */
+  readonly raw: UnfilteredFindings;
+  /** Where protected people are mentioned; empty unless `protectedMentions` ran. */
+  readonly protectedSpans: TextSpan[];
   /** IN_CLOUD if any chunk ran in the cloud; ON_DEVICE otherwise (also with no chunks). */
   readonly source: InferenceSourceKind;
   readonly stats: ScanStats;
 }
 
-interface ModelPass {
-  readonly findings: Finding[];
-  readonly source: InferenceSourceKind;
-  readonly rawModelFindings: number;
-  readonly unlocated: number;
-  readonly retries: number;
-}
+const NO_PROGRESS = (): void => undefined;
 
-interface ChunkScanContext {
-  readonly scanner: IdentityScanner;
-  readonly allowCloud: boolean;
-  readonly onProgress: (done: number, total: number) => void;
-}
-
-/** Fixed message: never includes report or model text. */
-const OFF_DEVICE_CHUNK = createAppError('PrivacyViolation', {
-  message: 'A report chunk was not scanned on this device; all findings were discarded.',
-});
-
-async function scanChunk(
-  scanner: IdentityScanner,
-  chunk: TextChunk,
-): Promise<Result<ModelPass, AppError>> {
-  const rawChunk = toRawText(chunk.text);
-  const scanned = await scanner.scan(rawChunk);
-  if (!scanned.ok) return scanned;
-  const { findings, source, retries } = scanned.value;
-  const found = locateModelFindingsWithStats(rawChunk, findings);
-  const located = shiftFindings(found.findings, chunk.offset);
-  return ok({
-    findings: located,
-    source,
-    rawModelFindings: findings.length,
-    unlocated: found.unlocated,
-    retries,
-  });
-}
-
-/**
- * Scans chunks strictly one after another. The first failing chunk fails the whole
- * pass, and so does the first off-device chunk unless the cloud is allowed.
- */
-async function scanChunksSequentially(
-  context: ChunkScanContext,
-  chunks: readonly TextChunk[],
-): Promise<Result<ModelPass, AppError>> {
-  const passes: ModelPass[] = [];
-  context.onProgress(0, chunks.length);
-  for (const [index, chunk] of chunks.entries()) {
-    const pass = await scanChunk(context.scanner, chunk);
-    if (!pass.ok) return err(pass.error);
-    if (!context.allowCloud && pass.value.source !== 'ON_DEVICE') return err(OFF_DEVICE_CHUNK);
-    passes.push(pass.value);
-    context.onProgress(index + 1, chunks.length);
-  }
-  return ok(combinePasses(passes));
-}
-
-function combinePasses(passes: readonly ModelPass[]): ModelPass {
+function buildResult(
+  text: RawText,
+  pass: ModelPass,
+  postFilters: readonly PostFilterName[],
+): Omit<ScanReportResult, 'stats'> & { readonly suppressed: number } {
+  const ruleFindings = detectByRules(text);
+  const filtered = applyPostFilters(text, pass.findings, pass.protectedQuotes, postFilters);
   return {
-    findings: passes.flatMap((p) => p.findings),
-    source: passes.some((p) => p.source === 'IN_CLOUD') ? 'IN_CLOUD' : 'ON_DEVICE',
-    rawModelFindings: passes.reduce((sum, p) => sum + p.rawModelFindings, 0),
-    unlocated: passes.reduce((sum, p) => sum + p.unlocated, 0),
-    retries: passes.reduce((sum, p) => sum + p.retries, 0),
+    findings: mergeFindings([...ruleFindings, ...filtered.kept]),
+    modelFindings: filtered.kept,
+    raw: {
+      findings: mergeFindings([...ruleFindings, ...pass.findings]),
+      modelFindings: pass.findings,
+    },
+    protectedSpans: filtered.protectedSpans,
+    source: pass.source,
+    suppressed: filtered.suppressed,
   };
 }
 
-const NO_PROGRESS = (): void => undefined;
-
 /**
- * Detection pipeline for one report (PLANO §3.4): deterministic rules on the full text,
- * then the model on chunks (sequentially; on-device inference is serial), quotes located
- * per chunk and shifted to report offsets, then everything merged. A model failure on
- * any chunk fails the scan; there is no silent rules-only downgrade.
+ * Detection pipeline for one report (PLANO §3.4): the model on chunks (sequentially;
+ * on-device inference is serial), quotes located per chunk and shifted to report
+ * offsets; protected quotes from ALL chunks are collected first, then the enabled
+ * post-filters run over the full text (so a person introduced in chunk 1 is protected in
+ * chunk 2); finally the deterministic rule findings (full text) are merged in. A model
+ * failure on any chunk fails the scan; there is no silent rules-only downgrade.
  */
 export async function scanReport(
   text: RawText,
@@ -136,7 +99,6 @@ export async function scanReport(
   options: ScanReportOptions = {},
 ): Promise<Result<ScanReportResult, AppError>> {
   const startedAt = deps.clock.now();
-  const ruleFindings = detectByRules(text);
   const chunks = chunkText(text, deps.chunkChars);
   const pass = await scanChunksSequentially(
     {
@@ -147,17 +109,16 @@ export async function scanReport(
     chunks,
   );
   if (!pass.ok) return pass;
-  const { findings, source, rawModelFindings, unlocated, retries } = pass.value;
+  const { suppressed, ...result } = buildResult(text, pass.value, deps.postFilters ?? []);
   return ok({
-    findings: mergeFindings([...ruleFindings, ...findings]),
-    modelFindings: findings,
-    source,
+    ...result,
     stats: {
       chunks: chunks.length,
-      rawModelFindings,
-      locatedModelFindings: findings.length,
-      unlocatedModelFindings: unlocated,
-      retries,
+      rawModelFindings: pass.value.rawModelFindings,
+      locatedModelFindings: pass.value.findings.length,
+      unlocatedModelFindings: pass.value.unlocated,
+      suppressed,
+      retries: pass.value.retries,
       durationMs: deps.clock.now() - startedAt,
     },
   });

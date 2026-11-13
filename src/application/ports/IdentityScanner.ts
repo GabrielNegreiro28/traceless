@@ -15,6 +15,12 @@ export type InferenceSourceKind = 'ON_DEVICE' | 'IN_CLOUD';
 export interface IdentityScanResult {
   /** Unlocated model findings for the scanned chunk (quotes, not offsets). */
   readonly findings: ModelFinding[];
+  /**
+   * Quotes the model labelled as people NOT to flag (the reported person, others), from
+   * every pass over the chunk. Raw report text: never log, persist or send it anywhere;
+   * it only feeds the deterministic protected-mentions filter. Empty for v1 prompts.
+   */
+  readonly protectedQuotes: readonly string[];
   readonly source: InferenceSourceKind;
   /** Retries spent on invalid model output for this chunk. */
   readonly retries: number;

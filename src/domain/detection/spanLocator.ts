@@ -2,7 +2,7 @@ import type { RawText } from '../text/brandedText';
 import { buildFindingId } from './span';
 import type { Finding, ModelFinding, TextSpan } from './types';
 
-interface NormalizedText {
+export interface NormalizedText {
   readonly text: string;
   /** For each normalized char: the original span it came from. */
   readonly origins: readonly TextSpan[];
@@ -85,6 +85,20 @@ function tolerantSpans(text: string, normalized: NormalizedText, needle: string)
     .filter((span) => hasWordBoundaries(text, span));
 }
 
+/**
+ * Every tolerant, word-bounded occurrence of `quote` in `text` (the matching rules of
+ * {@link locateModelFindingsWithStats}); empty when the quote is too short or absent.
+ * Pass `normalized` when locating many quotes in the same text.
+ */
+export function locateQuote(
+  text: string,
+  quote: string,
+  normalized: NormalizedText = normalizeWithMap(text),
+): TextSpan[] {
+  const needle = toNeedle(quote);
+  return needle === null ? [] : tolerantSpans(text, normalized, needle);
+}
+
 function toFinding(text: string, span: TextSpan, source: ModelFinding): Finding {
   return {
     id: buildFindingId('MODEL', span, source.category),
@@ -123,8 +137,7 @@ export function locateModelFindingsWithStats(
   const byId = new Map<string, Finding>();
   let unlocated = 0;
   for (const found of findings) {
-    const needle = toNeedle(found.quote);
-    const spans = needle === null ? [] : tolerantSpans(text, normalized, needle);
+    const spans = locateQuote(text, found.quote, normalized);
     if (spans.length === 0) unlocated += 1;
     for (const span of spans) {
       const finding = toFinding(text, span, found);

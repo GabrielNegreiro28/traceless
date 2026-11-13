@@ -90,8 +90,8 @@ describe('FEW_SHOT', () => {
     (_, example) => {
       const parsed = parseIdentityScanOutput(fewShotAnswer(example, ALL), ALL);
       if (!parsed.ok) throw new Error(parsed.error.kind);
-      expect(parsed.value).toHaveLength(example.findings.length);
-      const located = locateModelFindings(toRawText(example.report), parsed.value);
+      expect(parsed.value.findings).toHaveLength(example.findings.length);
+      const located = locateModelFindings(toRawText(example.report), parsed.value.findings);
       expect(located).toHaveLength(example.findings.length);
     },
   );
@@ -130,7 +130,7 @@ describe('buildInitialPrompts', () => {
     for (const message of buildInitialPrompts(group).filter((m) => m.role === 'assistant')) {
       const parsed = parseIdentityScanOutput(message.content[0]?.value as string, ALL);
       if (!parsed.ok) throw new Error(parsed.error.kind);
-      for (const finding of parsed.value) expect(group).toContain(finding.category);
+      for (const finding of parsed.value.findings) expect(group).toContain(finding.category);
     }
     expect(fewShotAnswer(FEW_SHOT[0]!, group)).not.toContain('ROLE_UNIQUE');
   });

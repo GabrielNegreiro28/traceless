@@ -4,7 +4,19 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-_(nenhuma no momento — a próxima rodada de avaliação será pedida depois do ajuste do prompt)_
+- [ ] **Rodar o "Dev matrix" do Gemini Nano no seu Chrome** (adicionado em 13/11; meta: 14/11). Compara 4 versões do detector (a antiga v1 e três versões da nova v2) nos 8 relatos de treino, 3 vezes cada. É isso que escolhe a versão que vai para a prova final. Leva cerca de 30 a 60 minutos, quase tudo esperando. Deixe o computador ligado na tomada.
+  1. Feche programas pesados (jogos, muitas abas). Seu computador tem 8 GB de memória.
+  2. Abra uma janela **separada** do PowerShell (menu Iniciar → digite "PowerShell" → Enter) e cole uma linha por vez:
+     - `cd C:\Users\Gabriel\hackathon`
+     - `npm run eval`
+     - O Chrome abre em `http://localhost:5173/eval`. Se não abrir sozinho, abra o Chrome e cole esse endereço.
+     - ⚠️ Não feche essa janela do PowerShell enquanto a avaliação estiver rodando.
+  3. Confira a linha **Device status** no topo: precisa dizer **"On-device AI is ready"**. Se disser "not downloaded yet", clique em **Prepare on-device AI** e espere. Se disser "unavailable", me avise.
+  4. Clique em **1. Smoke test (1 report)**. Em 1 ou 2 minutos deve aparecer "Saved to eval/results/…". Se aparecer erro, **pare** e me mande a mensagem.
+  5. Clique em **4. Dev matrix: every variant x dev x 3 runs**. Ele ignora a caixa "variant" e roda todas as versões sozinho. **Deixe a aba aberta e na frente** (sem minimizar e sem deixar o computador hibernar).
+  6. No fim, cada versão aparece com "Saved to eval/results/…". Se aparecer "save failed", clique em **Download JSON** e salve o arquivo em `C:\Users\Gabriel\hackathon\eval\results\`.
+  7. **NÃO clique em "5. Full evaluation (test split)".** A prova final só pode rodar uma vez, depois que eu escolher a versão. Eu peço esse passo separadamente.
+  8. Me avise no chat ("dev matrix feito"). Para desligar o servidor, clique na janela do PowerShell e aperte **Ctrl+C**.
 
 
 ## Arquivos a remover

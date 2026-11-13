@@ -16,7 +16,10 @@ export const GATE_THRESHOLDS = {
 } as const;
 
 /** ACCUSED band: <= pass limit passes, <= conditional limit ships only with the chips UI. */
-export const ACCUSED_BANDS = { pass: 0.05, conditional: 0.15 } as const;
+export const ACCUSED_BANDS = {
+  pass: GATE_THRESHOLDS.accusedViolations,
+  conditional: 0.15,
+} as const;
 
 export type AccusedBand = 'PASS' | 'CONDITIONAL' | 'FAIL';
 

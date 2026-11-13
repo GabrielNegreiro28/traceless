@@ -46,6 +46,18 @@ const ID = {
   suggestion: null,
 };
 
+/**
+ * The writer's name or initials on the last line (docs/design/fase2-gate-iteration.md
+ * §C.4). It needs line context (a blank line, a cue line or a dash before it), so the
+ * matching lives in signOffRule.ts rather than in one table regex.
+ */
+export const SIGN_OFF_RULE: Omit<DetectionRule, 'pattern' | 'flags'> = {
+  name: 'sign-off',
+  category: 'DIRECT_IDENTIFIER',
+  reason: 'A name or initials at the end of a report usually sign it.',
+  suggestion: null,
+};
+
 export const DETECTION_RULES: readonly DetectionRule[] = [
   {
     name: 'email',

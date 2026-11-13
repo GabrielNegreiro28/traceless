@@ -10,14 +10,20 @@ describe('FakeIdentityScanner', () => {
   it('returns no findings on device by default and records the chunk', async () => {
     const fake = new FakeIdentityScanner();
     const result = await fake.scan(toRawText('a'));
-    expect(result).toEqual({ ok: true, value: { findings: [], source: 'ON_DEVICE', retries: 0 } });
+    expect(result).toEqual({
+      ok: true,
+      value: { findings: [], protectedQuotes: [], source: 'ON_DEVICE', retries: 0 },
+    });
     expect(fake.chunks).toEqual(['a']);
   });
 
   it('plays steps in order, then falls back to respond()', async () => {
     const error = createAppError('OnDeviceUnavailable', { message: 'no model' });
     const fake = new FakeIdentityScanner({
-      steps: [{ findings: [finding], source: 'IN_CLOUD', retries: 1 }, { error }],
+      steps: [
+        { findings: [finding], protectedQuotes: ['the boss'], source: 'IN_CLOUD', retries: 1 },
+        { error },
+      ],
       respond: (_chunk, callIndex) => ({ findings: [{ ...finding, reason: `call ${callIndex}` }] }),
     });
     const first = await fake.scan(toRawText('a'));
@@ -25,7 +31,7 @@ describe('FakeIdentityScanner', () => {
     const third = await fake.scan(toRawText('c'));
     expect(first).toEqual({
       ok: true,
-      value: { findings: [finding], source: 'IN_CLOUD', retries: 1 },
+      value: { findings: [finding], protectedQuotes: ['the boss'], source: 'IN_CLOUD', retries: 1 },
     });
     expect(second).toEqual({ ok: false, error });
     expect(third.ok && third.value.findings[0]?.reason).toBe('call 2');
