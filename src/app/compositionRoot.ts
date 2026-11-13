@@ -26,7 +26,8 @@ import { bootstrapFirebase } from './firebaseBootstrap';
 
 /**
  * Composition root (PLANO §1, rule 1): the only place that picks concrete adapters.
- * Not wired into the UI yet; the ServicesProvider arrives in Fase 3.
+ * The app builds these services once in src/app/bootstrap.ts and hands them to features
+ * through the ServicesProvider (features read them with useServices()).
  */
 
 export type ProgressCallback = (done: number, total: number) => void;
@@ -37,6 +38,8 @@ export interface Services {
   readonly scanReport: (
     text: RawText,
     onProgress?: ProgressCallback,
+    /** Polled before each chunk; when true the scan stops with a Cancelled error. */
+    isCancelled?: () => boolean,
   ) => Promise<Result<ScanReportResult, AppError>>;
 }
 
@@ -131,11 +134,14 @@ function bindScanReport(
   variant: ScanVariantSpec,
 ): Services['scanReport'] {
   const { chunkChars, postFilters } = variant;
-  return (text, onProgress) =>
+  return (text, onProgress, isCancelled) =>
     scanReport(
       text,
       { scanner, clock: systemClock, chunkChars, postFilters },
-      onProgress === undefined ? {} : { onProgress },
+      {
+        ...(onProgress === undefined ? {} : { onProgress }),
+        ...(isCancelled === undefined ? {} : { isCancelled }),
+      },
     );
 }
 

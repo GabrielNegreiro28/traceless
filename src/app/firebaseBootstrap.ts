@@ -4,8 +4,8 @@ import { initAppCheck, type AppCheckOptions } from '../infrastructure/firebase/a
 import { isDev, type AppEnv } from './env';
 
 /**
- * Intended Firebase start-up sequence. NOT wired into the UI yet: the
- * composition root will call `bootstrapFirebase(env)` once it exists.
+ * Firebase start-up sequence. The composition root calls `bootstrapFirebase(env)` when it
+ * builds the real (non-fake) AI services.
  */
 
 /** Emulators run under a `demo-` project, so they can never touch production. */

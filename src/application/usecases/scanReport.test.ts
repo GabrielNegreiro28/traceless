@@ -132,6 +132,34 @@ describe('scanReport', () => {
     ]);
   });
 
+  it('stops before the next chunk once cancelled and makes no further scanner calls', async () => {
+    const scanner = new FakeIdentityScanner({ respond });
+    let cancelled = false;
+    const result = await scanReport(
+      TEXT,
+      { scanner, clock: new FakeClock(1000, 25), chunkChars: CHUNK_CHARS },
+      {
+        onProgress: (done) => {
+          if (done === 1) cancelled = true;
+        },
+        isCancelled: () => cancelled,
+      },
+    );
+    expect(result).toMatchObject({ ok: false, error: { kind: 'Cancelled' } });
+    expect(scanner.chunks).toHaveLength(1);
+  });
+
+  it('a scan cancelled before it starts never calls the scanner', async () => {
+    const scanner = new FakeIdentityScanner({ respond });
+    const result = await scanReport(
+      TEXT,
+      { scanner, clock: new FakeClock(1000, 25), chunkChars: CHUNK_CHARS },
+      { isCancelled: () => true },
+    );
+    expect(result).toMatchObject({ ok: false, error: { kind: 'Cancelled' } });
+    expect(scanner.chunks).toHaveLength(0);
+  });
+
   it('with allowCloud, reports IN_CLOUD when any chunk ran in the cloud and sums retries', async () => {
     const { run } = setup(
       {

@@ -71,6 +71,7 @@ describe('APP_ERROR_KINDS', () => {
       DirectIdentifierRemains: true,
       RiskNotAcknowledged: true,
       EmptyReport: true,
+      Cancelled: true,
       Unknown: true,
     };
     expect([...APP_ERROR_KINDS].sort()).toEqual(Object.keys(everyKind).sort());

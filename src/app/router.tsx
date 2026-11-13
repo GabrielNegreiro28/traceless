@@ -3,19 +3,12 @@ import { App } from './App';
 import { AppShell } from './AppShell';
 import { devRoutes } from './devRoutes';
 import { PlaceholderPage } from './PlaceholderPage';
+import { ReportPage } from './ReportPage';
 
 /** Public screens, rendered inside the shared AppShell. */
 const shellRoutes: RouteObject[] = [
   { index: true, element: <App /> },
-  {
-    path: 'report',
-    element: (
-      <PlaceholderPage
-        title="Compose your report"
-        description="Writing and checking your report will be available here soon."
-      />
-    ),
-  },
+  { path: 'report', element: <ReportPage /> },
   {
     path: 'case',
     element: (

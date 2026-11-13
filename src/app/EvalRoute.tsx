@@ -11,6 +11,11 @@ import { createVariantServices } from './compositionRoot';
 import { readEnv } from './env';
 import { saveEvalResult } from './evalResultsClient';
 
+/**
+ * NOTE: /eval deliberately owns its on-device queue (one shared createVariantServices factory
+ * below), separate from the root services provided by ServicesProvider. The eval feature must
+ * never call useServices() for scanning: two queues would mean two Chrome sessions at once.
+ */
 function buildEvalServices(): Result<EvalServices, AppError> {
   const env = readEnv();
   if (!env.ok) return env;

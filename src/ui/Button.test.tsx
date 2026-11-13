@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 
@@ -18,7 +19,7 @@ describe('Button', () => {
     expect(screen.getByRole('button')).toBeEnabled();
   });
 
-  it('loading disables the button, marks it busy and ignores clicks', async () => {
+  it('loading marks the button busy and aria-disabled, ignores clicks and keeps focus', async () => {
     const onClick = vi.fn();
     render(
       <Button loading onClick={onClick}>
@@ -26,10 +27,46 @@ describe('Button', () => {
       </Button>,
     );
     const button = screen.getByRole('button', { name: 'Save' });
-    expect(button).toBeDisabled();
+    expect(button).toBeEnabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAttribute('aria-busy', 'true');
     await userEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps keyboard focus when it switches to loading', async () => {
+    function Harness() {
+      const [loading, setLoading] = useState(false);
+      return (
+        <Button loading={loading} onClick={() => setLoading(true)}>
+          Check
+        </Button>
+      );
+    }
+    render(<Harness />);
+    const button = screen.getByRole('button', { name: 'Check' });
+    button.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveFocus();
+  });
+
+  it('a loading submit button does not submit its form', async () => {
+    const onSubmit = vi.fn();
+    render(
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
+        <Button type="submit" loading>
+          Send
+        </Button>
+      </form>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('respects the disabled prop', () => {

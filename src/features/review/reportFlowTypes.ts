@@ -16,9 +16,14 @@ export interface ScanProgress {
   readonly total: number;
 }
 
+/** Where a scan runs. Only 'onDevice' exists today; the consented cloud scan adds its own. */
+export type ScanMode = 'onDevice' | 'consentedCloud';
+
 export interface ScanningState {
   readonly status: 'scanning';
   readonly text: RawText;
+  /** The effect that runs the scan dispatches on this, so one mode can never run another's scan. */
+  readonly mode: ScanMode;
   /** Identifies this scan; events from any other (stale) scan are ignored. */
   readonly scanId: string;
   /** Null until the scanner reports the number of chunks. */
@@ -67,8 +72,20 @@ export interface NeedsConsentState {
   readonly text: RawText;
 }
 
+/**
+ * The on-device model is not downloaded yet (downloadable or downloading). The reporter starts
+ * the one-time download from this screen, because Chrome needs a click on it (user activation).
+ */
+export interface NeedsPrepareState {
+  readonly status: 'needsPrepare';
+  readonly text: RawText;
+  /** Null until the download starts; then the fraction 0..1. */
+  readonly progress: number | null;
+}
+
 /** The states an error can return to. */
-export type RecoverableState = ComposingState | ReviewingState | OutboxState | ApprovedState;
+export type RecoverableState =
+  ComposingState | NeedsPrepareState | ReviewingState | OutboxState | ApprovedState;
 
 export interface ErrorState {
   readonly status: 'error';
@@ -85,6 +102,7 @@ export type FlowState =
   | SubmittingState
   | SubmittedState
   | NeedsConsentState
+  | NeedsPrepareState
   | ErrorState;
 
 export type FlowStatus = FlowState['status'];
@@ -110,7 +128,15 @@ export type FlowEvent =
   | { readonly type: 'SUBMIT' }
   | { readonly type: 'SUBMIT_OK'; readonly caseKeyPresent: boolean }
   | { readonly type: 'SUBMIT_FAILED'; readonly error: AppError }
+  /** Only accepted from composing: on-device AI is unavailable, so the reporter must choose. */
   | { readonly type: 'CONSENT_REQUIRED' }
+  /** Only accepted from composing: the on-device model must be downloaded first. */
+  | { readonly type: 'PREPARE_REQUIRED' }
+  /** Download progress as a fraction from 0 to 1. */
+  | { readonly type: 'PREPARE_PROGRESS'; readonly fraction: number }
+  | { readonly type: 'PREPARE_FAILED'; readonly error: AppError }
+  /** The reporter stopped a running scan; back to composing with the text intact. */
+  | { readonly type: 'CANCEL_SCAN' }
   | { readonly type: 'RESET' };
 
 export type FlowEventType = FlowEvent['type'];

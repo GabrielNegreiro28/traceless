@@ -1,4 +1,5 @@
 import { onComposing, onError, onNeedsConsent, onScanning } from './reportFlowCompose';
+import { onNeedsPrepare } from './reportFlowPrepare';
 import { onApproved, onOutbox, onReviewing, onSubmitting } from './reportFlowReview';
 import { INITIAL_FLOW_STATE, type FlowEvent, type FlowState } from './reportFlowTypes';
 
@@ -13,7 +14,7 @@ function assertNever(value: never): never {
 /**
  * Pure reducer of the reporter's flow (PLANO §3.6):
  * composing → scanning → reviewing → outbox → approved → submitting → submitted, plus
- * needsConsent and error(previous). RESET always returns to an empty composer. Any event
+ * needsConsent, needsPrepare and error(previous). RESET always returns to an empty composer. Any event
  * a state does not accept returns that same state object, so invalid transitions are
  * no-ops; the exhaustive switch makes a forgotten state a compile error.
  */
@@ -26,6 +27,8 @@ export function reportFlowReducer(state: FlowState, event: FlowEvent): FlowState
       return onScanning(state, event);
     case 'needsConsent':
       return onNeedsConsent(state, event);
+    case 'needsPrepare':
+      return onNeedsPrepare(state, event);
     case 'reviewing':
       return onReviewing(state, event);
     case 'approved':

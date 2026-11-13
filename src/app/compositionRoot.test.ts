@@ -60,6 +60,13 @@ describe('createServices (fake AI mode)', () => {
     expect(scanner.chunks).toEqual([SAMPLE]);
   });
 
+  it('passes the cancellation check through to the scan', async () => {
+    const services = createServices(FAKE_ENV);
+    const result = await services.scanReport(SAMPLE, undefined, () => true);
+    expect(result).toMatchObject({ ok: false, error: { kind: 'Cancelled' } });
+    expect((services.identityScanner as FakeIdentityScanner).chunks).toHaveLength(0);
+  });
+
   it('works without a progress callback and reports the device as ready', async () => {
     const services = createServices(FAKE_ENV);
     expect((await services.scanReport(SAMPLE)).ok).toBe(true);

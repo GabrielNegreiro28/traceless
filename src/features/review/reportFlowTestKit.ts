@@ -34,6 +34,7 @@ export const SCAN_ID = 'scan-1';
 export const scanning: ScanningState = {
   status: 'scanning',
   text: TEXT,
+  mode: 'onDevice',
   scanId: SCAN_ID,
   progress: null,
 };

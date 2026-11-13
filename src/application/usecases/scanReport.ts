@@ -28,7 +28,11 @@ export interface ScanReportDeps {
 export interface ScanReportOptions {
   /** Called with (0, total) before the first chunk, then after each finished chunk. */
   readonly onProgress?: (done: number, total: number) => void;
+  /** Polled before every chunk; when it returns true the scan stops with a Cancelled error. */
+  readonly isCancelled?: () => boolean;
 }
+
+const NEVER_CANCELLED = (): boolean => false;
 
 export interface ScanStats {
   readonly chunks: number;
@@ -105,6 +109,7 @@ export async function scanReport(
       scanner: deps.scanner,
       allowCloud: deps.allowCloud === true,
       onProgress: options.onProgress ?? NO_PROGRESS,
+      isCancelled: options.isCancelled ?? NEVER_CANCELLED,
     },
     chunks,
   );

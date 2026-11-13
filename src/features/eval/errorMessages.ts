@@ -31,6 +31,8 @@ export function friendlyKindMessage(kind: AppErrorKind): string {
       return 'The report still carries identifying details that were not acknowledged.';
     case 'EmptyReport':
       return 'The report is empty.';
+    case 'Cancelled':
+      return 'The run was cancelled.';
     case 'Unknown':
       return 'Something went wrong. Reload the page and try again.';
   }

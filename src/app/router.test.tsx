@@ -3,6 +3,8 @@ import { createMemoryRouter, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAppRoutes } from './router';
+import { createFakeServices } from './services/renderWithServices';
+import { ServicesProvider } from './services/ServicesProvider';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -43,9 +45,11 @@ describe('navigation', () => {
   const heading = (name: string) => screen.getByRole('heading', { level: 1, name });
   const open = (path: string) =>
     render(
-      <RouterProvider
-        router={createMemoryRouter(createAppRoutes([]), { initialEntries: [path] })}
-      />,
+      <ServicesProvider services={createFakeServices()}>
+        <RouterProvider
+          router={createMemoryRouter(createAppRoutes([]), { initialEntries: [path] })}
+        />
+      </ServicesProvider>,
     );
 
   it('renders the landing page inside the shell at /', () => {
@@ -56,9 +60,9 @@ describe('navigation', () => {
   });
 
   it.each([
-    ['/report', 'Compose your report'],
+    ['/report', 'Write your report'],
     ['/case', 'Follow up on your case'],
-  ])('renders the %s placeholder inside the shell', (path, title) => {
+  ])('renders %s inside the shell', (path, title) => {
     open(path);
     expect(heading(title)).toBeInTheDocument();
     expect(screen.getByRole('banner')).toBeInTheDocument();

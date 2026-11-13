@@ -15,7 +15,8 @@ function parseVars(block: string): Palette {
 
 const darkStart = css.indexOf('prefers-color-scheme: dark');
 const LIGHT = parseVars(css.slice(0, darkStart));
-const DARK: Palette = { ...LIGHT, ...parseVars(css.slice(darkStart)) };
+const DARK_OVERRIDES = parseVars(css.slice(darkStart));
+const DARK: Palette = { ...LIGHT, ...DARK_OVERRIDES };
 
 function channel(hex: string, offset: number): number {
   const v = parseInt(hex.slice(1 + offset, 3 + offset), 16) / 255;
@@ -30,6 +31,17 @@ function contrast(a: string, b: string): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05);
 }
+
+describe('theme blocks', () => {
+  it('finds the dark block after the light one (no vacuous pass)', () => {
+    expect(darkStart).toBeGreaterThan(0);
+    expect(Object.keys(LIGHT).length).toBeGreaterThan(0);
+  });
+
+  it('the dark block overrides every light color token and adds none', () => {
+    expect(Object.keys(DARK_OVERRIDES).sort()).toEqual(Object.keys(LIGHT).sort());
+  });
+});
 
 /** [foreground token, background token] for every text pair the UI kit uses. */
 const TEXT_PAIRS: readonly (readonly [string, string])[] = [

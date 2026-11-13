@@ -22,12 +22,16 @@ export interface ChunkScanContext {
   readonly scanner: IdentityScanner;
   readonly allowCloud: boolean;
   readonly onProgress: (done: number, total: number) => void;
+  /** Polled before every chunk; once true the pass stops with a Cancelled error. */
+  readonly isCancelled: () => boolean;
 }
 
 /** Fixed message: never includes report or model text. */
 const OFF_DEVICE_CHUNK = createAppError('PrivacyViolation', {
   message: 'A report chunk was not scanned on this device; all findings were discarded.',
 });
+
+const CANCELLED = createAppError('Cancelled', { message: 'The scan was cancelled.' });
 
 async function scanChunk(
   scanner: IdentityScanner,
@@ -61,7 +65,8 @@ function combinePasses(passes: readonly ModelPass[]): ModelPass {
 
 /**
  * Scans chunks strictly one after another. The first failing chunk fails the whole
- * pass, and so does the first off-device chunk unless the cloud is allowed.
+ * pass, and so does the first off-device chunk unless the cloud is allowed. Cancellation
+ * is checked before each chunk, so a cancelled scan makes no further scanner calls.
  */
 export async function scanChunksSequentially(
   context: ChunkScanContext,
@@ -70,6 +75,7 @@ export async function scanChunksSequentially(
   const passes: ModelPass[] = [];
   context.onProgress(0, chunks.length);
   for (const [index, chunk] of chunks.entries()) {
+    if (context.isCancelled()) return err(CANCELLED);
     const pass = await scanChunk(context.scanner, chunk);
     if (!pass.ok) return err(pass.error);
     if (!context.allowCloud && pass.value.source !== 'ON_DEVICE') return err(OFF_DEVICE_CHUNK);

@@ -33,6 +33,8 @@ export type AppError =
     })
   /** Approval refused: the rewritten report has no text left. */
   | BaseError<'EmptyReport'>
+  /** The caller stopped the work (for example the reporter cancelled a scan). Not a failure. */
+  | BaseError<'Cancelled'>
   | BaseError<'Unknown'>;
 
 export type AppErrorKind = AppError['kind'];
@@ -52,6 +54,7 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'DirectIdentifierRemains',
   'RiskNotAcknowledged',
   'EmptyReport',
+  'Cancelled',
   'Unknown',
 ];
 
