@@ -50,3 +50,25 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 
 ## 2026-11-13 · /eval: avaliação completa por estratégia
 - **Desvio do desenho §4 ("full = todas as estratégias ×3"):** o botão "Full" roda só a estratégia selecionada. Motivo: no aparelho Medium, `grouped2` leva cerca de 2× mais tempo. O desenho §1 já diz para lançar com `single` e testar `grouped2` só se o recall ficar abaixo da meta. O guia do participante segue essa ordem.
+
+## 2026-11-13 · Plano de produto da Fase 3+ (consulta ao Fable)
+- **Decisão (manager): aceito.** Fonte da verdade: `docs/design/fase3-product-plan.md`.
+- **Revisão:** decisões por achado ACCEPTED/EDITED/KEPT_RISK/NOT_ABOUT_ME; sem "Accept all"; "Not about me" se propaga para o mesmo texto; approveReport bloqueia só identificador direto **não decidido** (o e-mail do acusado pode ser evidência).
+- **Jurados sem Nano:** construir (b) scan na nuvem **com consentimento explícito** (ConsentedRawText, port separado, kill switch no Remote Config), (c) instruções e (a) só regras. **Sem modo demo pré-gravado** (simularia o núcleo). A landing não afirma processamento local incondicional.
+- **Desvios do PLANO:** sem PWA/service worker; sem envio em fila offline (Auth e App Check precisam de rede; ADR 0005 já limitava à aba aberta). Envio offline mostra "Reconnect to send".
+- **Nuvem:** `structureReport` (PREFER_ON_DEVICE sobre SanitizedText) é a demonstração principal de "só texto limpo vai para a nuvem". Grounding/rights advisor rebaixado para spike de 1 h em 19/11 (grounding parece indisponível no plano grátis para Gemini 3+ e conflita com a CSP); alternativa: painel estático "Your rights" com fontes. Handler mínimo + `triageCase`.
+- **Ordem de corte se atrasar:** rights advisor → respostas do denunciante → triageCase → opção (a) → UI do handler → structureReport. Nunca cortar: fluxo do denunciante, (b), envio + chave do caso, polimento, vídeo.
+
+## 2026-11-13 · Portão da Fase 2, 1ª rodada: REPROVADO → ITERAR (consulta ao Fable)
+- **Resultado v1 (teste 16×3):** recall estrito 0,604; ACCUSED 0,632; infraestrutura impecável (0 falhas, p50 ~7 s).
+- **Diagnóstico:** o Nano tipa entidades, mas não atribui o sujeito (marca o título e o nome do acusado na apresentação "[cargo], [Nome]"); o recall cai porque o modelo para cedo e tem viés de posição.
+- **Decisão (manager): aceito, sem relaxar metas.** Desenho em `docs/design/fase2-gate-iteration.md`:
+  - identityScan.v2 com rótulos de escape REPORTED_PERSON/OTHER_PERSON, descartados pelo código e transformados em "menções protegidas" determinísticas, mais um filtro de 3ª pessoa. Nunca suprime achados de REGRA nem achados com I/me/my.
+  - Segunda passada (single2 vs grouped2).
+  - Regra determinística de assinatura.
+  - 3 novos few-shots, só com exemplos do dev.
+- **Limiares pré-registrados ANTES dos dados v2:** recall estrito ≥ 0,70; ACCUSED ≤ 0,05; INCIDENT_FACT ≤ 0,10; inválida ≤ 0,05; falhas ≤ 0,05; gigantes ≤ 0,25; **novos:** precisão ≥ 0,35, p50 ≤ 20 s, máx ≤ 60 s.
+  - ACCUSED entre 0,05 e 0,15 = go condicional: confirmação por chips na UI e o número real no README.
+  - ACCUSED acima de 0,15 = Plano C (checagem de sujeito em lote).
+- **Integridade:** o split de teste é rodado **uma única vez** com a variante escolhida no dev (15/11). Os briefs dos implementadores usam só exemplos do dev. Os artefatos de métrica são divulgados, e o dataset de teste não é editado.
+- **Rejeitado:** relaxar a meta de ACCUSED porque "dispensar é um clique" (apagar o acusado por engano prejudica o relato). Também rejeitado: tornar obrigatório o campo "quem você denuncia?" antes do scan (vira chip editável na revisão).
