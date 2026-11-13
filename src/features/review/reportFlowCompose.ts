@@ -60,9 +60,16 @@ export function onScanning(state: ScanningState, event: FlowEvent): FlowState {
       if (!isValidProgress(event.done, event.total)) return state;
       return { ...state, progress: { done: event.done, total: event.total } };
     case 'SCAN_DONE': {
-      const { findings } = event;
+      const { findings, protectedSpans = [] } = event;
       const risk = remainingRisk(findings, []);
-      return { status: 'reviewing', text: state.text, findings, decisions: [], risk };
+      return {
+        status: 'reviewing',
+        text: state.text,
+        findings,
+        protectedSpans,
+        decisions: [],
+        risk,
+      };
     }
     case 'SCAN_FAILED':
       return toError(event.error, composing(state.text));

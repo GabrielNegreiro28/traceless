@@ -22,6 +22,8 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 ## Arquivos a remover
 _(os agentes não apagam arquivos; listam aqui o que poderia ser removido)_
 
+- **No projeto, opcional:** `C:\Users\Gabriel\hackathon\src\app\ReportPage.review.snip` e `C:\Users\Gabriel\hackathon\src\app\ReportPage.review.test.tmp` (arquivos vazios criados por engano por um agente em 13/11; já estão ignorados pelo git). Pode apagar pelo Explorador de Arquivos.
+
 - **Fora do projeto, opcional:** `C:\Users\Gabriel\filelist.tmp` (6 KB, só uma lista de nomes de arquivos do projeto, sem segredos), criado por engano por um agente revisor em 13/11. Pode apagar pelo Explorador de Arquivos.
 
 - **Fora do projeto, opcional:** `C:\Users\Gabriel\node_modules`, `C:\Users\Gabriel\package.json` e `C:\Users\Gabriel\package-lock.json`, criados em 12/11 às 22:20 por um `npm install firebase` rodado por engano na pasta de usuário. Não atrapalham o projeto; apague pelo Explorador de Arquivos se quiser.

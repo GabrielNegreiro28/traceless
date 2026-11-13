@@ -12,11 +12,12 @@ const SOURCES: Readonly<
   rules: { tone: 'neutral', icon: Ruler, label: 'Pattern rule' },
 };
 
-export function SourceBadge(props: { readonly variant: SourceVariant }) {
-  const { tone, icon, label } = SOURCES[props.variant];
+/** `label` overrides the default text (for example "On-device AI" for a model finding). */
+export function SourceBadge(props: { readonly variant: SourceVariant; readonly label?: string }) {
+  const { tone, icon, label: defaultLabel } = SOURCES[props.variant];
   return (
     <Badge tone={tone} icon={icon}>
-      {label}
+      {props.label ?? defaultLabel}
     </Badge>
   );
 }

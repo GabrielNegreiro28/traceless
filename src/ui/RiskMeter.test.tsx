@@ -27,4 +27,10 @@ describe('RiskMeter', () => {
     rerender(<RiskMeter level="LOW" />);
     expect(live).toHaveTextContent('Risk: low');
   });
+
+  it('can silence its live region so the screen announces risk once', () => {
+    render(<RiskMeter level="HIGH" announce={false} />);
+    expect(screen.getByText('Risk: high')).not.toHaveAttribute('aria-live');
+    expect(screen.getByRole('meter')).toHaveAttribute('aria-valuetext', 'Risk: high');
+  });
 });

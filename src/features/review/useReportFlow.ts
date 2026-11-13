@@ -4,6 +4,7 @@ import type {
   DeviceAvailability,
   DeviceCapability,
 } from '../../application/ports/DeviceCapability';
+import type { ReviewChoice } from '../../domain/rewrite/reviewDecision';
 import { toRawText } from '../../domain/text/brandedText';
 import { createAppError, type AppError } from '../../shared/appError';
 import { logger } from '../../shared/logger';
@@ -25,6 +26,11 @@ export interface ReportFlow {
   /** Starts the one-time model download. MUST be called from the click on its own button. */
   readonly prepare: () => void;
   readonly cancelScan: () => void;
+  /** Review: records a choice (also applied to identical quotes) or undoes it. */
+  readonly decide: (findingId: string, choice: ReviewChoice) => void;
+  readonly undoDecision: (findingId: string) => void;
+  /** Review: "Continue" (the outbox is where approveReport gates what is sent). */
+  readonly openOutbox: () => void;
   /** Back to the previous editable state (dismisses an error, leaves consent or review). */
   readonly backToEdit: () => void;
   readonly reset: () => void;
@@ -138,6 +144,13 @@ export function useReportFlow(): ReportFlow {
     dispatch({ type: 'EDIT_TEXT', text: toRawText(text) });
   }, []);
   const cancelScan = useCallback(() => dispatch({ type: 'CANCEL_SCAN' }), []);
+  const decide = useCallback((findingId: string, choice: ReviewChoice) => {
+    dispatch({ type: 'DECIDE', findingId, choice });
+  }, []);
+  const undoDecision = useCallback((findingId: string) => {
+    dispatch({ type: 'UNDO_DECISION', findingId });
+  }, []);
+  const openOutbox = useCallback(() => dispatch({ type: 'OPEN_OUTBOX' }), []);
   const backToEdit = useCallback(() => {
     abandonPrepare();
     dispatch({ type: 'BACK_TO_EDIT' });
@@ -147,5 +160,17 @@ export function useReportFlow(): ReportFlow {
     dispatch({ type: 'RESET' });
   }, [abandonPrepare]);
 
-  return { state, checking, setText, startScan, prepare, cancelScan, backToEdit, reset };
+  return {
+    state,
+    checking,
+    setText,
+    startScan,
+    prepare,
+    cancelScan,
+    decide,
+    undoDecision,
+    openOutbox,
+    backToEdit,
+    reset,
+  };
 }

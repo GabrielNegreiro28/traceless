@@ -14,4 +14,9 @@ describe('SourceBadge', () => {
     expect(screen.getByText(label)).toHaveClass(toneClass);
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
+
+  it('shows a custom label when given', () => {
+    render(<SourceBadge variant="onDevice" label="On-device AI" />);
+    expect(screen.getByText('On-device AI')).toHaveClass('text-accent');
+  });
 });

@@ -105,6 +105,19 @@ describe('reportFlowReducer: leaving review', () => {
       text: TEXT,
     });
   });
+  it('BACK_TO_EDIT then START_SCAN forces a fresh scan and drops the old decisions', () => {
+    const decided = decide(reviewing, DOCK.id, 'ACCEPTED');
+    const composing = reportFlowReducer(decided, { type: 'BACK_TO_EDIT' });
+    const next = reportFlowReducer(composing, { type: 'START_SCAN', scanId: 'scan-2' });
+    expect(next).toMatchObject({ status: 'scanning', text: TEXT, scanId: 'scan-2' });
+    expect(next).not.toHaveProperty('decisions');
+  });
+  it('keeps the protected spans through the outbox and back', () => {
+    const withSpans = { ...reviewing, protectedSpans: [{ start: 1, end: 3 }] };
+    const opened = reportFlowReducer(withSpans, { type: 'OPEN_OUTBOX' });
+    expect(opened).toMatchObject({ status: 'outbox', protectedSpans: withSpans.protectedSpans });
+    expect(reportFlowReducer(opened, { type: 'BACK_TO_EDIT' })).toEqual(withSpans);
+  });
 
   it('OPEN_OUTBOX previews the rewritten text, keeping the review', () => {
     const decided = decide(reviewing, DOCK.id, 'ACCEPTED');

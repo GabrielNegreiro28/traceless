@@ -4,7 +4,7 @@ import { PrepareScreen } from '../features/onboarding/PrepareScreen';
 import { ConsentPlaceholder } from '../features/review/ConsentPlaceholder';
 import { FlowErrorPanel } from '../features/review/FlowErrorPanel';
 import type { FlowState } from '../features/review/reportFlowMachine';
-import { ReviewPlaceholder } from '../features/review/ReviewPlaceholder';
+import { ReviewScreen } from '../features/review/ReviewScreen';
 import { useReportFlow, type ReportFlow } from '../features/review/useReportFlow';
 import { ScanningScreen } from '../features/scanning/ScanningScreen';
 import { Button } from '../ui';
@@ -61,7 +61,13 @@ function screenFor(flow: ReportFlow) {
       );
     case 'reviewing':
       return (
-        <ReviewPlaceholder findingCount={state.findings.length} onBackToEdit={flow.backToEdit} />
+        <ReviewScreen
+          state={state}
+          onDecide={flow.decide}
+          onUndo={flow.undoDecision}
+          onBackToEdit={flow.backToEdit}
+          onContinue={flow.openOutbox}
+        />
       );
     case 'error':
       return <FlowErrorPanel error={state.error} onTryAgain={flow.backToEdit} />;

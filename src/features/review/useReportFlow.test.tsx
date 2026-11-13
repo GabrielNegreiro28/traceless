@@ -164,4 +164,32 @@ describe('useReportFlow', () => {
     act(() => hook.result.current.reset());
     expect(hook.result.current.state).toEqual({ status: 'composing', text: '' });
   });
+
+  it('carries the protected spans into the review and decides, undoes and opens the outbox', async () => {
+    const hook = setup();
+    await startWith(hook);
+    const spans = [{ start: 31, end: 42 }];
+    await settle(() => hook.scan.calls[0]?.succeed(FINDINGS, spans));
+    expect(hook.result.current.state).toMatchObject({ status: 'reviewing', protectedSpans: spans });
+
+    const id = FINDINGS[1]?.id ?? '';
+    act(() => hook.result.current.decide(id, { action: 'KEPT_RISK' }));
+    expect(hook.result.current.state).toMatchObject({
+      decisions: [{ findingId: id, action: 'KEPT_RISK' }],
+    });
+    act(() => hook.result.current.undoDecision(id));
+    expect(hook.result.current.state).toMatchObject({ decisions: [] });
+    act(() => hook.result.current.openOutbox());
+    expect(hook.result.current.state.status).toBe('outbox');
+  });
+
+  it('back to edit from the review and a new check scans again', async () => {
+    const hook = setup();
+    await startWith(hook);
+    await settle(() => hook.scan.calls[0]?.succeed(FINDINGS));
+    act(() => hook.result.current.backToEdit());
+    expect(hook.result.current.state.status).toBe('composing');
+    await clickCheck(hook);
+    expect(hook.scan.calls).toHaveLength(2);
+  });
 });

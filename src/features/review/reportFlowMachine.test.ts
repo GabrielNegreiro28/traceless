@@ -126,6 +126,17 @@ describe('reportFlowReducer: scanning', () => {
     const next = reportFlowReducer(scanning, { type: 'SCAN_DONE', scanId, findings: FINDINGS });
     expect(next).toEqual({ ...reviewing, risk: scoreRisk(FINDINGS) });
   });
+  it('SCAN_DONE carries the protected spans into the review (default: none)', () => {
+    const protectedSpans = [{ start: 31, end: 42 }];
+    const next = reportFlowReducer(scanning, {
+      type: 'SCAN_DONE',
+      scanId,
+      findings: FINDINGS,
+      protectedSpans,
+    });
+    expect(next).toMatchObject({ status: 'reviewing', protectedSpans });
+    expect(reviewing.protectedSpans).toEqual([]);
+  });
 
   it('SCAN_FAILED shows the error and can return to the composer', () => {
     const next = reportFlowReducer(scanning, { type: 'SCAN_FAILED', scanId, error: FAILURE });

@@ -56,6 +56,7 @@ describe('SAMPLE_REPORT', () => {
   it('the invented org and town names do not appear in the evaluation dataset', () => {
     const joined = datasetTexts().join('\n').toLowerCase();
     expect(joined).not.toContain('northwind');
+    expect(joined).not.toContain('halvern');
     expect(joined).not.toContain('brackenford');
   });
 });

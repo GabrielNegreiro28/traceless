@@ -11,7 +11,8 @@ const FILL_CLASSES: Readonly<Record<RiskLevel, string>> = {
   HIGH: 'bg-danger',
 };
 
-export function RiskMeter(props: { readonly level: RiskLevel }) {
+/** `announce={false}` silences the built-in live region when the screen announces risk itself. */
+export function RiskMeter(props: { readonly level: RiskLevel; readonly announce?: boolean }) {
   const index = LEVELS.indexOf(props.level);
   const text = riskText(props.level);
   return (
@@ -35,7 +36,10 @@ export function RiskMeter(props: { readonly level: RiskLevel }) {
           />
         ))}
       </div>
-      <p aria-live="polite" className="text-base font-semibold">
+      <p
+        aria-live={props.announce === false ? undefined : 'polite'}
+        className="text-base font-semibold"
+      >
         {text}
       </p>
     </div>

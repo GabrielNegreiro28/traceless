@@ -5,7 +5,7 @@
  * and title and some incident facts, so the scan has something realistic to find.
  * Written independently of the evaluation dataset (a test guards against overlap).
  */
-export const SAMPLE_REPORT = `I am the only night-shift forklift trainer at the Northwind Logistics depot in Brackenford, Dock 4. I have held this job for six years, so most of the crew knows me by sight.
+export const SAMPLE_REPORT = `I am the only night-shift forklift trainer at the Halvern Freight depot in Brackenford, Dock 4. I have held this job for six years, so most of the crew knows me by sight.
 
 On the night of 14 March, at about 2 a.m., I watched Gary Pemberton, the operations manager, tell two temporary workers to load pallets of damaged lithium batteries onto a trailer without the fire-safety labels the law requires. When I objected, he said the paperwork could be fixed later and that the trailer had to leave before dawn. The same thing happened again on 28 March.
 

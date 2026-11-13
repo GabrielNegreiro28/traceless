@@ -26,7 +26,7 @@ describe('ComposeScreen', () => {
     render(<Harness />);
     expect(screen.getByRole('heading', { level: 1, name: 'Write your report' })).toBeVisible();
     expect(field()).toHaveAccessibleDescription(/English only for now/);
-    expect(screen.getByText('Demo organization: Northwind Logistics (fictional)')).toBeVisible();
+    expect(screen.getByText('Demo organization: Halvern Freight (fictional)')).toBeVisible();
     expect(
       screen.getByText('Your text stays in this tab until you approve what is sent.'),
     ).toBeVisible();

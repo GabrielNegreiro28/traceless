@@ -8,7 +8,10 @@ import type { FlowEvent, FlowState } from './reportFlowMachine';
 type ScanOutcome = Awaited<ReturnType<Services['scanReport']>>;
 
 function outcomeEvent(scanId: string, outcome: ScanOutcome): FlowEvent {
-  if (outcome.ok) return { type: 'SCAN_DONE', scanId, findings: outcome.value.findings };
+  if (outcome.ok) {
+    const { findings, protectedSpans } = outcome.value;
+    return { type: 'SCAN_DONE', scanId, findings, protectedSpans };
+  }
   return { type: 'SCAN_FAILED', scanId, error: outcome.error };
 }
 

@@ -43,6 +43,7 @@ export const reviewing: ReviewingState = {
   status: 'reviewing',
   text: TEXT,
   findings: FINDINGS,
+  protectedSpans: [],
   decisions: [],
   risk: scoreRisk(FINDINGS),
 };

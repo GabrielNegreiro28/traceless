@@ -19,7 +19,7 @@ const heading = (name: string) => screen.findByRole('heading', { level: 1, name 
 const click = (name: string) => userEvent.click(screen.getByRole('button', { name }));
 
 describe('/report flow on fake services', () => {
-  it('goes from the sample through the scan to the review placeholder', async () => {
+  it('goes from the sample through the scan to the review', async () => {
     openReport();
     await heading('Write your report');
     await click('Try a sample report');
@@ -27,7 +27,7 @@ describe('/report flow on fake services', () => {
 
     await click('Check my report');
     const review = await heading('Review your report');
-    expect(screen.getByText(/^\d+ details? found$/)).toBeVisible();
+    expect(screen.getByRole('meter')).toBeVisible();
     await waitFor(() => expect(review).toHaveFocus());
 
     await click('Back to edit');

@@ -8,7 +8,7 @@ import type {
   DeviceCapability,
 } from '../../application/ports/DeviceCapability';
 import type { ScanReportResult } from '../../application/usecases/scanReport';
-import type { Finding } from '../../domain/detection/types';
+import type { Finding, TextSpan } from '../../domain/detection/types';
 import type { RawText } from '../../domain/text/brandedText';
 import type { AppError } from '../../shared/appError';
 import { err, ok, type Result } from '../../shared/result';
@@ -18,18 +18,21 @@ type ScanOutcome = Awaited<ReturnType<Services['scanReport']>>;
 export interface PendingScan {
   readonly text: RawText;
   readonly onProgress: ProgressCallback | undefined;
-  readonly succeed: (findings: readonly Finding[]) => void;
+  readonly succeed: (findings: readonly Finding[], protectedSpans?: readonly TextSpan[]) => void;
   readonly fail: (error: AppError) => void;
   readonly crash: () => void;
 }
 
 /** `findings` is the shipped field; the model-only fields stay empty so a mix-up is visible. */
-function resultOf(findings: readonly Finding[]): ScanReportResult {
+function resultOf(
+  findings: readonly Finding[],
+  protectedSpans: readonly TextSpan[] = [],
+): ScanReportResult {
   return {
     findings: [...findings],
     modelFindings: [],
     raw: { findings: [], modelFindings: [] },
-    protectedSpans: [],
+    protectedSpans: [...protectedSpans],
     source: 'ON_DEVICE',
     stats: {
       chunks: 1,
@@ -54,7 +57,7 @@ export function controllableScan(): {
       calls.push({
         text,
         onProgress,
-        succeed: (findings) => resolve(ok(resultOf(findings))),
+        succeed: (findings, spans) => resolve(ok(resultOf(findings, spans))),
         fail: (error) => resolve(err(error)),
         crash: () => reject(new Error('boom')),
       });

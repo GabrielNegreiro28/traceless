@@ -2,4 +2,4 @@
 export const MAX_REPORT_CHARS = 6000;
 
 /** Fictional organization shown in the composer; never a real company. */
-export const DEMO_ORG_NAME = 'Northwind Logistics';
+export const DEMO_ORG_NAME = 'Halvern Freight';

@@ -1,5 +1,5 @@
 import type { ApprovedReport } from '../../application/usecases/approveReport';
-import type { Finding } from '../../domain/detection/types';
+import type { Finding, TextSpan } from '../../domain/detection/types';
 import type { ReviewChoice, ReviewDecision } from '../../domain/rewrite/rewriteApplier';
 import type { RiskAssessment } from '../../domain/risk/riskScorer';
 import { toRawText, type RawText } from '../../domain/text/brandedText';
@@ -34,6 +34,8 @@ export interface ReviewingState {
   readonly status: 'reviewing';
   readonly text: RawText;
   readonly findings: readonly Finding[];
+  /** Where people who are not the reporter are mentioned; shown read-only in the review. */
+  readonly protectedSpans: readonly TextSpan[];
   readonly decisions: readonly ReviewDecision[];
   /** Live risk of the findings that remain after the decisions so far. */
   readonly risk: RiskAssessment;
@@ -116,7 +118,13 @@ export type FlowEvent =
       readonly done: number;
       readonly total: number;
     }
-  | { readonly type: 'SCAN_DONE'; readonly scanId: string; readonly findings: readonly Finding[] }
+  | {
+      readonly type: 'SCAN_DONE';
+      readonly scanId: string;
+      readonly findings: readonly Finding[];
+      /** Defaults to none. */
+      readonly protectedSpans?: readonly TextSpan[];
+    }
   | { readonly type: 'SCAN_FAILED'; readonly scanId: string; readonly error: AppError }
   /** Also applied to findings with the identical quote (see propagateDecision). */
   | { readonly type: 'DECIDE'; readonly findingId: string; readonly choice: ReviewChoice }
