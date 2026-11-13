@@ -1,27 +1,20 @@
-import { detectByRules } from '../../domain/detection/ruleDetector';
 import { aggregateRuns } from '../../domain/evaluation/aggregateRuns';
 import type { Dataset } from '../../domain/evaluation/datasetSchema';
 import { evaluateGate } from '../../domain/evaluation/gate';
-import {
-  countReport,
-  type EvalFinding,
-  type ScanOutcome,
-} from '../../domain/evaluation/reportCounts';
 import { resolveReport, type ResolvedReport } from '../../domain/evaluation/resolveSpans';
 import { summarizeCounts } from '../../domain/evaluation/summary';
-import { toRawText, type RawText } from '../../domain/text/brandedText';
 import { createAppError, type AppError } from '../../shared/appError';
 import { err, ok, type Result } from '../../shared/result';
-import type { ScanReportResult } from './scanReport';
 import type {
   EvalRunResult,
-  EvalScan,
   EvalSplit,
   EvalSummary,
   EvaluateDetectionParams,
   ReportRunResult,
   SingleRunResult,
+  ViewResult,
 } from './evaluateDetection.types';
+import { evaluateReport, type ViewName } from './evaluateReport';
 
 export type {
   EvalProgress,
@@ -29,9 +22,12 @@ export type {
   EvalScan,
   EvalSplit,
   EvalSummary,
+  EvalViews,
   EvaluateDetectionParams,
   ReportRunResult,
   SingleRunResult,
+  VariantInfo,
+  ViewResult,
 } from './evaluateDetection.types';
 
 function misconfigured(missing: string[], message: string): AppError {
@@ -52,74 +48,30 @@ function selectReports(dataset: Dataset, split: EvalSplit): Result<ResolvedRepor
   return ok(resolved);
 }
 
-const toEvalFinding = ({ span, category, origin }: EvalFinding): EvalFinding => ({
-  span,
-  category,
-  origin,
-});
-
-function toOutcome(
-  result: Result<ScanReportResult, AppError>,
-  ruleFindings: readonly EvalFinding[],
-): ScanOutcome {
-  if (!result.ok) return { ok: false, errorKind: result.error.kind };
-  const { findings, modelFindings, stats } = result.value;
-  return {
-    ok: true,
-    findings: findings.map(toEvalFinding),
-    ruleFindings: ruleFindings.map(toEvalFinding),
-    modelFindings: modelFindings.map(toEvalFinding),
-    rawModelFindings: stats.rawModelFindings,
-    unlocatedModelFindings: stats.unlocatedModelFindings,
-    durationMs: stats.durationMs,
-  };
-}
-
-/** A rejected scan becomes an Unknown failure of that report; the message is never kept. */
-async function safeScan(
-  scan: EvalScan,
-  text: RawText,
-): Promise<Result<ScanReportResult, AppError>> {
-  try {
-    return await scan(text);
-  } catch {
-    return err(createAppError('Unknown', { message: 'The scan function threw.' }));
-  }
-}
-
-async function evaluateReport(report: ResolvedReport, scan: EvalScan): Promise<ReportRunResult> {
-  const text = toRawText(report.text);
-  const result = await safeScan(scan, text);
-  const outcome = toOutcome(result, detectByRules(text));
-  const counts = countReport({ gold: report.gold, mustNot: report.mustNot, scan: outcome });
-  return {
-    reportId: report.id,
-    split: report.split,
-    ok: outcome.ok,
-    errorKind: counts.errorKind,
-    findings: outcome.ok ? outcome.findings : [],
-    counts,
-    metrics: summarizeCounts([counts]),
-  };
-}
-
 async function runOnce(
   params: EvaluateDetectionParams,
   reports: readonly ResolvedReport[],
   run: number,
-): Promise<SingleRunResult> {
-  const results: ReportRunResult[] = [];
+): Promise<Readonly<Record<ViewName, SingleRunResult>>> {
+  const results: Record<ViewName, ReportRunResult[]> = { raw: [], filtered: [] };
   for (const report of reports) {
-    results.push(await evaluateReport(report, params.scan));
+    const evaluated = await evaluateReport(report, params.scan);
+    results.raw.push(evaluated.raw);
+    results.filtered.push(evaluated.filtered);
     params.onProgress?.({
       run,
       runs: params.runs,
-      reportsDone: results.length,
+      reportsDone: results.filtered.length,
       reports: reports.length,
       reportId: report.id,
     });
   }
-  return { run, reports: results, metrics: summarizeCounts(results.map((r) => r.counts)) };
+  const single = (view: ViewName): SingleRunResult => ({
+    run,
+    reports: results[view],
+    metrics: summarizeCounts(results[view].map((r) => r.counts)),
+  });
+  return { raw: single('raw'), filtered: single('filtered') };
 }
 
 function summarizeRuns(runs: readonly SingleRunResult[], reportCount: number): EvalSummary {
@@ -131,12 +83,26 @@ function summarizeRuns(runs: readonly SingleRunResult[], reportCount: number): E
   };
 }
 
+function toView(
+  runs: readonly SingleRunResult[],
+  reportCount: number,
+  split: EvalSplit,
+): ViewResult {
+  const summary = summarizeRuns(runs, reportCount);
+  return {
+    runs,
+    summary,
+    gate: split === 'test' ? evaluateGate(summary.pooled, summary.metrics) : null,
+  };
+}
+
 /**
  * Evaluates detection quality: runs the selected reports sequentially, `runs` times,
  * and returns per-run metrics, pooled rates, mean/min/max and (test split only) the
- * gate verdict. Rule findings are recomputed here so origin attribution does not
- * depend on merge order. Fails with Misconfigured when the split is empty, `runs` is
- * below 1 or annotations do not resolve.
+ * gate verdict, for the raw and the post-filtered view of the same scans (top-level
+ * runs/summary/gate are the filtered view). Rule findings are recomputed here so origin
+ * attribution does not depend on merge order. Fails with Misconfigured when the split is
+ * empty, `runs` is below 1 or annotations do not resolve.
  */
 export async function evaluateDetection(
   params: EvaluateDetectionParams,
@@ -147,19 +113,24 @@ export async function evaluateDetection(
   const reports = selectReports(params.dataset, params.split);
   if (!reports.ok) return reports;
   const startedAt = params.clock.now();
-  const runs: SingleRunResult[] = [];
+  const rawRuns: SingleRunResult[] = [];
+  const filteredRuns: SingleRunResult[] = [];
   for (let run = 1; run <= params.runs; run++) {
-    runs.push(await runOnce(params, reports.value, run));
+    const once = await runOnce(params, reports.value, run);
+    rawRuns.push(once.raw);
+    filteredRuns.push(once.filtered);
   }
-  const summary = summarizeRuns(runs, reports.value.length);
+  const count = reports.value.length;
+  const filtered = toView(filteredRuns, count, params.split);
+  const { variant } = params;
   return ok({
     datasetVersion: params.dataset.version,
-    promptVersion: params.promptVersion,
-    strategy: params.strategy,
+    promptVersion: variant.promptVersion,
+    strategy: variant.strategy,
+    variant,
     split: params.split,
     startedAt,
-    runs,
-    summary,
-    gate: params.split === 'test' ? evaluateGate(summary.pooled, summary.metrics) : null,
+    ...filtered,
+    views: { raw: toView(rawRuns, count, params.split), filtered },
   });
 }

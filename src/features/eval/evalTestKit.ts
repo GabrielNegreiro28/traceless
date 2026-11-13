@@ -63,7 +63,6 @@ export function fakeServices(overrides: Partial<EvalServices> = {}): EvalService
     deviceCapability: fakeDevice('available').capability,
     dataset: TEST_DATASET,
     clock: { now: () => (tick += 100) },
-    promptVersion: 'identityScan.v1',
     scanFor: () => EMPTY_SCAN,
     saveResult: () => Promise.resolve(ok('saved-file.json')),
     ...overrides,

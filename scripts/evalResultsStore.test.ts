@@ -31,6 +31,19 @@ describe('parseResultMeta', () => {
   });
 });
 
+describe('variant ids', () => {
+  it('names the file after the variant id', () => {
+    const text = body({ variant: { id: 'v2-single2' } });
+    const meta = parseResultMeta(text);
+    expect(meta).toEqual({ ...META, variantId: 'v2-single2' });
+    expect(resultFileName(meta ?? META, NOW)).toBe('v2-single2-test-2026-11-13T03-51-34.123Z.json');
+  });
+
+  it.each([{ id: '../x' }, { id: 3 }, null, {}])('rejects an unsafe variant %j', (variant) => {
+    expect(parseResultMeta(body({ variant }))).toBeNull();
+  });
+});
+
 describe('resultFileName', () => {
   it('has no colons and is built from labels plus the timestamp', () => {
     expect(resultFileName(META, NOW)).toBe(

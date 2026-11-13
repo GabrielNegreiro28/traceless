@@ -37,10 +37,18 @@ export interface ScanStats {
   readonly durationMs: number;
 }
 
+/** Findings after the optional post-filters (protected mentions etc.), for evaluation. */
+export interface FilteredFindings {
+  readonly findings: Finding[];
+  readonly modelFindings: Finding[];
+}
+
 export interface ScanReportResult {
   readonly findings: Finding[];
   /** Located model findings before merging with the rule findings (for evaluation). */
   readonly modelFindings: Finding[];
+  /** Post-filtered view; absent means no filter ran, so it equals the raw findings above. */
+  readonly filtered?: FilteredFindings;
   /** IN_CLOUD if any chunk ran in the cloud; ON_DEVICE otherwise (also with no chunks). */
   readonly source: InferenceSourceKind;
   readonly stats: ScanStats;

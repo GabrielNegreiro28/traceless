@@ -1,4 +1,4 @@
-import { buildUserPrompt } from '../../../ai/prompts/identityScan.v1';
+import type { PromptModule } from '../../../ai/prompts/promptModule';
 import {
   parseIdentityScanOutput,
   type ModelFindingCategory,
@@ -59,13 +59,19 @@ function uniqueFindings(findings: readonly ModelFinding[]): ModelFinding[] {
  */
 export class OnDeviceIdentityScanner implements IdentityScanner {
   private readonly passes: readonly GroupPass[];
+  private readonly buildUserPrompt: PromptModule['buildUserPrompt'];
 
-  constructor(groups: readonly (readonly ModelFindingCategory[])[], runnerFor: GroupRunnerFactory) {
+  constructor(
+    groups: readonly (readonly ModelFindingCategory[])[],
+    runnerFor: GroupRunnerFactory,
+    buildUserPrompt: PromptModule['buildUserPrompt'],
+  ) {
+    this.buildUserPrompt = buildUserPrompt;
     this.passes = groups.map((group) => ({ group, runner: runnerFor(group) }));
   }
 
   async scan(chunk: RawText): Promise<Result<IdentityScanResult, AppError>> {
-    const prompt = buildUserPrompt(chunk);
+    const prompt = this.buildUserPrompt(chunk);
     const findings: ModelFinding[] = [];
     let retries = 0;
     for (const pass of this.passes) {

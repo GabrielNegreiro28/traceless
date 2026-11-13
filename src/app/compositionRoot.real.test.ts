@@ -1,7 +1,7 @@
 import { InferenceSource, type HybridParams } from 'firebase/ai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toRawText } from '../domain/text/brandedText';
-import { createServices, createStrategyServices } from './compositionRoot';
+import { createServices, createVariantServices } from './compositionRoot';
 import type { AppEnv } from './env';
 
 /**
@@ -116,18 +116,19 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       expect(sdk.initializeDeviceModel).toHaveBeenCalledTimes(1);
     });
 
-    it('shares one queue and stuck tracker across strategies', async () => {
+    it('shares one queue and stuck tracker across variants', async () => {
       vi.useFakeTimers();
       try {
         sdk.generateContent.mockImplementation(() => new Promise(() => undefined));
-        const servicesFor = createStrategyServices(REAL_ENV);
-        const pending = servicesFor('single').scanReport(REPORT);
+        const servicesFor = createVariantServices(REAL_ENV);
+        const variant = { promptVersion: 'identityScan.v1', chunkChars: 3000 } as const;
+        const pending = servicesFor({ ...variant, strategy: 'single' }).scanReport(REPORT);
         await vi.advanceTimersByTimeAsync(121_000);
         const first = await pending;
         expect(!first.ok && first.error.kind).toBe('OnDeviceStuck');
 
         const calls = sdk.generateContent.mock.calls.length;
-        const second = await servicesFor('grouped2').scanReport(REPORT);
+        const second = await servicesFor({ ...variant, strategy: 'grouped2' }).scanReport(REPORT);
         expect(!second.ok && second.error.kind).toBe('OnDeviceStuck');
         expect(sdk.generateContent.mock.calls.length).toBe(calls);
       } finally {

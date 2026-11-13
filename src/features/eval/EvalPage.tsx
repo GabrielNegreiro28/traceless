@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { DevicePanel } from './DevicePanel';
 import { EvalResults } from './EvalResults';
 import { EVAL_PRESETS } from './evalPresets';
-import { EVAL_STRATEGIES, useEvalServices, type EvalStrategy } from './evalServices';
+import { useEvalServices } from './evalServices';
+import { DEFAULT_EVAL_VARIANT, EVAL_VARIANTS, findVariant } from './evalVariants';
 import { friendlyErrorMessage } from './errorMessages';
 import { RunProgress } from './RunProgress';
 import { useDeviceStatus } from './useDeviceStatus';
@@ -15,7 +16,8 @@ export function EvalPage() {
   const services = useEvalServices();
   const device = useDeviceStatus(services.deviceCapability);
   const { state, start } = useEvalRunner(services);
-  const [strategy, setStrategy] = useState<EvalStrategy>('single');
+  const [variantId, setVariantId] = useState(DEFAULT_EVAL_VARIANT.id);
+  const variant = findVariant(variantId) ?? DEFAULT_EVAL_VARIANT;
   const running = state.phase === 'running';
   const canRun = device.availability === 'available' && !running;
 
@@ -31,25 +33,25 @@ export function EvalPage() {
       </p>
       <DevicePanel device={device} />
       <section className="rounded-md border border-border bg-surface p-4">
-        <label className="block font-semibold" htmlFor="strategy">
-          Prompt strategy
+        <label className="block font-semibold" htmlFor="variant">
+          Variant
         </label>
         <select
-          id="strategy"
-          value={strategy}
+          id="variant"
+          value={variantId}
           disabled={running}
-          onChange={(e) => setStrategy(e.target.value as EvalStrategy)}
+          onChange={(e) => setVariantId(e.target.value)}
           className="mt-1 rounded-md border border-border bg-bg px-2 py-1"
         >
-          {EVAL_STRATEGIES.map((name) => (
-            <option key={name} value={name}>
-              {name}
+          {EVAL_VARIANTS.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.id}
             </option>
           ))}
         </select>
         <p className="mt-1 text-sm text-muted">
-          Run &apos;single&apos; first. Try &apos;grouped2&apos; only if recall is below the target;
-          it takes about twice as long.
+          A variant is a prompt version, strategy, chunk size and post-filters. The Dev matrix runs
+          every variant and ignores this choice; the other presets run the selected one.
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
           {EVAL_PRESETS.map((preset) => (
@@ -57,7 +59,7 @@ export function EvalPage() {
               key={preset.id}
               type="button"
               disabled={!canRun}
-              onClick={() => start(preset.id, strategy)}
+              onClick={() => start(preset.id, variant)}
               className="rounded-md bg-accent px-4 py-2 font-medium text-accent-contrast disabled:opacity-50"
             >
               {preset.label}

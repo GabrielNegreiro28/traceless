@@ -1,4 +1,6 @@
 import { MODEL_CHUNK_CHARS, STRATEGIES, type StrategyName } from '../ai/prompts/identityScan.v1';
+import type { PromptModule } from '../ai/prompts/promptModule';
+import { DEFAULT_PROMPT_MODULE, getPromptModule } from '../ai/prompts/promptRegistry';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
@@ -43,9 +45,22 @@ const DEFAULT_STRATEGY: StrategyName = 'single';
 
 type ScanGroups = readonly (readonly ModelFindingCategory[])[];
 
+/** What defines a scanner pipeline; the eval variant registry satisfies it structurally. */
+export interface ScanVariantSpec {
+  readonly promptVersion: string;
+  readonly strategy: StrategyName;
+  readonly chunkChars: number;
+}
+
+const DEFAULT_VARIANT: ScanVariantSpec = {
+  promptVersion: DEFAULT_PROMPT_MODULE.version,
+  strategy: DEFAULT_STRATEGY,
+  chunkChars: MODEL_CHUNK_CHARS,
+};
+
 export interface ServiceOptions {
-  /** Prompt strategy; only the developer evaluation page overrides the default. */
-  readonly strategy?: StrategyName;
+  /** Scan variant; only the developer evaluation page overrides the default. */
+  readonly variant?: ScanVariantSpec;
 }
 
 /** Caller-facing limit for one on-device call; to be tuned from eval latency (p50/max). */
@@ -73,19 +88,27 @@ function createOnDeviceInfra(): OnDeviceInfra {
   };
 }
 
-function createRealAi(env: AppEnv, scanGroups: ScanGroups, infra: OnDeviceInfra): AiServices {
+function createRealAi(
+  env: AppEnv,
+  scanGroups: ScanGroups,
+  prompt: PromptModule,
+  infra: OnDeviceInfra,
+): AiServices {
   const ai = getAiService(bootstrapFirebase(env));
   const { queue, stuck, chrome } = infra;
   const modelFor = (group: readonly ModelFindingCategory[]) =>
-    createOnDeviceModel(ai, identityScanModelSpec(group));
-  const identityScanner = new OnDeviceIdentityScanner(scanGroups, (group) =>
-    createOnDevicePromptRunner({
-      queue,
-      stuck,
-      capability: chrome,
-      getModel: () => modelFor(group),
-      timeoutMs: ON_DEVICE_TIMEOUT_MS,
-    }),
+    createOnDeviceModel(ai, identityScanModelSpec(group, prompt));
+  const identityScanner = new OnDeviceIdentityScanner(
+    scanGroups,
+    (group) =>
+      createOnDevicePromptRunner({
+        queue,
+        stuck,
+        capability: chrome,
+        getModel: () => modelFor(group),
+        timeoutMs: ON_DEVICE_TIMEOUT_MS,
+      }),
+    prompt.buildUserPrompt,
   );
   const deviceCapability: DeviceCapability = {
     check: () => chrome.check(),
@@ -98,38 +121,46 @@ function createRealAi(env: AppEnv, scanGroups: ScanGroups, infra: OnDeviceInfra)
   return { identityScanner, deviceCapability };
 }
 
-function bindScanReport(scanner: IdentityScanner): Services['scanReport'] {
+function bindScanReport(scanner: IdentityScanner, chunkChars: number): Services['scanReport'] {
   return (text, onProgress) =>
     scanReport(
       text,
-      { scanner, clock: systemClock, chunkChars: MODEL_CHUNK_CHARS },
+      { scanner, clock: systemClock, chunkChars },
       onProgress === undefined ? {} : { onProgress },
     );
 }
 
-function buildServices(ai: AiServices): Services {
-  return { ...ai, scanReport: bindScanReport(ai.identityScanner) };
+function buildServices(ai: AiServices, chunkChars: number): Services {
+  return { ...ai, scanReport: bindScanReport(ai.identityScanner, chunkChars) };
+}
+
+function variantKey(v: ScanVariantSpec): string {
+  return `${v.promptVersion}|${v.strategy}|${v.chunkChars}`;
 }
 
 /**
- * Services for any prompt strategy over ONE shared on-device queue and stuck tracker, so
- * switching strategy can never open a second Chrome session. Instances are cached per strategy.
+ * Services for any scan variant over ONE shared on-device queue and stuck tracker, so
+ * switching variant can never open a second Chrome session. Instances are cached per variant.
+ * An unregistered prompt version is a programming error and throws.
  */
-export function createStrategyServices(env: AppEnv): (strategy: StrategyName) => Services {
+export function createVariantServices(env: AppEnv): (variant: ScanVariantSpec) => Services {
   const infra = env.aiMode === 'fake' ? null : createOnDeviceInfra();
-  const cache = new Map<StrategyName, Services>();
-  return (strategy) => {
-    const cached = cache.get(strategy);
+  const cache = new Map<string, Services>();
+  return (variant) => {
+    const key = variantKey(variant);
+    const cached = cache.get(key);
     if (cached !== undefined) return cached;
-    const groups: ScanGroups = STRATEGIES[strategy];
-    const ai = infra === null ? createFakeAi() : createRealAi(env, groups, infra);
-    const services = buildServices(ai);
-    cache.set(strategy, services);
+    const prompt = getPromptModule(variant.promptVersion);
+    if (prompt === undefined) throw new Error(`Unknown prompt version: ${variant.promptVersion}`);
+    const groups: ScanGroups = STRATEGIES[variant.strategy];
+    const ai = infra === null ? createFakeAi() : createRealAi(env, groups, prompt, infra);
+    const services = buildServices(ai, variant.chunkChars);
+    cache.set(key, services);
     return services;
   };
 }
 
 /** Builds the app services: deterministic fakes for `fake` AI mode, Chrome + Firebase otherwise. */
 export function createServices(env: AppEnv, options: ServiceOptions = {}): Services {
-  return createStrategyServices(env)(options.strategy ?? DEFAULT_STRATEGY);
+  return createVariantServices(env)(options.variant ?? DEFAULT_VARIANT);
 }

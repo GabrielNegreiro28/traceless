@@ -1,7 +1,7 @@
 import type { EvalSplit } from '../../application/usecases/evaluateDetection';
 import type { Dataset } from '../../domain/evaluation/datasetSchema';
 
-export type PresetId = 'smoke' | 'dev' | 'full';
+export type PresetId = 'smoke' | 'dev' | 'dev3' | 'devMatrix' | 'full';
 
 export interface EvalPreset {
   readonly id: PresetId;
@@ -10,17 +10,50 @@ export interface EvalPreset {
   readonly runs: number;
   /** Limits the run to the first N reports of the split (smoke test). */
   readonly reportLimit: number | null;
+  /** `selected` runs the chosen variant; `all` runs every registered variant in order. */
+  readonly variants: 'selected' | 'all';
 }
 
 export const EVAL_PRESETS: readonly EvalPreset[] = [
-  { id: 'smoke', label: '1. Smoke test (1 report)', split: 'dev', runs: 1, reportLimit: 1 },
-  { id: 'dev', label: '2. Dev split (8 reports, 1 run)', split: 'dev', runs: 1, reportLimit: null },
+  {
+    id: 'smoke',
+    label: '1. Smoke test (1 report)',
+    split: 'dev',
+    runs: 1,
+    reportLimit: 1,
+    variants: 'selected',
+  },
+  {
+    id: 'dev',
+    label: '2. Dev split (8 reports, 1 run)',
+    split: 'dev',
+    runs: 1,
+    reportLimit: null,
+    variants: 'selected',
+  },
+  {
+    id: 'dev3',
+    label: '3. Dev split, 3 runs',
+    split: 'dev',
+    runs: 3,
+    reportLimit: null,
+    variants: 'selected',
+  },
+  {
+    id: 'devMatrix',
+    label: '4. Dev matrix: every variant x dev x 3 runs',
+    split: 'dev',
+    runs: 3,
+    reportLimit: null,
+    variants: 'all',
+  },
   {
     id: 'full',
-    label: '3. Full evaluation (test split, 3 runs)',
+    label: '5. Full evaluation (test split, 3 runs)',
     split: 'test',
     runs: 3,
     reportLimit: null,
+    variants: 'selected',
   },
 ];
 

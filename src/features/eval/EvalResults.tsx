@@ -1,9 +1,9 @@
-import type { GateCheck } from '../../domain/evaluation/gate';
+import type { AccusedBand, GateCheck } from '../../domain/evaluation/gate';
 import { downloadJson } from './downloadJson';
 import { friendlyErrorMessage } from './errorMessages';
 import { FailedReports } from './FailedReports';
 import { formatMetric } from './formatMetric';
-import type { RunState } from './useEvalRunner';
+import type { RunState, VariantOutcome } from './useEvalRunner';
 
 const SUMMARY_METRICS: readonly (readonly [string, string])[] = [
   ['strictRecallAll', 'Strict recall (failed scans count as missed)'],
@@ -19,15 +19,20 @@ const SUMMARY_METRICS: readonly (readonly [string, string])[] = [
   ['latencyMaxMs', 'Slowest scan'],
 ];
 
-type Done = Extract<RunState, { phase: 'done' }>;
+const BAND_NOTES: Readonly<Record<AccusedBand, string>> = {
+  PASS: 'within the 5% limit',
+  CONDITIONAL:
+    'between 5% and 15%: ship only with the protected-chips confirmation and the real number in the README',
+  FAIL: 'above 15%: needs Plan C (a subject check) before more review work',
+};
 
 function gateLabel(check: GateCheck): string {
   if (!check.pass) return 'FAIL';
   return check.unstable ? 'UNSTABLE' : 'PASS';
 }
 
-function SummaryTable({ done }: { readonly done: Done }) {
-  const { pooled, metrics } = done.result.summary;
+function SummaryTable({ outcome }: { readonly outcome: VariantOutcome }) {
+  const { pooled, metrics } = outcome.result.summary;
   return (
     <table className="mt-3 w-full text-left text-sm">
       <thead>
@@ -52,8 +57,8 @@ function SummaryTable({ done }: { readonly done: Done }) {
   );
 }
 
-function GateList({ done }: { readonly done: Done }) {
-  const { gate } = done.result;
+function GateList({ outcome }: { readonly outcome: VariantOutcome }) {
+  const { gate } = outcome.result;
   if (gate === null) {
     return (
       <p className="mt-3 text-muted">The go/no-go checklist only applies to the test split.</p>
@@ -62,6 +67,9 @@ function GateList({ done }: { readonly done: Done }) {
   return (
     <div className="mt-4">
       <h3 className="font-semibold">Go/no-go checklist: {gate.pass ? 'PASS' : 'FAIL'}</h3>
+      <p className="text-sm">
+        ACCUSED band: <strong>{gate.accusedBand}</strong> ({BAND_NOTES[gate.accusedBand]})
+      </p>
       <ul className="mt-1 space-y-1 text-sm">
         {gate.checks.map((check) => (
           <li key={check.metric}>
@@ -78,35 +86,50 @@ function GateList({ done }: { readonly done: Done }) {
   );
 }
 
-function SaveNotice({ done }: { readonly done: Done }) {
-  if (done.save.kind === 'saved') {
-    return <p className="mt-4">Saved to eval/results/{done.save.file}</p>;
+function SaveNotice({ outcome }: { readonly outcome: VariantOutcome }) {
+  if (outcome.save.kind === 'saved') {
+    return <p className="mt-4">Saved to eval/results/{outcome.save.file}</p>;
   }
   return (
     <p className="mt-4 text-danger">
-      Could not save the file: {friendlyErrorMessage(done.save.error)} Use "Download JSON" instead.
+      Could not save the file: {friendlyErrorMessage(outcome.save.error)} Use "Download JSON"
+      instead.
     </p>
   );
 }
 
-export function EvalResults({ state }: { readonly state: RunState }) {
-  if (state.phase !== 'done') return null;
-  const { result } = state;
-  const fileName = `${result.promptVersion}-${result.strategy}-${result.split}.json`;
+function VariantResults({ outcome }: { readonly outcome: VariantOutcome }) {
+  const { result, variant } = outcome;
+  const fileName = `${variant.id}-${result.split}.json`;
   return (
-    <section className="rounded-md border border-border bg-surface p-4">
-      <h2 className="font-semibold">Results ({state.preset.label})</h2>
-      <SummaryTable done={state} />
-      <GateList done={state} />
+    <div className="mt-4 border-t border-border pt-3">
+      <h3 className="font-semibold">
+        Variant {variant.id} ({variant.promptVersion}, {variant.strategy}, {variant.chunkChars}{' '}
+        chars)
+      </h3>
+      <SummaryTable outcome={outcome} />
+      <GateList outcome={outcome} />
       <FailedReports result={result} />
-      <SaveNotice done={state} />
+      <SaveNotice outcome={outcome} />
       <button
         type="button"
         onClick={() => downloadJson(fileName, result)}
         className="mt-3 rounded-md border border-border px-4 py-2 font-medium"
       >
-        Download JSON
+        Download JSON ({variant.id})
       </button>
+    </div>
+  );
+}
+
+export function EvalResults({ state }: { readonly state: RunState }) {
+  if (state.phase !== 'done') return null;
+  return (
+    <section className="rounded-md border border-border bg-surface p-4">
+      <h2 className="font-semibold">Results ({state.preset.label})</h2>
+      {state.outcomes.map((outcome) => (
+        <VariantResults key={outcome.variant.id} outcome={outcome} />
+      ))}
     </section>
   );
 }

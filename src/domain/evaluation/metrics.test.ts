@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aggregateRuns } from './aggregateRuns';
-import { evaluateGate, GATE_THRESHOLDS } from './gate';
+import { accusedBand, evaluateGate, GATE_THRESHOLDS } from './gate';
 import { overlapRatio, spansMatch } from './matching';
 import { countReport, type EvalFinding, type ReportCounts } from './reportCounts';
 import type { ResolvedGold, ResolvedMustNot } from './resolveSpans';
@@ -198,6 +198,9 @@ describe('evaluateGate', () => {
     invalidOutputRate: GATE_THRESHOLDS.invalidOutputRate,
     scanFailureRate: GATE_THRESHOLDS.scanFailureRate,
     oversizedRate: GATE_THRESHOLDS.oversizedRate,
+    softPrecision: GATE_THRESHOLDS.softPrecision,
+    latencyP50Ms: GATE_THRESHOLDS.latencyP50Ms,
+    latencyMaxMs: GATE_THRESHOLDS.latencyMaxMs,
   };
   const stable = aggregateRuns([passing, passing]);
 
@@ -205,7 +208,30 @@ describe('evaluateGate', () => {
     const gate = evaluateGate(passing, stable);
     expect(gate.pass).toBe(true);
     expect(gate.unstable).toBe(false);
-    expect(gate.checks).toHaveLength(6);
+    expect(gate.checks).toHaveLength(9);
+  });
+
+  it('fails on low precision or slow scans', () => {
+    const gate = evaluateGate(
+      { ...passing, softPrecision: 0.34, latencyP50Ms: 20_001, latencyMaxMs: 60_001 },
+      stable,
+    );
+    expect(gate.checks.filter((c) => !c.pass).map((c) => c.metric)).toEqual([
+      'softPrecision',
+      'latencyP50Ms',
+      'latencyMaxMs',
+    ]);
+  });
+
+  it('bands the pooled ACCUSED rate', () => {
+    expect(evaluateGate(passing, stable).accusedBand).toBe('PASS');
+    const band = (rate: number | null) =>
+      evaluateGate({ ...passing, 'violation:ACCUSED': rate }, stable).accusedBand;
+    expect(band(0.06)).toBe('CONDITIONAL');
+    expect(band(0.15)).toBe('CONDITIONAL');
+    expect(band(0.16)).toBe('FAIL');
+    expect(band(null)).toBe('FAIL');
+    expect(accusedBand(0)).toBe('PASS');
   });
 
   it('reports each failing criterion on the pooled value', () => {

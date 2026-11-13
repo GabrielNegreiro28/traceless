@@ -5,18 +5,15 @@ import type { EvalRunResult, EvalScan } from '../../application/usecases/evaluat
 import type { Dataset } from '../../domain/evaluation/datasetSchema';
 import type { AppError } from '../../shared/appError';
 import type { Result } from '../../shared/result';
-
-export const EVAL_STRATEGIES = ['single', 'grouped2'] as const;
-export type EvalStrategy = (typeof EVAL_STRATEGIES)[number];
+import type { EvalVariant } from './evalVariants';
 
 /** Everything the evaluation page needs; built in src/app so features stay adapter-free. */
 export interface EvalServices {
   readonly deviceCapability: DeviceCapability;
   readonly dataset: Dataset;
   readonly clock: Clock;
-  readonly promptVersion: string;
-  /** Scan function for a prompt strategy (wraps the real or fake scanner). */
-  readonly scanFor: (strategy: EvalStrategy) => EvalScan;
+  /** Scan function for a variant (wraps the real or fake scanner, shared on-device queue). */
+  readonly scanFor: (variant: EvalVariant) => EvalScan;
   /** Saves a result under eval/results/ via the dev server; resolves to the file name. */
   readonly saveResult: (result: EvalRunResult) => Promise<Result<string, AppError>>;
 }

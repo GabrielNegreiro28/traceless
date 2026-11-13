@@ -1,13 +1,13 @@
-import { IDENTITY_SCAN_PROMPT_VERSION } from '../ai/prompts/identityScan.v1';
 import { parseDataset } from '../domain/evaluation/datasetSchema';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import { EvalPage } from '../features/eval/EvalPage';
 import type { EvalServices } from '../features/eval/evalServices';
+import { DEFAULT_EVAL_VARIANT } from '../features/eval/evalVariants';
 import { EvalServicesProvider } from '../features/eval/EvalServicesContext';
 import { createAppError, type AppError } from '../shared/appError';
 import { err, ok, type Result } from '../shared/result';
 import datasetText from '../../eval/datasets/reports.v1.json?raw';
-import { createStrategyServices } from './compositionRoot';
+import { createVariantServices } from './compositionRoot';
 import { readEnv } from './env';
 import { saveEvalResult } from './evalResultsClient';
 
@@ -22,14 +22,13 @@ function buildEvalServices(): Result<EvalServices, AppError> {
   }
   const dataset = parseDataset(json);
   if (!dataset.ok) return dataset;
-  // One factory, hence one shared on-device queue and stuck tracker, for every strategy.
-  const servicesFor = createStrategyServices(env.value);
+  // One factory, hence one shared on-device queue and stuck tracker, for every variant.
+  const servicesFor = createVariantServices(env.value);
   return ok({
-    deviceCapability: servicesFor('single').deviceCapability,
+    deviceCapability: servicesFor(DEFAULT_EVAL_VARIANT).deviceCapability,
     dataset: dataset.value,
     clock: systemClock,
-    promptVersion: IDENTITY_SCAN_PROMPT_VERSION,
-    scanFor: (strategy) => (text) => servicesFor(strategy).scanReport(text),
+    scanFor: (variant) => (text) => servicesFor(variant).scanReport(text),
     saveResult: saveEvalResult,
   });
 }

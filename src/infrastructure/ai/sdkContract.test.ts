@@ -9,6 +9,7 @@ import {
 import { getApps, initializeApp } from 'firebase/app';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STRATEGIES } from '../../ai/prompts/identityScan.v1';
+import { DEFAULT_PROMPT_MODULE } from '../../ai/prompts/promptRegistry';
 import { toRawText } from '../../domain/text/brandedText';
 import { identityScanModelSpec } from './adapters/identityScanModelSpec';
 import { createDeviceCapability } from './deviceCapability';
@@ -38,7 +39,7 @@ vi.mock('firebase/ai', async () => {
 const SENTINEL = 'SECRET-REPORT';
 const REPORT = toRawText(`I am the only night nurse on ward 7. ${SENTINEL}`);
 const MODEL_JSON = '{"findings":[]}';
-const SPEC = identityScanModelSpec(STRATEGIES.single[0]);
+const SPEC = identityScanModelSpec(STRATEGIES.single[0], DEFAULT_PROMPT_MODULE);
 interface RecordedFetch {
   readonly url: string;
   readonly carriesSentinel: boolean;

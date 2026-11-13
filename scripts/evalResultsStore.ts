@@ -11,6 +11,8 @@ export interface ResultMeta {
   readonly promptVersion: string;
   readonly strategy: string;
   readonly split: string;
+  /** From `variant.id`; names the file when present (older results have no variant). */
+  readonly variantId?: string;
 }
 
 export interface SaveOutcome {
@@ -31,15 +33,19 @@ export function parseResultMeta(text: string): ResultMeta | null {
     return null;
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
-  const { promptVersion, strategy, split } = parsed as Record<string, unknown>;
+  const { promptVersion, strategy, split, variant } = parsed as Record<string, unknown>;
   if (!isLabel(promptVersion) || !isLabel(strategy) || !isLabel(split)) return null;
-  return { promptVersion, strategy, split };
+  if (variant === undefined) return { promptVersion, strategy, split };
+  const id: unknown =
+    typeof variant === 'object' && variant !== null ? Reflect.get(variant, 'id') : null;
+  return isLabel(id) ? { promptVersion, strategy, split, variantId: id } : null;
 }
 
 /** Server-chosen name; ':' is replaced so the name is valid on Windows. */
 export function resultFileName(meta: ResultMeta, now: Date): string {
   const stamp = now.toISOString().replaceAll(':', '-');
-  return `${meta.promptVersion}-${meta.strategy}-${meta.split}-${stamp}.json`;
+  const name = meta.variantId ?? `${meta.promptVersion}-${meta.strategy}`;
+  return `${name}-${meta.split}-${stamp}.json`;
 }
 
 function failure(status: number, error: string): SaveOutcome {

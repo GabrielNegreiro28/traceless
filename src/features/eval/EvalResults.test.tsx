@@ -5,9 +5,11 @@ import type { GateCheck } from '../../domain/evaluation/gate';
 import { createAppError } from '../../shared/appError';
 import { EvalResults } from './EvalResults';
 import { EVAL_PRESETS } from './evalPresets';
+import { EVAL_VARIANTS, type EvalVariant } from './evalVariants';
 import type { RunState } from './useEvalRunner';
 
 type DoneState = Extract<RunState, { phase: 'done' }>;
+type SaveState = DoneState['outcomes'][number]['save'];
 
 const CHECK: GateCheck = {
   name: 'strict recall',
@@ -21,9 +23,9 @@ const CHECK: GateCheck = {
   unstable: false,
 };
 
-const SAVED: DoneState['save'] = { kind: 'saved', file: 'x.json' };
+const SAVED: SaveState = { kind: 'saved', file: 'x.json' };
 
-function doneState(checks: GateCheck[] | null, save: DoneState['save'] = SAVED): DoneState {
+function doneState(checks: GateCheck[] | null, save: SaveState = SAVED): DoneState {
   const result = {
     promptVersion: 'identityScan.v1',
     strategy: 'single',
@@ -45,11 +47,17 @@ function doneState(checks: GateCheck[] | null, save: DoneState['save'] = SAVED):
     gate:
       checks === null
         ? null
-        : { pass: checks.every((c) => c.pass), unstable: checks.some((c) => c.unstable), checks },
+        : {
+            pass: checks.every((c) => c.pass),
+            accusedBand: 'CONDITIONAL',
+            unstable: checks.some((c) => c.unstable),
+            checks,
+          },
   } as unknown as EvalRunResult;
-  const preset = EVAL_PRESETS[2];
+  const preset = EVAL_PRESETS[4];
   if (preset === undefined) throw new Error('preset missing');
-  return { phase: 'done', preset, result, save };
+  const variant = { ...EVAL_VARIANTS[0], id: 'v1-single' } as EvalVariant;
+  return { phase: 'done', preset, outcomes: [{ variant, result, save }] };
 }
 
 describe('EvalResults', () => {
@@ -74,6 +82,13 @@ describe('EvalResults', () => {
     expect(screen.getByText('PASS')).toBeInTheDocument();
     expect(screen.getByText('UNSTABLE')).toBeInTheDocument();
     expect(screen.getByText('FAIL')).toBeInTheDocument();
+  });
+
+  it('shows the ACCUSED band and the variant', () => {
+    render(<EvalResults state={doneState([CHECK])} />);
+    expect(screen.getByText('CONDITIONAL')).toBeInTheDocument();
+    expect(screen.getByText(/protected-chips confirmation/)).toBeInTheDocument();
+    expect(screen.getByText(/Variant v1-single/)).toBeInTheDocument();
   });
 
   it('passes the gate when every criterion passes', () => {

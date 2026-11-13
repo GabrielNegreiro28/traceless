@@ -9,7 +9,16 @@ export const GATE_THRESHOLDS = {
   invalidOutputRate: 0.05,
   scanFailureRate: 0.05,
   oversizedRate: 0.25,
+  /** Pre-registered 2026-11-13 (docs/design/fase2-gate-iteration.md section D). */
+  softPrecision: 0.35,
+  latencyP50Ms: 20_000,
+  latencyMaxMs: 60_000,
 } as const;
+
+/** ACCUSED band: <= pass limit passes, <= conditional limit ships only with the chips UI. */
+export const ACCUSED_BANDS = { pass: 0.05, conditional: 0.15 } as const;
+
+export type AccusedBand = 'PASS' | 'CONDITIONAL' | 'FAIL';
 
 export interface GateCriterion {
   readonly name: string;
@@ -55,6 +64,24 @@ export const GATE_CRITERIA: readonly GateCriterion[] = [
     comparison: '<=',
     threshold: GATE_THRESHOLDS.oversizedRate,
   },
+  {
+    name: 'precision (findings matching gold)',
+    metric: 'softPrecision',
+    comparison: '>=',
+    threshold: GATE_THRESHOLDS.softPrecision,
+  },
+  {
+    name: 'median scan time (all scans of all runs)',
+    metric: 'latencyP50Ms',
+    comparison: '<=',
+    threshold: GATE_THRESHOLDS.latencyP50Ms,
+  },
+  {
+    name: 'slowest scan (all scans of all runs)',
+    metric: 'latencyMaxMs',
+    comparison: '<=',
+    threshold: GATE_THRESHOLDS.latencyMaxMs,
+  },
 ];
 
 export interface GateCheck extends GateCriterion {
@@ -71,6 +98,8 @@ export interface GateCheck extends GateCriterion {
 
 export interface GateResult {
   readonly pass: boolean;
+  /** Pooled ACCUSED rate band; CONDITIONAL needs the protected-chips confirmation in the UI. */
+  readonly accusedBand: AccusedBand;
   readonly unstable: boolean;
   readonly checks: readonly GateCheck[];
 }
@@ -98,6 +127,12 @@ function check(criterion: GateCriterion, pooled: MetricSet, perRun: AggregatedMe
   };
 }
 
+/** Band of the pooled ACCUSED violation rate; an undefined rate fails. */
+export function accusedBand(rate: number | null): AccusedBand {
+  if (rate === null || rate > ACCUSED_BANDS.conditional) return 'FAIL';
+  return rate <= ACCUSED_BANDS.pass ? 'PASS' : 'CONDITIONAL';
+}
+
 /**
  * Pass/fail per criterion on rates pooled over runs. A metric that is undefined in the
  * pooled data or in any run fails. `unstable` flags criteria whose worst run breaches
@@ -107,6 +142,7 @@ export function evaluateGate(pooled: MetricSet, perRun: AggregatedMetrics): Gate
   const checks = GATE_CRITERIA.map((criterion) => check(criterion, pooled, perRun));
   return {
     pass: checks.every((c) => c.pass),
+    accusedBand: accusedBand(pooled['violation:ACCUSED'] ?? null),
     unstable: checks.some((c) => c.unstable),
     checks,
   };

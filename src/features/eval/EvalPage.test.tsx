@@ -27,7 +27,9 @@ describe('EvalPage', () => {
     expect(await screen.findByText(/On-device AI is ready/)).toBeInTheDocument();
     expect(button(/1\. Smoke test/)).toBeEnabled();
     expect(button(/2\. Dev split/)).toBeEnabled();
-    expect(button(/3\. Full evaluation/)).toBeEnabled();
+    expect(button(/3\. Dev split, 3 runs/)).toBeEnabled();
+    expect(button(/4\. Dev matrix/)).toBeEnabled();
+    expect(button(/5\. Full evaluation/)).toBeEnabled();
   });
 
   it('offers to prepare the model when it is downloadable', async () => {
@@ -60,8 +62,16 @@ describe('EvalPage', () => {
     expect(await screen.findByText(/Run 1\/1, report 1\/2 \(a\)/)).toBeInTheDocument();
     expect(screen.getByText(/Keep this tab open and in the foreground/)).toBeInTheDocument();
     expect(screen.getByText(/Elapsed:/)).toBeInTheDocument();
+    expect(screen.getByText(/Variant 1\/1 \(v1-single\)/)).toBeInTheDocument();
     expect(screen.getByText(/Last report took/)).toBeInTheDocument();
-    for (const name of [/1\. Smoke/, /2\. Dev/, /3\. Full/]) expect(button(name)).toBeDisabled();
+    for (const name of [
+      /1\. Smoke/,
+      /2\. Dev split \(/,
+      /3\. Dev split, 3/,
+      /4\. Dev matrix/,
+      /5\. Full/,
+    ])
+      expect(button(name)).toBeDisabled();
 
     release();
     expect(await screen.findByText('Saved to eval/results/saved-file.json')).toBeInTheDocument();
@@ -85,7 +95,7 @@ describe('EvalPage', () => {
     await screen.findByText(/On-device AI is ready/);
 
     // The test dataset has no test-split reports, so the full evaluation cannot start.
-    await userEvent.click(button(/3\. Full evaluation/));
+    await userEvent.click(button(/5\. Full evaluation/));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/not set up correctly/);
   });

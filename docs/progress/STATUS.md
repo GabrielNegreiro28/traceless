@@ -18,6 +18,8 @@ _Atualizado pelo manager a cada iteração._
 - Estrutura de agentes: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`.
 
 ## Em andamento
+- **Fase 3 núcleo commitado** (`a46f044`, 817 testes; 2 rodadas de revisão adversarial): rewriteApplier, propagação de decisões, approveReport (bloqueia identificador direto não decidido, mutilado ou digitado), reducer do fluxo com outbox. Pendências menores para a tarefa de UI: scanId ausente em runtime = stale; APPROVE_OK conferir texto = preview; cancelar scan; CONSENT_REQUIRED com scanId; removalJoin com aspas raras.
+- Implementer (sonnet): **T1 da iteração do portão** — eval-inspect, registro de variantes, presets dev3/devMatrix, critérios novos do portão (precisão, latência, faixa ACCUSED).
 - **Tarefa 2** (`9f50798`) + **endurecimento** (`94b7cfe`): camada on-device fail-closed; revisão adversarial com sonda no SDK real; teste de contrato verificado por mutações.
 - **Tarefas 3+4 commitadas** (`e51d2ee`, 491 testes): métricas + portão (refinado após revisão adversarial: pooled, strictRecallAll, falhas de scan, achados gigantes) e dataset de 24 relatos (88 gold, 150 must-not; revisado e corrigido).
 - **Tarefa 5 commitada** (`f752b72`, 533 testes): página `/eval` só em dev (canário confirma ausência no build), plugin que salva em `eval/results/` (só mesma origem; testado: POST de outra origem → 403), fila on-device compartilhada entre estratégias. Servidor de dev testado: `/eval` responde 200.

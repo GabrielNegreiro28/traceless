@@ -36,7 +36,7 @@ function singleGroupScanner(steps: readonly Step[]) {
   const scripted = scriptedRunner(steps);
   return {
     ...scripted,
-    scanner: new OnDeviceIdentityScanner(STRATEGIES.single, () => scripted.runner),
+    scanner: new OnDeviceIdentityScanner(STRATEGIES.single, () => scripted.runner, buildUserPrompt),
   };
 }
 
@@ -102,7 +102,7 @@ describe('OnDeviceIdentityScanner', () => {
       ],
     ]);
     const runnerFor = vi.fn((group: readonly ModelFindingCategory[]) => byGroup.get(group)!.runner);
-    const scanner = new OnDeviceIdentityScanner(STRATEGIES.grouped2, runnerFor);
+    const scanner = new OnDeviceIdentityScanner(STRATEGIES.grouped2, runnerFor, buildUserPrompt);
     const result = await scanner.scan(CHUNK);
     if (!result.ok) throw new Error(result.error.kind);
     // LOCATION is outside the first group, so its copy there is dropped; duplicates collapse.
@@ -120,7 +120,11 @@ describe('OnDeviceIdentityScanner', () => {
     const first = scriptedRunner([{ error: failure }]);
     const second = scriptedRunner([]);
     const runners = [first.runner, second.runner];
-    const scanner = new OnDeviceIdentityScanner(STRATEGIES.grouped2, () => runners.shift()!);
+    const scanner = new OnDeviceIdentityScanner(
+      STRATEGIES.grouped2,
+      () => runners.shift()!,
+      buildUserPrompt,
+    );
     await expect(scanner.scan(CHUNK)).resolves.toEqual(err(failure));
     expect(second.prompts).toEqual([]);
   });

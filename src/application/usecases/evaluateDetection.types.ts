@@ -23,6 +23,15 @@ export interface EvalProgress {
   readonly reportId: string;
 }
 
+/** The scan variant an evaluation ran with. Labels only. */
+export interface VariantInfo {
+  readonly id: string;
+  readonly promptVersion: string;
+  readonly strategy: string;
+  readonly chunkChars: number;
+  readonly postFilters: readonly string[];
+}
+
 export interface EvaluateDetectionParams {
   readonly dataset: Dataset;
   readonly split: EvalSplit;
@@ -30,9 +39,8 @@ export interface EvaluateDetectionParams {
   readonly scan: EvalScan;
   readonly clock: Clock;
   readonly runs: number;
-  /** Labels copied into the result (application must not import ai/prompts). */
-  readonly promptVersion: string;
-  readonly strategy: string;
+  /** Copied into the result (application must not import ai/prompts or features). */
+  readonly variant: VariantInfo;
   readonly onProgress?: (progress: EvalProgress) => void;
 }
 
@@ -61,15 +69,30 @@ export interface EvalSummary {
   readonly metrics: AggregatedMetrics;
 }
 
-/** JSON-serialisable result of an evaluation (all fields are plain data). */
-export interface EvalRunResult {
-  readonly datasetVersion: string;
-  readonly promptVersion: string;
-  readonly strategy: string;
-  readonly split: EvalSplit;
-  readonly startedAt: number;
+/** Runs, pooled summary and gate for one view of the findings. */
+export interface ViewResult {
   readonly runs: readonly SingleRunResult[];
   readonly summary: EvalSummary;
   /** Only evaluated on the test split; null otherwise. */
   readonly gate: GateResult | null;
+}
+
+/** `raw` = model output as scanned; `filtered` = after post-filters (the shipping pipeline). */
+export interface EvalViews {
+  readonly raw: ViewResult;
+  readonly filtered: ViewResult;
+}
+
+/**
+ * JSON-serialisable result of an evaluation (all fields are plain data, spans and
+ * labels only). `runs`, `summary` and `gate` are the filtered view, i.e. what ships.
+ */
+export interface EvalRunResult extends ViewResult {
+  readonly datasetVersion: string;
+  readonly promptVersion: string;
+  readonly strategy: string;
+  readonly variant: VariantInfo;
+  readonly split: EvalSplit;
+  readonly startedAt: number;
+  readonly views: EvalViews;
 }

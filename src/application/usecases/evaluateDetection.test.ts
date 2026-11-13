@@ -7,6 +7,7 @@ import {
   type FakeScanStep,
 } from '../../infrastructure/fakes/FakeIdentityScanner';
 import { createAppError } from '../../shared/appError';
+import { ok } from '../../shared/result';
 import type { IdentityScanner } from '../ports/IdentityScanner';
 import {
   evaluateDetection,
@@ -86,13 +87,20 @@ async function run(
     scan,
     clock: new FakeClock(1000),
     runs,
-    promptVersion: 'p-test',
-    strategy: 'single',
+    variant: { ...VARIANT, id: 'v-test', promptVersion: 'p-test' },
     ...(progress ? { onProgress: (p: EvalProgress) => progress.push(p) } : {}),
   });
   if (!result.ok) throw new Error('evaluation failed');
   return result.value;
 }
+
+const VARIANT = {
+  id: 'v',
+  promptVersion: 'p',
+  strategy: 'single',
+  chunkChars: 3000,
+  postFilters: [],
+} as const;
 
 describe('evaluateDetection with a fake model', () => {
   it('runs the split sequentially and summarises exact metrics', async () => {
@@ -103,6 +111,9 @@ describe('evaluateDetection with a fake model', () => {
     expect(result.startedAt).toBe(1000);
     expect(result.promptVersion).toBe('p-test');
     expect(result.strategy).toBe('single');
+    expect(result.variant).toEqual({ ...VARIANT, id: 'v-test', promptVersion: 'p-test' });
+    expect(result.views.raw.summary).toEqual(result.summary);
+    expect(result.views.filtered.runs).toEqual(result.runs);
     expect(result.runs).toHaveLength(2);
     expect(scanner.maxConcurrent).toBe(1);
     expect(progress.map((p) => `${p.run}:${p.reportsDone}:${p.reportId}`)).toEqual([
@@ -226,8 +237,7 @@ describe('evaluateDetection origin attribution', () => {
       scan: swallowing(),
       clock: new FakeClock(),
       runs: 1,
-      promptVersion: 'p',
-      strategy: 's',
+      variant: VARIANT,
     });
     if (!result.ok) throw new Error('evaluation failed');
     return result.value.runs[0]?.metrics;
@@ -267,8 +277,7 @@ describe('evaluateDetection configuration errors', () => {
     dataset: DATASET,
     scan: wrap(new FakeIdentityScanner()),
     clock: new FakeClock(),
-    promptVersion: 'p',
-    strategy: 's',
+    variant: VARIANT,
   };
 
   it('rejects invalid run counts and empty splits', async () => {
@@ -286,5 +295,21 @@ describe('evaluateDetection configuration errors', () => {
     };
     const result = await evaluateDetection({ ...base, dataset: broken, split: 'all', runs: 1 });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe('evaluateDetection raw and filtered views', () => {
+  it('computes each view from its own findings of the same scan', async () => {
+    const scan: EvalScan = async (text) => {
+      const base = await wrap(new FakeIdentityScanner({ respond: (c) => respond(c) }))(text);
+      if (!base.ok) return base;
+      return ok({ ...base.value, filtered: { findings: [], modelFindings: [] } });
+    };
+    const result = await run(scan, 'all');
+    const raw = result.views.raw.summary.pooled;
+    const filtered = result.views.filtered.summary.pooled;
+    expect(result.summary.pooled).toEqual(filtered);
+    expect(raw.softPrecision).not.toBe(filtered.softPrecision);
+    expect(raw.latencyP50Ms).toBe(filtered.latencyP50Ms);
   });
 });
