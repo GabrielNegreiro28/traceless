@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APP_ERROR_KINDS, createAppError, isAppError } from './appError';
+import { APP_ERROR_KINDS, createAppError, isAppError, type AppErrorKind } from './appError';
 
 describe('createAppError', () => {
   it('builds a simple variant', () => {
@@ -33,6 +33,31 @@ describe('createAppError', () => {
   it('allows an unknown download progress', () => {
     const error = createAppError('ModelDownloading', { message: 'Downloading', progress: null });
     expect(error.progress).toBeNull();
+  });
+
+  it('builds a PrivacyViolation that carries only a fixed message', () => {
+    const error = createAppError('PrivacyViolation', { message: 'Result discarded.' });
+    expect(error).toEqual({ kind: 'PrivacyViolation', message: 'Result discarded.' });
+  });
+});
+
+describe('APP_ERROR_KINDS', () => {
+  it('lists every AppError kind exactly once', () => {
+    // A missing or extra key here is a compile error, so the list cannot drift.
+    const everyKind: Record<AppErrorKind, true> = {
+      OnDeviceUnavailable: true,
+      LanguageNotSupported: true,
+      ModelDownloading: true,
+      InvalidModelOutput: true,
+      Offline: true,
+      QuotaExceeded: true,
+      PermissionDenied: true,
+      PrivacyViolation: true,
+      Misconfigured: true,
+      Unknown: true,
+    };
+    expect([...APP_ERROR_KINDS].sort()).toEqual(Object.keys(everyKind).sort());
+    expect(new Set(APP_ERROR_KINDS).size).toBe(APP_ERROR_KINDS.length);
   });
 });
 

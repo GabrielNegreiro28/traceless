@@ -85,4 +85,20 @@ describe('INFERENCE_POLICY', () => {
     };
     expect([rawPrefer, badRow.mode]).toHaveLength(2);
   });
+
+  it('rejects at compile time a CONSENTED_RAW row with any mode but ONLY_IN_CLOUD', () => {
+    expect(assertType<Equals<AllowedModes<'CONSENTED_RAW'>, 'only_in_cloud'>>(true)).toBe(true);
+    expect(assertType<Equals<AllowedModes<'SANITIZED'>, InferenceModeName>>(true)).toBe(true);
+    // @ts-expect-error consented raw text may only use ONLY_IN_CLOUD.
+    const consentedPrefer: AllowedModes<'CONSENTED_RAW'> = 'prefer_in_cloud';
+    // @ts-expect-error a CONSENTED_RAW row must never run on the device or in a hybrid mode.
+    const badRow: PolicyRow = {
+      dataClass: 'CONSENTED_RAW',
+      mode: 'prefer_on_device',
+      tools: [],
+      multiTurn: false,
+      rationale: 'never valid',
+    };
+    expect([consentedPrefer, badRow.mode]).toHaveLength(2);
+  });
 });

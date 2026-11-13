@@ -41,10 +41,14 @@ export type AiTask = (typeof AI_TASKS)[number];
 /**
  * Modes a data class may use. RAW text never leaves the device, so its only allowed mode
  * is ONLY_ON_DEVICE (PREFER_ON_DEVICE would silently fall back to the cloud).
+ * CONSENTED_RAW exists only for the explicit cloud path the reporter agreed to, so it is
+ * pinned to ONLY_IN_CLOUD (no hybrid mode whose routing the consent screen didn't describe).
  */
 export type AllowedModes<D extends DataClass> = D extends 'RAW'
   ? typeof INFERENCE_MODES.ONLY_ON_DEVICE
-  : InferenceModeName;
+  : D extends 'CONSENTED_RAW'
+    ? typeof INFERENCE_MODES.ONLY_IN_CLOUD
+    : InferenceModeName;
 
 /** One routing rule. Distributes over DataClass so `mode` is checked against `dataClass`. */
 export type PolicyRow<D extends DataClass = DataClass> = D extends DataClass

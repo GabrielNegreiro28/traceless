@@ -3,7 +3,13 @@ import type { RawText } from '../../domain/text/brandedText';
 import type { AppError } from '../../shared/appError';
 import type { Result } from '../../shared/result';
 
-/** Where an inference actually ran (from the SDK's `inferenceSource`). */
+/**
+ * Where an inference actually ran (from the SDK's `inferenceSource`).
+ * Adapters must MAP the SDK value, never cast it: the runtime value of
+ * `InferenceSource.ON_DEVICE` in `firebase/ai` is `'on_device'` (and `IN_CLOUD` is
+ * `'in_cloud'`), not these upper-case names. Anything other than
+ * `InferenceSource.ON_DEVICE` must be treated as off-device.
+ */
 export type InferenceSourceKind = 'ON_DEVICE' | 'IN_CLOUD';
 
 export interface IdentityScanResult {

@@ -97,9 +97,17 @@ export const FEW_SHOT: readonly FewShotExample[] = [
   },
 ];
 
-/** The per-call user prompt wrapping one chunk of raw report text. */
+/** Three or more double quotes in a row would look like the report delimiter. */
+const DELIMITER_LIKE = /"{3,}/g;
+
+/**
+ * The per-call user prompt wrapping one chunk of raw report text. Runs of `"""` inside
+ * the chunk become `'''` (same length) so the report cannot close its own delimiter.
+ * This changes only the prompt copy; findings are located in the original chunk.
+ */
 export function buildUserPrompt(chunk: RawText): RawText {
-  return toRawText(`Report:\n"""\n${chunk}\n"""`);
+  const neutralized = chunk.replace(DELIMITER_LIKE, (run) => "'".repeat(run.length));
+  return toRawText(`Report:\n"""\n${neutralized}\n"""`);
 }
 
 /** The assistant answer for an example, keeping only findings in `categories`. */

@@ -2,36 +2,37 @@
 
 _Atualizado pelo manager a cada iteração._
 
-- **Data da última atualização:** 2026-11-12
-- **Fase atual:** Fase 2 (detecção) em andamento; Fase 1 concluída exceto o enforce do App Check no AI Logic (passo humano)
+- **Data da última atualização:** 2026-11-13
+- **Fase atual:** Fase 2 (detecção + avaliação) em andamento — tarefa 2 de 7. Fase 1 concluída (App Check enforced no AI Logic, verificado em 13/11).
 - **Prazo:** **2026-11-30 às 19:00 GMT-3** (horário de Brasília). Rascunho completo até 28/11; congelamento de funcionalidades em 25/11; submeter com folga, nunca na última hora.
 
 ## Concluído
-- **Fase 1, código (12/11):** commit `eadc293` (245 testes, revisado). **Primeiro deploy no Hosting**: https://traceless-92f85.web.app abre; CSP, Referrer-Policy, Permissions-Policy e cache verificados com curl. Regras deny-all + índices publicados no Firestore; template do Remote Config publicado (versão 1). Emuladores (auth, firestore) sobem com `npm run emulators`.
+- **Fase 2, tarefa 1 (13/11):** commit `c32b9f9` (325 testes, revisado) — política de inferência (RAW ⇒ only_on_device garantido em compilação), prompt `identityScan.v1` + few-shot, schema JSON + zod com salvamento, port `IdentityScanner`, caso de uso `scanReport`, fakes. Desenho da Fase 2 em `docs/design/fase2-ai-layer.md`.
+- **riskScorer + endurecimento das regras (12/11):** commit `70e8efd` (revisão opus pegou regressão de privacidade — telefones após "from/to" e datas antes de "the" — corrigida com testes).
+- **Fase 1 (12–13/11):** commit `eadc293`. Hosting no ar: https://traceless-92f85.web.app (CSP, Referrer-Policy, Permissions-Policy e cache verificados com curl). Regras deny-all + índices no Firestore; Remote Config template versão 1. Emuladores com `npm run emulators`. **App Check enforced no AI Logic** (13/11: chamada sem token → HTTP 401).
 - **Núcleo de detecção (12/11):** commit `e4f223f` (2 rodadas de revisão).
-- Repositório privado no GitHub: https://github.com/GabrielNegreiro28/traceless (`main` sincronizado a cada commit).
-- **Fase 0 (12/11):** scaffold revisado e aprovado pelo reviewer; `npm run ci` verde (34 testes); commit `50e082f`. TypeScript fixado em 6.0.3 (typescript-eslint 8.72.2 não suporta TS 7).
+- Repositório privado no GitHub: https://github.com/GabrielNegreiro28/traceless (`main` sincronizado a cada commit; CI do GitHub verde).
+- **Fase 0 (12/11):** commit `50e082f`. TypeScript fixado em 6.0.3 (typescript-eslint 8.72.2 não suporta TS 7).
 - Pesquisa, ideia (Traceless) e plano aprovados — ver `HACKATHON.md` e `PLANO.md`.
 - Máquina do participante verificada: Gemini Nano disponível (`LanguageModel.availability()` → `'available'`).
-- Estrutura de agentes criada: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`, `.claude/settings.json`.
+- Estrutura de agentes: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`.
 
 ## Em andamento
-- `riskScorer` + endurecimento das regras commitados (`70e8efd`, 272 testes; revisão opus pegou regressão de privacidade — telefones após "from/to" e datas antes de "the" — corrigida com testes). CI do GitHub verde em todos os commits.
-- Fable entregou o desenho da Fase 2 → `docs/design/fase2-ai-layer.md` (fonte da verdade; 7 tarefas em série) + DECISIONS 12/11. **Achado crítico:** no firebase 13.3.0, `ONLY_ON_DEVICE` chama a nuvem se `window.LanguageModel` não existe → três camadas fail-closed obrigatórias.
-- Implementer (opus): **tarefa 1** do desenho (política, schema, prompt v1, ports, `scanReport`, `FakeIdentityScanner`).
+- Implementer (opus, esforço alto): **tarefa 2** do desenho — `aiService`, `serialQueue`, `deviceCapability`, `errorMapper`, `modelFactory`, `onDevicePromptRunner`, `OnDeviceIdentityScanner`, `compositionRoot` mínimo, com as **três camadas fail-closed** (guarda antes de criar o modelo; baseUrl morto; descarte se a fonte não for on-device). Inclui as pendências da revisão da tarefa 1 (`allowCloud` + `PrivacyViolation` no `scanReport`, neutralizar `"""` no prompt, `chunkChars` obrigatório, CONSENTED_RAW só nuvem).
 
 ## Próximos passos
-1. Camada de IA da Fase 2 (política, modelFactory, deviceCapability, errorMapper, OnDeviceIdentityScanner, prompt v1, schema, scanReport) conforme o Fable.
-2. Dataset `eval/datasets/reports.v1.json` + página `/eval` (só em dev) → rodar no Chrome do participante → portão da Fase 2 (meta: decisão até 15/11).
-3. Após o participante aplicar o enforce: verificar que chamada sem token ao AI Logic é recusada; portão da Fase 1 com o Fable.
-4. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
+1. Revisão da tarefa 2 (checar explicitamente as três camadas fail-closed) → commit.
+2. Tarefa 3 (sonnet): métricas de avaliação, schema zod do dataset, `evaluateDetection`.
+3. Tarefa 4 (opus): dataset de 24 relatos sintéticos + teste de validação (disjunto dos few-shots: farmacêutico da Elm Street / Dana Ruiz; faturas do irmão do diretor financeiro).
+4. Tarefa 5 (sonnet): router, `devRoutes`, `EvalPage`, plugin Vite que salva resultados, canário `verify-no-eval-in-dist`.
+5. Passo humano: rodar `/eval` no Chrome (meta 14/11 à noite) → portão das Fases 1+2 com o Fable (15/11).
+6. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
 
 ## Firebase
-- **Console pronto (12/11, verificado):** Auth (Anonymous e Email/Password), Firestore `(default)` em nam5 (Standard/Native), Remote Config ativo, debug token `dev-laptop` registrado (troca → OK; AI Logic com token → 200).
-- **ID do projeto Firebase:** `traceless-92f85` (criado pelo participante em 12/11). Usar em `.firebaserc` (`default`).
-- Domínios de produção: `traceless-92f85.web.app` e `traceless-92f85.firebaseapp.com` (para a chave do reCAPTCHA Enterprise).
-- **App Check:** usar `ReCaptchaEnterpriseProvider` (o reCAPTCHA clássico/v3 foi descontinuado em favor do Google Cloud Fraud Defense). Chave Web (baseada em pontuação, sem checkbox) criada pelo participante em 12/11: **`6LdToB0uAAAAAABzcCtn3w5sysp8c74sIwBeq-cr`** (pública; vai em `.env.local` como `VITE_RECAPTCHA_ENTERPRISE_SITE_KEY` e o nome da variável é documentado em `.env.example`). **Não aplicar (enforce) até o manager decidir.** Confirmar com o participante se ela já foi registrada no Firebase (App Check → Apps → traceless-web → reCAPTCHA Enterprise).
-- **App Web registrado** (12/11). Configuração pública do Firebase (não é segredo; identifica o projeto). Colocar em `.env.local` como `VITE_FIREBASE_*` e documentar os nomes em `.env.example`:
+- **Console pronto (12/11, verificado):** Auth (Anonymous e Email/Password), Firestore `(default)` em nam5 (Standard/Native), Remote Config ativo, debug token `dev-laptop` registrado.
+- **App Check:** `ReCaptchaEnterpriseProvider`; chave Web (pública) **`6LdToB0uAAAAAABzcCtn3w5sysp8c74sIwBeq-cr`** em `.env.local` (`VITE_RECAPTCHA_ENTERPRISE_SITE_KEY`). **Enforced no AI Logic** (13/11). Firestore: enforce no portão da Fase 4 (e antes de tornar o repo público). Debug token em `.env.development.local` (git-ignored).
+- **ID do projeto:** `traceless-92f85` (`.firebaserc` default). Domínios: `traceless-92f85.web.app`, `traceless-92f85.firebaseapp.com`.
+- **Configuração pública do app Web** (não é segredo; está em `.env.local` como `VITE_FIREBASE_*`):
   - apiKey `AIzaSyBNxXIwy4NMJzF_IRkgDUXMNWp35SZ19CI`
   - authDomain `traceless-92f85.firebaseapp.com`
   - projectId `traceless-92f85`
@@ -41,13 +42,16 @@ _Atualizado pelo manager a cada iteração._
   - (também recuperável com `npx firebase apps:sdkconfig WEB --project traceless-92f85`)
 
 ## Ambiente / versões
-- GitHub CLI 2.104.0 instalado em 12/11 (`C:\Program Files\GitHub CLI\gh.exe`).
-- Node 24.20.0 · npm 12.2.1 · Git 2.53 · **JDK 21 (Temurin 21.0.13) instalado em 12/11**, `JAVA_HOME` definido e primeiro no PATH (o Java 1.8 continua instalado, mas fica atrás) · Chrome 157
-- npm latest em 12/11: firebase 13.3.0 · vite 8.3.8 · vitest 5.1.0 · firebase-tools 15.36.0 · typescript 7.0.2 (checar compatibilidade com typescript-eslint)
+- GitHub CLI 2.104.0 (`C:\Program Files\GitHub CLI\gh.exe`).
+- Node 24.20.0 · npm 12.2.1 · Git 2.53 · JDK 21 (Temurin 21.0.13, `JAVA_HOME` primeiro no PATH) · Chrome 157.
+- Dependências fixadas (exatas): firebase 13.3.0 · react 19.3.1 · react-router 8.5.1 · zod 4.6.7 · vite 8.3.8 · vitest 5.1.0 · typescript 6.0.3 · typescript-eslint 8.72.2 · eslint 10.14.0 · tailwindcss 4.3.5 · firebase-tools 15.36.0.
+- npm 12 bloqueia scripts de instalação de dependências (re2, protobufjs, @firebase/util postinstall) — sem impacto.
 
 ## Métricas
-- Avaliação de detecção (Fase 2): ainda não medida.
+- Testes: 325 (13/11). Cobertura do domínio de detecção ~99% statements.
+- Avaliação de detecção (Fase 2): ainda não medida. Portão: recall combinado ≥ 0,70; violações ACCUSED ≤ 0,05; INCIDENT_FACT ≤ 0,10; saída inválida ≤ 0,05.
 
 ## Riscos
-- Qualidade do Gemini Nano na detecção de quasi-identificadores (portão da Fase 2).
-- App Check ainda NÃO está enforced no Firebase AI Logic (verificado em 12/11: uma chamada sem token foi aceita). Console (aba APIs): "Básico: não aplicado", data de aplicação automática **21/01/2027** (depois do prazo, então o enforce tem que ser manual), proteção contra repetição desativada; métricas de 12/11: 1 chamada verificada e 1 sem verificação (os dois testes do manager). Obrigatório antes da submissão; aplicar depois que o app enviar tokens (Fase 1) e testar o debug token.
+- Qualidade do Gemini Nano na detecção (portão da Fase 2), especialmente marcar o nome do acusado.
+- Latência no aparelho "Medium" (estimativa não medida: 15–40 s por relato curto).
+- SDK firebase 13.3.0: `ONLY_ON_DEVICE` cai para a nuvem sem `window.LanguageModel` (mitigado pelas três camadas fail-closed da tarefa 2).

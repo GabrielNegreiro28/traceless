@@ -18,6 +18,8 @@ export type AppError =
   | BaseError<'Offline'>
   | BaseError<'QuotaExceeded'>
   | BaseError<'PermissionDenied'>
+  /** A raw-text inference did not run on this device; its result was discarded. */
+  | BaseError<'PrivacyViolation'>
   | (BaseError<'Misconfigured'> & { readonly missing: readonly string[] })
   | BaseError<'Unknown'>;
 
@@ -31,6 +33,7 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'Offline',
   'QuotaExceeded',
   'PermissionDenied',
+  'PrivacyViolation',
   'Misconfigured',
   'Unknown',
 ];

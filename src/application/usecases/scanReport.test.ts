@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { MODEL_CHUNK_CHARS } from '../../ai/prompts/identityScan.v1';
 import type { ModelFinding } from '../../domain/detection/types';
 import { toRawText } from '../../domain/text/brandedText';
 import { FakeClock } from '../../infrastructure/fakes/FakeClock';
@@ -29,14 +28,19 @@ function respond(chunk: string): FakeScanStep {
   return { findings: [mf('desk 14', 'LOCATION'), mf('in the basement', 'LOCATION')] };
 }
 
-function setup(options: ConstructorParameters<typeof FakeIdentityScanner>[0] = { respond }) {
+function setup(
+  options: ConstructorParameters<typeof FakeIdentityScanner>[0] = { respond },
+  allowCloud?: boolean,
+) {
   const scanner = new FakeIdentityScanner(options);
   const clock = new FakeClock(1000, 25);
   const progress: [number, number][] = [];
-  const run = (text = TEXT, chunkChars: number | undefined = CHUNK_CHARS) =>
+  const run = (text = TEXT, chunkChars = CHUNK_CHARS) =>
     scanReport(
       text,
-      chunkChars === undefined ? { scanner, clock } : { scanner, clock, chunkChars },
+      allowCloud === undefined
+        ? { scanner, clock, chunkChars }
+        : { scanner, clock, chunkChars, allowCloud },
       { onProgress: (done, total) => progress.push([done, total]) },
     );
   return { scanner, progress, run };
@@ -101,19 +105,50 @@ describe('scanReport', () => {
     ]);
   });
 
-  it('reports IN_CLOUD when any chunk ran in the cloud and sums retries', async () => {
-    const { run } = setup({
-      steps: [
-        { findings: [], retries: 1 },
-        { findings: [], source: 'IN_CLOUD' },
-        { findings: [], retries: 1 },
-      ],
-    });
+  it('with allowCloud, reports IN_CLOUD when any chunk ran in the cloud and sums retries', async () => {
+    const { run } = setup(
+      {
+        steps: [
+          { findings: [], retries: 1 },
+          { findings: [], source: 'IN_CLOUD' },
+          { findings: [], retries: 1 },
+        ],
+      },
+      true,
+    );
     const result = await run();
     if (!result.ok) throw new Error(result.error.kind);
     expect(result.value.source).toBe('IN_CLOUD');
     expect(result.value.stats.retries).toBe(2);
   });
+
+  it.each([undefined, false])(
+    'stops after the first cloud chunk and discards all findings (allowCloud: %s)',
+    async (allowCloud) => {
+      const { scanner, progress, run } = setup(
+        {
+          steps: [
+            respond(PARAGRAPHS[0]!),
+            { findings: [mf('jane.doe@example.com', 'DIRECT_IDENTIFIER')], source: 'IN_CLOUD' },
+          ],
+          respond,
+        },
+        allowCloud,
+      );
+      const result = await run();
+      if (result.ok) throw new Error('expected a PrivacyViolation');
+      expect(result.error.kind).toBe('PrivacyViolation');
+      expect(Object.keys(result.error).sort()).toEqual(['kind', 'message']);
+      for (const paragraph of PARAGRAPHS) expect(result.error.message).not.toContain(paragraph);
+      expect(result.error.message).not.toContain('jane.doe');
+      // The third chunk is never sent, and the cloud chunk never counts as done.
+      expect(scanner.chunks).toHaveLength(2);
+      expect(progress).toEqual([
+        [0, 3],
+        [1, 3],
+      ]);
+    },
+  );
 
   it('still returns rule findings when the model finds nothing', async () => {
     const { run } = setup({});
@@ -143,14 +178,14 @@ describe('scanReport', () => {
     expect(progress).toEqual([[0, 0]]);
   });
 
-  it('defaults to MODEL_CHUNK_CHARS per model call', async () => {
+  it('sends the model chunks of at most chunkChars characters', async () => {
     const { scanner, run } = setup();
     const long = toRawText(
       Array.from({ length: 200 }, () => 'I saw it happen again.').join('\n\n'),
     );
-    const result = await run(long, undefined);
+    const result = await run(long, 3000);
     expect(result.ok).toBe(true);
     expect(scanner.chunks.length).toBeGreaterThan(1);
-    for (const chunk of scanner.chunks) expect(chunk.length).toBeLessThanOrEqual(MODEL_CHUNK_CHARS);
+    for (const chunk of scanner.chunks) expect(chunk.length).toBeLessThanOrEqual(3000);
   });
 });

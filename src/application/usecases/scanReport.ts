@@ -1,11 +1,10 @@
-import { MODEL_CHUNK_CHARS } from '../../ai/prompts/identityScan.v1';
 import { mergeFindings } from '../../domain/detection/findingMerger';
 import { detectByRules } from '../../domain/detection/ruleDetector';
 import { locateModelFindings } from '../../domain/detection/spanLocator';
 import { chunkText, shiftFindings, type TextChunk } from '../../domain/detection/textChunker';
 import type { Finding } from '../../domain/detection/types';
 import { toRawText, type RawText } from '../../domain/text/brandedText';
-import type { AppError } from '../../shared/appError';
+import { createAppError, type AppError } from '../../shared/appError';
 import { err, ok, type Result } from '../../shared/result';
 import type { Clock } from '../ports/Clock';
 import type { IdentityScanner, InferenceSourceKind } from '../ports/IdentityScanner';
@@ -13,8 +12,14 @@ import type { IdentityScanner, InferenceSourceKind } from '../ports/IdentityScan
 export interface ScanReportDeps {
   readonly scanner: IdentityScanner;
   readonly clock: Clock;
-  /** Report characters per model call; defaults to MODEL_CHUNK_CHARS. */
-  readonly chunkChars?: number;
+  /** Report characters per model call (the composition root passes MODEL_CHUNK_CHARS). */
+  readonly chunkChars: number;
+  /**
+   * Defense in depth: unless true, the first chunk that did not run ON_DEVICE stops the
+   * scan, discards every finding and fails with PrivacyViolation. Only the consented
+   * cloud scan (explicit reporter consent) sets this.
+   */
+  readonly allowCloud?: boolean;
 }
 
 export interface ScanReportOptions {
@@ -44,31 +49,45 @@ interface ModelPass {
   readonly retries: number;
 }
 
+interface ChunkScanContext {
+  readonly scanner: IdentityScanner;
+  readonly allowCloud: boolean;
+  readonly onProgress: (done: number, total: number) => void;
+}
+
+/** Fixed message: never includes report or model text. */
+const OFF_DEVICE_CHUNK = createAppError('PrivacyViolation', {
+  message: 'A report chunk was not scanned on this device; all findings were discarded.',
+});
+
 async function scanChunk(
   scanner: IdentityScanner,
   chunk: TextChunk,
 ): Promise<Result<ModelPass, AppError>> {
-  const chunkText = toRawText(chunk.text);
-  const scanned = await scanner.scan(chunkText);
+  const rawChunk = toRawText(chunk.text);
+  const scanned = await scanner.scan(rawChunk);
   if (!scanned.ok) return scanned;
   const { findings, source, retries } = scanned.value;
-  const located = shiftFindings(locateModelFindings(chunkText, findings), chunk.offset);
+  const located = shiftFindings(locateModelFindings(rawChunk, findings), chunk.offset);
   return ok({ findings: located, source, rawModelFindings: findings.length, retries });
 }
 
-/** Scans chunks strictly one after another; the first failing chunk fails the whole pass. */
+/**
+ * Scans chunks strictly one after another. The first failing chunk fails the whole
+ * pass, and so does the first off-device chunk unless the cloud is allowed.
+ */
 async function scanChunksSequentially(
-  scanner: IdentityScanner,
+  context: ChunkScanContext,
   chunks: readonly TextChunk[],
-  onProgress: (done: number, total: number) => void,
 ): Promise<Result<ModelPass, AppError>> {
   const passes: ModelPass[] = [];
-  onProgress(0, chunks.length);
+  context.onProgress(0, chunks.length);
   for (const [index, chunk] of chunks.entries()) {
-    const pass = await scanChunk(scanner, chunk);
+    const pass = await scanChunk(context.scanner, chunk);
     if (!pass.ok) return err(pass.error);
+    if (!context.allowCloud && pass.value.source !== 'ON_DEVICE') return err(OFF_DEVICE_CHUNK);
     passes.push(pass.value);
-    onProgress(index + 1, chunks.length);
+    context.onProgress(index + 1, chunks.length);
   }
   return ok(combinePasses(passes));
 }
@@ -97,11 +116,14 @@ export async function scanReport(
 ): Promise<Result<ScanReportResult, AppError>> {
   const startedAt = deps.clock.now();
   const ruleFindings = detectByRules(text);
-  const chunks = chunkText(text, deps.chunkChars ?? MODEL_CHUNK_CHARS);
+  const chunks = chunkText(text, deps.chunkChars);
   const pass = await scanChunksSequentially(
-    deps.scanner,
+    {
+      scanner: deps.scanner,
+      allowCloud: deps.allowCloud === true,
+      onProgress: options.onProgress ?? NO_PROGRESS,
+    },
     chunks,
-    options.onProgress ?? NO_PROGRESS,
   );
   if (!pass.ok) return pass;
   const { findings, source, rawModelFindings, retries } = pass.value;
