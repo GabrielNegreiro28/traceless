@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getPromptModule } from '../../ai/prompts/promptRegistry';
+import { SHIPPED_SCAN_PIPELINE } from '../../ai/prompts/scanPipelines';
 import { STRATEGIES } from '../../ai/prompts/strategies';
 import { POST_FILTERS } from '../../domain/detection/postFilters';
 import { EVAL_VARIANTS, findVariant } from './evalVariants';
@@ -39,5 +40,11 @@ describe('EVAL_VARIANTS', () => {
       expect(variant.postFilters).toEqual(['protectedMentions', 'thirdPerson']);
       expect(variant.chunkChars).toBe(3000);
     }
+  });
+
+  it('v2-single2 is exactly the shipped pipeline (§G.1)', () => {
+    const { id, ...spec } = findVariant('v2-single2') ?? { id: 'missing' };
+    expect(id).toBe('v2-single2');
+    expect(spec).toEqual(SHIPPED_SCAN_PIPELINE);
   });
 });

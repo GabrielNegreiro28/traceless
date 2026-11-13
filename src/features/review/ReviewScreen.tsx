@@ -1,4 +1,5 @@
 import type { ReviewChoice } from '../../domain/rewrite/reviewDecision';
+import { BasicChecksNotice } from './BasicChecksNotice';
 import { FindingList } from './FindingList';
 import { HighlightedText } from './HighlightedText';
 import { ProtectedMentions } from './ProtectedMentions';
@@ -55,6 +56,7 @@ export function ReviewScreen(props: ReviewScreenProps) {
   });
   const { snapshot } = session;
   const empty = state.findings.length === 0;
+  const basic = state.checks === 'basic';
   return (
     <section>
       <h1 id="screen-heading" tabIndex={-1} className="text-3xl font-bold tracking-tight">
@@ -62,6 +64,7 @@ export function ReviewScreen(props: ReviewScreenProps) {
       </h1>
       <p className="mt-2 max-w-prose text-muted">{intro(state.findings.length)}</p>
       <p className="mt-1 text-sm text-muted">{SHORTCUTS}</p>
+      {basic && <BasicChecksNotice />}
       <div role="status" aria-live="polite" className="sr-only">
         {session.message}
       </div>
@@ -84,7 +87,7 @@ export function ReviewScreen(props: ReviewScreenProps) {
             <>
               <h2 className="text-lg font-semibold">Details to review</h2>
               <FindingList state={state} session={session} />
-              <SecondLook />
+              <SecondLook defaultOpen={basic} />
             </>
           )}
           <ProtectedMentions quotes={protectedQuotes(state.text, state.protectedSpans)} />

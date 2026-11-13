@@ -7,8 +7,11 @@ import { OutboxScreen } from '../features/outbox/OutboxScreen';
 import { PrivacyLedgerPanel } from '../features/privacy/PrivacyLedgerPanel';
 import { ConsentPlaceholder } from '../features/review/ConsentPlaceholder';
 import { FlowErrorPanel } from '../features/review/FlowErrorPanel';
-import type { FlowState } from '../features/review/reportFlowMachine';
+import { copyToClipboard, reloadPage } from '../features/review/pageActions';
+import type { ErrorState, FlowState } from '../features/review/reportFlowMachine';
+import { isStall } from '../features/review/reportFlowStall';
 import { ReviewScreen } from '../features/review/ReviewScreen';
+import { StallPanel } from '../features/review/StallPanel';
 import { useReportFlow, type ReportFlow } from '../features/review/useReportFlow';
 import { ScanningScreen } from '../features/scanning/ScanningScreen';
 import { Button } from '../ui';
@@ -37,6 +40,33 @@ function NotReady({ onReset }: { readonly onReset: () => void }) {
       </div>
     </section>
   );
+}
+
+/** An approval error, a stalled on-device scan (§G.2), or any other error. */
+function errorScreenFor(flow: ReportFlow, state: ErrorState) {
+  if (state.previous.status === 'outbox') {
+    return (
+      <ApprovalErrorPanel
+        error={state.error}
+        onBackToReview={flow.backToReview}
+        onBackToOutbox={flow.backToEdit}
+      />
+    );
+  }
+  if (isStall(state)) {
+    return (
+      <StallPanel
+        recoverable={state.error.recoverable}
+        text={state.previous.text}
+        onTryAgain={flow.retryScan}
+        onBackToEdit={flow.backToEdit}
+        onBasicChecks={flow.continueWithBasicChecks}
+        copyText={copyToClipboard}
+        reload={reloadPage}
+      />
+    );
+  }
+  return <FlowErrorPanel error={state.error} onTryAgain={flow.backToEdit} />;
 }
 
 function screenFor(flow: ReportFlow) {
@@ -80,15 +110,7 @@ function screenFor(flow: ReportFlow) {
     case 'approved':
       return <ApprovedScreen state={state} onBack={flow.backToEdit} />;
     case 'error':
-      return state.previous.status === 'outbox' ? (
-        <ApprovalErrorPanel
-          error={state.error}
-          onBackToReview={flow.backToReview}
-          onBackToOutbox={flow.backToEdit}
-        />
-      ) : (
-        <FlowErrorPanel error={state.error} onTryAgain={flow.backToEdit} />
-      );
+      return errorScreenFor(flow, state);
     case 'submitting':
     case 'submitted':
       return <NotReady onReset={flow.reset} />;

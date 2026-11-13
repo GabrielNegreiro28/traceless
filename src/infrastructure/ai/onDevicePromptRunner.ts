@@ -20,6 +20,8 @@ export interface PromptableModel {
   generateContent(prompt: string): Promise<{
     readonly response: { readonly inferenceSource?: InferenceSource; text(): string };
   }>;
+  /** Aborts the model's session and forgets it (see `OnDeviceModel.abandon`). */
+  abandon(): void;
 }
 
 export interface OnDeviceRunOutput {
@@ -35,14 +37,18 @@ export interface PromptRunner {
 export interface OnDevicePromptRunnerDeps {
   /** The ONE queue shared by every on-device runner (see serialQueue.ts). */
   readonly queue: SerialQueue;
-  /** The ONE stuck tracker shared by every runner on that queue (see stuckTracker.ts). */
+  /**
+   * The ONE stuck tracker shared by every runner on that queue (see stuckTracker.ts); it
+   * also holds the page load's recovery budget.
+   */
   readonly stuck: StuckTracker;
   readonly capability: Pick<DeviceCapability, 'check'>;
   /** Lazily creates/returns the memoized model (createOnDeviceModel: layers 1 and 2). */
   readonly getModel: () => Result<PromptableModel, AppError>;
   /**
-   * Optional: answer the caller with `OnDeviceStuck` after this long. The queue still waits
-   * for the inference, and later calls fail fast until it ends.
+   * Optional: answer the caller with `OnDeviceStuck` after this long. The stalled model is
+   * abandoned; the queue still waits for the inference, and later calls fail fast until it
+   * ends (for good once a stall is terminal).
    */
   readonly timeoutMs?: number;
 }
@@ -64,10 +70,27 @@ const OFF_DEVICE_RESULT = createAppError('PrivacyViolation', {
   message: 'An on-device-only inference did not run on this device; its result was discarded.',
 });
 
-/** Fixed, user-facing: deadline expired, or an earlier timed-out inference still runs. */
-const STUCK = createAppError('OnDeviceStuck', {
-  message: 'On-device AI is not responding. Reload the page to try again.',
+type RunResult = Result<OnDeviceRunOutput, AppError>;
+
+/** Fixed: the deadline expired, the model was abandoned and the work settled (§G.2). */
+const STUCK_RECOVERABLE = createAppError('OnDeviceStuck', {
+  message: 'On-device AI stalled; its model was abandoned and the next call starts a fresh one.',
+  recoverable: true,
 });
+
+/**
+ * Fixed: a stall this page load cannot recover from (recoveries spent, or the abandoned work
+ * never settled), or a call made while a timed-out inference still runs.
+ */
+const STUCK_TERMINAL = createAppError('OnDeviceStuck', {
+  message: 'On-device AI is not responding. Reload the page to try again.',
+  recoverable: false,
+});
+
+/** The model an attempt is using, so that a deadline abandons exactly that one. */
+interface InFlight {
+  model: PromptableModel | null;
+}
 
 /**
  * Required before every call: with 'downloadable', the SDK would still call
@@ -103,12 +126,14 @@ function readOnDeviceText(response: {
 async function attempt(
   deps: OnDevicePromptRunnerDeps,
   prompt: RawText,
+  inFlight: InFlight,
 ): Promise<Result<OnDeviceRunOutput, AppError>> {
   try {
     const ready = await requireAvailable(deps.capability);
     if (!ready.ok) return ready;
     const model = deps.getModel();
     if (!model.ok) return model;
+    inFlight.model = model.value;
     const { response } = await model.value.generateContent(prompt);
     return readOnDeviceText(response);
   } catch (error) {
@@ -117,38 +142,53 @@ async function attempt(
 }
 
 /**
- * Answers the caller with `work`, or with STUCK once the deadline expires. On expiry the
- * still-running inference marks the tracker stuck until it settles.
+ * Stuck recovery (docs/design/fase2-gate-iteration.md §G.2), after the deadline expired:
+ * the still-running inference marks the tracker stuck until it settles, its model is
+ * abandoned (the abort destroys the Chrome session, so the hung prompt rejects), and the
+ * tracker decides whether the caller may try again. Nothing is retried here.
  */
-function answerWithin(
+async function recoverFromStall(
+  stuck: StuckTracker,
+  work: Promise<RunResult>,
+  inFlight: InFlight,
+): Promise<RunResult> {
+  stuck.holdUntilSettled(work);
+  inFlight.model?.abandon();
+  logger.warn('on-device inference timed out; its model was abandoned');
+  const recoverable = await stuck.recover(work);
+  if (!recoverable) logger.warn('on-device stall is terminal for this page load');
+  return err(recoverable ? STUCK_RECOVERABLE : STUCK_TERMINAL);
+}
+
+/** Answers the caller with `work`, or with `OnDeviceStuck` once the deadline expires. */
+async function answerWithin(
   deps: OnDevicePromptRunnerDeps,
-  work: Promise<Result<OnDeviceRunOutput, AppError>>,
-): Promise<Result<OnDeviceRunOutput, AppError>> {
+  work: Promise<RunResult>,
+  inFlight: InFlight,
+): Promise<RunResult> {
   const { timeoutMs } = deps;
   if (timeoutMs === undefined) return work;
-  return withDeadline(work, timeoutMs, () => {
-    deps.stuck.holdUntilSettled(work);
-    logger.warn('on-device inference timed out; failing fast until it ends');
-    return err(STUCK);
-  });
+  const answer = await withDeadline<RunResult | null>(work, timeoutMs, () => null);
+  return answer ?? recoverFromStall(deps.stuck, work, inFlight);
 }
 
 /**
  * Runs prompts on the device, one at a time through the shared queue. With a timeout,
- * the caller gets `OnDeviceStuck` once it expires, but the queue is held until the
- * underlying inference really ends (it cannot be aborted), so sessions never overlap;
- * meanwhile new calls fail fast with `OnDeviceStuck` instead of waiting behind it.
+ * the caller gets `OnDeviceStuck` once it expires and the stalled model is abandoned, but
+ * the queue is held until the underlying inference really ends, so sessions never overlap;
+ * meanwhile new calls fail fast with a terminal `OnDeviceStuck` instead of waiting behind it.
  * (A call already queued when the deadline fires still waits; the app scans one chunk
  * at a time, so nothing is queued behind a running inference in practice.)
  */
 export function createOnDevicePromptRunner(deps: OnDevicePromptRunnerDeps): PromptRunner {
   return {
     run: (prompt) => {
-      if (deps.stuck.isStuck()) return Promise.resolve(err(STUCK));
+      if (deps.stuck.isStuck()) return Promise.resolve(err(STUCK_TERMINAL));
       return new Promise((resolve) => {
         void deps.queue.enqueue(async () => {
-          const work = attempt(deps, prompt);
-          resolve(answerWithin(deps, work));
+          const inFlight: InFlight = { model: null };
+          const work = attempt(deps, prompt, inFlight);
+          resolve(answerWithin(deps, work, inFlight));
           await work;
         });
       });

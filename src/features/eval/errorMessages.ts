@@ -20,7 +20,7 @@ export function friendlyKindMessage(kind: AppErrorKind): string {
     case 'PrivacyViolation':
       return 'Stopped: a report did not run on this device. Nothing was kept.';
     case 'OnDeviceStuck':
-      return 'A previous on-device call is still running. Reload this page and try again.';
+      return 'On-device AI stalled on this report and timed out. If every later report fails too, reload this page.';
     case 'InputTooLong':
       return 'A report is longer than the on-device model accepts.';
     case 'Misconfigured':

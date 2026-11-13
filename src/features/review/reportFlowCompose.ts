@@ -8,6 +8,7 @@ import type {
   ScanningState,
 } from './reportFlowTypes';
 import { toReviewing } from './reportFlowReview';
+import { basicChecksReview, isTerminalStall } from './reportFlowStall';
 import { composing, toError } from './reportFlowTypes';
 
 /** Transitions before review: writing, scanning, consent and error recovery (pure). */
@@ -66,6 +67,7 @@ export function onScanning(state: ScanningState, event: FlowEvent): FlowState {
       return {
         status: 'reviewing',
         text: state.text,
+        checks: 'full',
         findings,
         protectedSpans,
         decisions: [],
@@ -96,11 +98,15 @@ export function onNeedsConsent(state: NeedsConsentState, event: FlowEvent): Flow
 /**
  * BACK_TO_EDIT dismisses the error and returns to the state it interrupted. BACK_TO_REVIEW
  * goes one step further for an approval refused in the outbox (the fix is in the review).
+ * BASIC_CHECKS_DONE opens a rules-only review, only after a terminal on-device stall.
  */
 export function onError(state: ErrorState, event: FlowEvent): FlowState {
   if (event.type === 'BACK_TO_EDIT') return state.previous;
   if (event.type === 'BACK_TO_REVIEW' && state.previous.status === 'outbox') {
     return toReviewing(state.previous);
+  }
+  if (event.type === 'BASIC_CHECKS_DONE' && isTerminalStall(state)) {
+    return basicChecksReview(state, event.findings);
   }
   return state;
 }

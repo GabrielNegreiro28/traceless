@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { EvalRunResult } from '../../application/usecases/evaluateDetection';
-import type { AppError } from '../../shared/appError';
-import { ok, type Result } from '../../shared/result';
+import type { EvalRunResult, EvalScan } from '../../application/usecases/evaluateDetection';
+import { createAppError, type AppError } from '../../shared/appError';
+import { err, ok, type Result } from '../../shared/result';
 import { EMPTY_SCAN, fakeServices } from './evalTestKit';
 import { EVAL_VARIANTS, type EvalVariant } from './evalVariants';
 import { useEvalRunner } from './useEvalRunner';
@@ -49,5 +49,32 @@ describe('useEvalRunner variant sequencing', () => {
       'scanFor:second',
       'save:second',
     ]);
+  });
+
+  it('a stalled report is a scan failure; the matrix continues to the next report and variant', async () => {
+    const stalled = createAppError('OnDeviceStuck', { message: 'stalled', recoverable: true });
+    let scans = 0;
+    const firstScanStalls: EvalScan = (text) => {
+      scans += 1;
+      return scans === 1 ? Promise.resolve(err(stalled)) : EMPTY_SCAN(text);
+    };
+    const scanFor = vi.fn((variant: EvalVariant) =>
+      variant.id === 'second' ? EMPTY_SCAN : firstScanStalls,
+    );
+    const { result } = renderHook(() => useEvalRunner(fakeServices({ scanFor })));
+
+    act(() => result.current.start('devMatrix', EVAL_VARIANTS[0]!));
+
+    await waitFor(() => expect(result.current.state.phase).toBe('done'));
+    const { state } = result.current;
+    if (state.phase !== 'done') throw new Error('expected done');
+    const [first, second] = state.outcomes.map((o) => o.result);
+    expect(first?.runs[0]?.reports.map((r) => [r.ok, r.errorKind])).toEqual([
+      [false, 'OnDeviceStuck'],
+      [true, null],
+    ]);
+    expect(first?.stalls).toEqual({ recovered: 1, terminal: 0 });
+    expect(second?.stalls).toEqual({ recovered: 0, terminal: 0 });
+    expect(scanFor).toHaveBeenCalledTimes(2);
   });
 });

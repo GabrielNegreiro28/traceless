@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MODEL_FINDING_CATEGORIES } from '../schemas/identityScan';
 import { DEFAULT_PROMPT_MODULE, getPromptModule } from './promptRegistry';
+import { SHIPPED_SCAN_PIPELINE } from './scanPipelines';
 
 const ALL = MODEL_FINDING_CATEGORIES;
 const OUTPUT = JSON.stringify({
@@ -11,14 +12,15 @@ const OUTPUT = JSON.stringify({
 });
 
 describe('promptRegistry', () => {
-  it('resolves v1 by its version and rejects unknown versions', () => {
-    expect(getPromptModule('identityScan.v1')).toBe(DEFAULT_PROMPT_MODULE);
+  it('resolves each version and rejects unknown versions', () => {
+    expect(getPromptModule('identityScan.v1')?.version).toBe('identityScan.v1');
+    expect(getPromptModule('identityScan.v2')).toBe(DEFAULT_PROMPT_MODULE);
     expect(getPromptModule('identityScan.v0')).toBeUndefined();
   });
 
-  it('keeps v1 as the shipped default until the gate picks another version', () => {
-    expect(DEFAULT_PROMPT_MODULE.version).toBe('identityScan.v1');
-    expect(getPromptModule('identityScan.v2')?.version).toBe('identityScan.v2');
+  it('ships v2, the prompt of the shipped pipeline (§G.1 default by dominance)', () => {
+    expect(DEFAULT_PROMPT_MODULE.version).toBe('identityScan.v2');
+    expect(DEFAULT_PROMPT_MODULE.version).toBe(SHIPPED_SCAN_PIPELINE.promptVersion);
   });
 
   it('v1 has no outlets: its schema and parser ignore REPORTED_PERSON/OTHER_PERSON', () => {

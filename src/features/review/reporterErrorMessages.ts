@@ -20,7 +20,7 @@ const MESSAGES: Readonly<Record<AppErrorKind, string>> = {
   PrivacyViolation:
     'Traceless stopped because part of the check did not run on this computer. Nothing was kept or sent.',
   OnDeviceStuck:
-    'An earlier check is still running on this computer. Reload this page, then try again. Your text will not be saved.',
+    'The on-device AI stopped responding. Nothing was sent anywhere. Try again, or copy your text and reload this page.',
   InputTooLong:
     'Your report is longer than the on-device AI can read in one go. Try shortening it.',
   Misconfigured: 'Traceless is not set up correctly right now. Please try again later.',

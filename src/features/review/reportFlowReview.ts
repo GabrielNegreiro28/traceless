@@ -40,13 +40,13 @@ function undo(state: ReviewingState, findingId: string): ReviewingState {
 }
 
 export function toReviewing(state: OutboxState): ReviewingState {
-  const { text, findings, protectedSpans, decisions, risk } = state;
-  return { status: 'reviewing', text, findings, protectedSpans, decisions, risk };
+  const { text, checks, findings, protectedSpans, decisions, risk } = state;
+  return { status: 'reviewing', text, checks, findings, protectedSpans, decisions, risk };
 }
 
 function toOutbox(state: ApprovedState | SubmittingState): OutboxState {
-  const { text, findings, protectedSpans, decisions, risk, preview } = state;
-  return { status: 'outbox', text, findings, protectedSpans, decisions, risk, preview };
+  const { text, checks, findings, protectedSpans, decisions, risk, preview } = state;
+  return { status: 'outbox', text, checks, findings, protectedSpans, decisions, risk, preview };
 }
 
 /** Previews the decisions applied to the text; a failed rewrite stays on the review. */

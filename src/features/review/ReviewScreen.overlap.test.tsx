@@ -18,6 +18,7 @@ function reviewingOf(text: string, findings: readonly Finding[]): ReviewingState
   return {
     status: 'reviewing',
     text: toRawText(text),
+    checks: 'full',
     findings,
     protectedSpans: [],
     decisions: [],

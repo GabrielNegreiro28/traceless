@@ -77,6 +77,18 @@ export interface ViewResult {
   readonly gate: GateResult | null;
 }
 
+/**
+ * On-device stalls during an evaluation (docs/design/fase2-gate-iteration.md §G.2), counted
+ * per scanned report: `recovered` = recoveries (the stalled model was abandoned and later scans
+ * ran on a fresh one); `terminal` = stalls the page load could not recover from, including the
+ * later scans that failed fast because of one. Every stalled report also counts as a scan
+ * failure in the metrics.
+ */
+export interface StallCounts {
+  readonly recovered: number;
+  readonly terminal: number;
+}
+
 /** `raw` = model output as scanned; `filtered` = after post-filters (the shipping pipeline). */
 export interface EvalViews {
   readonly raw: ViewResult;
@@ -95,4 +107,6 @@ export interface EvalRunResult extends ViewResult {
   readonly split: EvalSplit;
   readonly startedAt: number;
   readonly views: EvalViews;
+  /** Added with §G.2: result files saved before it have no `stalls` (read it as unknown). */
+  readonly stalls: StallCounts;
 }

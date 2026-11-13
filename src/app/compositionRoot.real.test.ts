@@ -1,5 +1,7 @@
 import { InferenceSource, type HybridParams } from 'firebase/ai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getPromptModule } from '../ai/prompts/promptRegistry';
+import { MODEL_FINDING_CATEGORIES } from '../ai/schemas/identityScan';
 import { toRawText } from '../domain/text/brandedText';
 import { createServices, createVariantServices } from './compositionRoot';
 import type { AppEnv } from './env';
@@ -51,8 +53,23 @@ const MODEL_JSON = JSON.stringify({
   ],
 });
 
-function respond(inferenceSource: InferenceSource): void {
-  sdk.generateContent.mockResolvedValue({ response: { inferenceSource, text: () => MODEL_JSON } });
+function respond(inferenceSource: InferenceSource, text = MODEL_JSON): void {
+  sdk.generateContent.mockResolvedValue({ response: { inferenceSource, text: () => text } });
+}
+
+const V1 = { promptVersion: 'identityScan.v1', chunkChars: 3000, postFilters: [] } as const;
+
+/** The abort signal the factory put in the n-th created model's createOptions. */
+function signalOf(call: number): AbortSignal | undefined {
+  const params = sdk.getGenerativeModel.mock.calls[call]?.[1] as HybridParams | undefined;
+  return params?.onDeviceParams?.createOptions?.signal;
+}
+
+/** Like Chrome: aborting the create() signal destroys the session and rejects the prompt. */
+function hangUntilAborted(signal: AbortSignal | undefined): Promise<never> {
+  return new Promise((_, reject) => {
+    signal?.addEventListener('abort', () => reject(new DOMException('destroyed', 'AbortError')));
+  });
 }
 
 describe('createServices (real AI mode, SDK mocked)', () => {
@@ -104,6 +121,23 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       expect(requestOptions).toEqual({ baseUrl: 'https://on-device-only.invalid' });
     });
 
+    it('ships v2-single2 by default (§G.1): v2 prompts, two passes, post-filters on', async () => {
+      const outlet = { quote: 'The head nurse', category: 'REPORTED_PERSON', reason: 'r' };
+      const v2Json = JSON.stringify({ findings: [{ ...outlet, suggestion: '' }] });
+      respond(InferenceSource.ON_DEVICE, v2Json);
+      const result = await createServices(REAL_ENV).scanReport(REPORT);
+      if (!result.ok) throw new Error(result.error.kind);
+      expect(sdk.getGenerativeModel).toHaveBeenCalledTimes(1);
+      expect(sdk.generateContent).toHaveBeenCalledTimes(2);
+      const [, params] = sdk.getGenerativeModel.mock.lastCall as [unknown, HybridParams];
+      const v2 = getPromptModule('identityScan.v2');
+      expect(params.onDeviceParams?.createOptions?.initialPrompts).toEqual(
+        v2?.buildInitialPrompts(MODEL_FINDING_CATEGORIES),
+      );
+      // Only the protectedMentions post-filter turns the outlet quote into a protected span.
+      expect(result.value.protectedSpans).toEqual([{ start: 37, end: 51 }]);
+    });
+
     it('discards an in-cloud answer as a privacy violation', async () => {
       respond(InferenceSource.IN_CLOUD);
       const result = await createServices(REAL_ENV).scanReport(REPORT);
@@ -116,24 +150,54 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       expect(sdk.initializeDeviceModel).toHaveBeenCalledTimes(1);
     });
 
-    it('shares one queue and stuck tracker across variants', async () => {
+    it('a stall abandons the model (abort signal); the next scan runs on a fresh model', async () => {
+      vi.useFakeTimers();
+      try {
+        sdk.getGenerativeModel.mockImplementation((_ai: unknown, params: HybridParams) => {
+          const signal = params.onDeviceParams?.createOptions?.signal;
+          const hangs = sdk.getGenerativeModel.mock.calls.length === 1;
+          const answer = { inferenceSource: InferenceSource.ON_DEVICE, text: () => MODEL_JSON };
+          return {
+            generateContent: () =>
+              hangs ? hangUntilAborted(signal) : Promise.resolve({ response: answer }),
+            initializeDeviceModel: sdk.initializeDeviceModel,
+          };
+        });
+        const servicesFor = createVariantServices(REAL_ENV);
+        const pending = servicesFor({ ...V1, strategy: 'single' }).scanReport(REPORT);
+        await vi.advanceTimersByTimeAsync(120_000);
+        const first = await pending;
+        expect(!first.ok && first.error).toMatchObject({
+          kind: 'OnDeviceStuck',
+          recoverable: true,
+        });
+        expect(signalOf(0)?.aborted).toBe(true);
+
+        const second = await servicesFor({ ...V1, strategy: 'single' }).scanReport(REPORT);
+        expect(second.ok).toBe(true);
+        expect(sdk.getGenerativeModel).toHaveBeenCalledTimes(2);
+        expect(signalOf(1)?.aborted).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('shares one queue and stuck tracker across variants (terminal stall)', async () => {
       vi.useFakeTimers();
       try {
         sdk.generateContent.mockImplementation(() => new Promise(() => undefined));
         const servicesFor = createVariantServices(REAL_ENV);
-        const variant = {
-          promptVersion: 'identityScan.v1',
-          chunkChars: 3000,
-          postFilters: [],
-        } as const;
-        const pending = servicesFor({ ...variant, strategy: 'single' }).scanReport(REPORT);
-        await vi.advanceTimersByTimeAsync(121_000);
+        const pending = servicesFor({ ...V1, strategy: 'single' }).scanReport(REPORT);
+        await vi.advanceTimersByTimeAsync(125_000);
         const first = await pending;
-        expect(!first.ok && first.error.kind).toBe('OnDeviceStuck');
+        expect(!first.ok && first.error).toMatchObject({
+          kind: 'OnDeviceStuck',
+          recoverable: false,
+        });
 
         const calls = sdk.generateContent.mock.calls.length;
-        const second = await servicesFor({ ...variant, strategy: 'grouped2' }).scanReport(REPORT);
-        expect(!second.ok && second.error.kind).toBe('OnDeviceStuck');
+        const second = await servicesFor({ ...V1, strategy: 'grouped2' }).scanReport(REPORT);
+        expect(!second.ok && second.error).toMatchObject({ recoverable: false });
         expect(sdk.generateContent.mock.calls.length).toBe(calls);
       } finally {
         vi.useRealTimers();

@@ -1,6 +1,6 @@
-import { MODEL_CHUNK_CHARS } from '../ai/prompts/identityScan.v1';
-import { DEFAULT_PROMPT_MODULE, getPromptModule } from '../ai/prompts/promptRegistry';
-import { STRATEGIES, type StrategyName } from '../ai/prompts/strategies';
+import { getPromptModule } from '../ai/prompts/promptRegistry';
+import { SHIPPED_SCAN_PIPELINE, type ScanPipelineSpec } from '../ai/prompts/scanPipelines';
+import { STRATEGIES } from '../ai/prompts/strategies';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import type { PrivacyLedger, PrivacyLedgerView } from '../application/ports/PrivacyLedger';
@@ -10,7 +10,10 @@ import {
   type ApproveReportInput,
 } from '../application/usecases/approveReport';
 import { scanReport, type ScanReportResult } from '../application/usecases/scanReport';
-import type { PostFilterName } from '../domain/detection/postFilters';
+import {
+  scanReportRulesOnly,
+  type RulesOnlyScanResult,
+} from '../application/usecases/scanReportRulesOnly';
 import type { RawText } from '../domain/text/brandedText';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
@@ -22,6 +25,7 @@ import type { AppEnv } from './env';
 import {
   ledgerView,
   withApprovalLedger,
+  withRulesOnlyLedger,
   withScanLedger,
   type ScannerKind,
 } from './ledgerDecorators';
@@ -44,30 +48,27 @@ export interface Services {
     /** Polled before each chunk; when true the scan stops with a Cancelled error. */
     isCancelled?: () => boolean,
   ) => Promise<Result<ScanReportResult, AppError>>;
+  /**
+   * "Continue with basic checks" after a terminal on-device stall (§G.2): pattern rules only,
+   * never a model; recorded in the privacy ledger with source `rules`.
+   */
+  readonly scanRulesOnly: (text: RawText) => RulesOnlyScanResult;
   /** The only way features create SanitizedText (the reporter's explicit approval). */
   readonly approveReport: (input: ApproveReportInput) => Result<ApprovedReport, AppError>;
   /** Session-only record of what happened to the text (read-only; the root records). */
   readonly privacyLedger: PrivacyLedgerView;
 }
 
-/** Shipped prompt strategy (design §1: switch to grouped2 only if eval justifies it). */
-const DEFAULT_STRATEGY: StrategyName = 'single';
-
 /** What defines a scanner pipeline; the eval variant registry satisfies it structurally. */
-export interface ScanVariantSpec {
-  readonly promptVersion: string;
-  readonly strategy: StrategyName;
-  readonly chunkChars: number;
-  /** Deterministic filters applied to the model findings (src/domain/detection/postFilters). */
-  readonly postFilters: readonly PostFilterName[];
-}
+export type ScanVariantSpec = ScanPipelineSpec;
 
-const DEFAULT_VARIANT: ScanVariantSpec = {
-  promptVersion: DEFAULT_PROMPT_MODULE.version,
-  strategy: DEFAULT_STRATEGY,
-  chunkChars: MODEL_CHUNK_CHARS,
-  postFilters: [],
-};
+/**
+ * The product default: v2-single2 (identityScan.v2, strategy single2, the shipped chunk size,
+ * post-filters protectedMentions + thirdPerson), identical to the `v2-single2` eval variant.
+ * docs/design/fase2-gate-iteration.md §G.1: a default BY DOMINANCE on the dev matrix, NOT a
+ * gate pass; the final default is whichever variant goes to the test split.
+ */
+const DEFAULT_VARIANT: ScanVariantSpec = SHIPPED_SCAN_PIPELINE;
 
 export interface ServiceOptions {
   /** Scan variant; only the developer evaluation page overrides the default. */
@@ -113,6 +114,7 @@ function buildServices(ai: AiServices, variant: ScanVariantSpec, context: Ledger
   return {
     ...ai,
     scanReport: withScanLedger(scan, ledger, systemClock, kind),
+    scanRulesOnly: withRulesOnlyLedger(scanReportRulesOnly, ledger, systemClock),
     approveReport: withApprovalLedger(approve, ledger),
     privacyLedger: ledgerView(ledger),
   };

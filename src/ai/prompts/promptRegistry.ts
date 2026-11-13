@@ -32,5 +32,8 @@ export function getPromptModule(version: string): PromptModule | undefined {
   return PROMPT_MODULES.find((m) => m.version === version);
 }
 
-/** The shipped prompt version until the gate picks another. */
-export const DEFAULT_PROMPT_MODULE: PromptModule = V1;
+/**
+ * The prompt version of the shipped pipeline (SHIPPED_SCAN_PIPELINE in scanPipelines.ts):
+ * v2 since docs/design/fase2-gate-iteration.md §G.1, a default by dominance, not a gate pass.
+ */
+export const DEFAULT_PROMPT_MODULE: PromptModule = V2;

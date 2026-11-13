@@ -51,6 +51,28 @@ export function withScanLedger(
   };
 }
 
+/**
+ * Records one RAW identityScan entry with source `rules` per basic-checks scan (§G.2): only the
+ * pattern rules ran on this device, no model. Never marked demo: the rules are the real ones.
+ */
+export function withRulesOnlyLedger(
+  scan: Services['scanRulesOnly'],
+  ledger: PrivacyLedger,
+  clock: Clock,
+): Services['scanRulesOnly'] {
+  return (text) => {
+    const result = scan(text);
+    ledger.record({
+      task: 'identityScan',
+      source: 'rules',
+      dataClass: 'RAW',
+      demo: false,
+      at: clock.now(),
+    });
+    return result;
+  };
+}
+
 /** Records one SANITIZED approve entry per successful approval (plain code on this device). */
 export function withApprovalLedger(
   approve: Services['approveReport'],

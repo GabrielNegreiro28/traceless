@@ -1,20 +1,15 @@
 import {
-  getAI,
   getGenerativeModel,
-  GoogleAIBackend,
   InferenceSource,
   type AI,
   type GenerativeModel,
+  type LanguageModelCreateOptions,
 } from 'firebase/ai';
-import { getApps, initializeApp } from 'firebase/app';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { STRATEGIES } from '../../ai/prompts/identityScan.v1';
-import { DEFAULT_PROMPT_MODULE } from '../../ai/prompts/promptRegistry';
-import { toRawText } from '../../domain/text/brandedText';
-import { identityScanModelSpec } from './adapters/identityScanModelSpec';
 import { createDeviceCapability } from './deviceCapability';
 import { createOnDeviceModel, ON_DEVICE_ONLY_BASE_URL, onDeviceModelConfig } from './modelFactory';
 import { createOnDevicePromptRunner } from './onDevicePromptRunner';
+import { freshAi, MODEL_JSON, REPORT, SENTINEL, SPEC } from './sdkContract.testKit';
 import { createSerialQueue } from './serialQueue';
 import { createStuckTracker } from './stuckTracker';
 
@@ -36,10 +31,6 @@ vi.mock('firebase/ai', async () => {
   return (await import(/* @vite-ignore */ browserBuild)) as Record<string, unknown>;
 });
 
-const SENTINEL = 'SECRET-REPORT';
-const REPORT = toRawText(`I am the only night nurse on ward 7. ${SENTINEL}`);
-const MODEL_JSON = '{"findings":[]}';
-const SPEC = identityScanModelSpec(STRATEGIES.single[0], DEFAULT_PROMPT_MODULE);
 interface RecordedFetch {
   readonly url: string;
   readonly carriesSentinel: boolean;
@@ -55,23 +46,13 @@ const fetchSpy = vi.fn((input: RequestInfo | URL, init?: RequestInit): Promise<R
   return Promise.reject(new TypeError('network blocked by the SDK contract test'));
 });
 
-/**
- * A fresh Firebase app and AI service per test: getAI() returns the same instance for the
- * same app, and createOnDeviceModel memoizes per AI instance, so a shared app would reuse
- * a model whose adapter captured an earlier test's LanguageModel stub.
- * Dummy config, no App Check, no Auth: nothing here can reach a real project.
- */
-function freshAi(): AI {
-  const name = `sdk-contract-${String(getApps().length)}`;
-  const app = initializeApp({ apiKey: 'k', projectId: 'p', appId: '1:0:web:0' }, name);
-  return getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
-}
-
 function fakePromptApi(availability: () => Promise<string>) {
   const session = { prompt: vi.fn(() => Promise.resolve(MODEL_JSON)), destroy: vi.fn() };
   const languageModel = {
     availability: vi.fn(availability),
-    create: vi.fn(() => Promise.resolve(session)),
+    create: vi.fn<(options?: LanguageModelCreateOptions) => Promise<typeof session>>(() =>
+      Promise.resolve(session),
+    ),
   };
   vi.stubGlobal('LanguageModel', languageModel);
   return { languageModel, session };
@@ -130,6 +111,23 @@ describe('SDK contract: fail-closed on-device layers vs the real @firebase/ai br
       expect(fetchSpy).not.toHaveBeenCalled();
     });
 
+    it("every LanguageModel.create() gets the model's abort signal; abandon() aborts it", async () => {
+      const { languageModel } = fakePromptApi(() => Promise.resolve('available'));
+      const model = createOnDeviceModel(ai, SPEC);
+      if (!model.ok) throw new Error('expected a model');
+
+      await model.value.generateContent(REPORT);
+      await model.value.generateContent(REPORT);
+
+      const signals = languageModel.create.mock.calls.map(([options]) => options?.signal);
+      expect(signals).toHaveLength(2);
+      expect(signals[0]).toBeInstanceOf(AbortSignal);
+      expect(signals[1]).toBe(signals[0]);
+      expect(signals[0]?.aborted).toBe(false);
+      model.value.abandon();
+      expect(signals[0]?.aborted).toBe(true);
+    });
+
     it('the full runner (all three layers) returns the on-device text with zero requests', async () => {
       fakePromptApi(() => Promise.resolve('available'));
       const runner = createOnDevicePromptRunner({
@@ -153,7 +151,7 @@ describe('SDK contract: fail-closed on-device layers vs the real @firebase/ai br
     beforeEach(() => {
       expect('LanguageModel' in globalThis).toBe(false);
       // Exactly what createOnDeviceModel would pass, minus its LanguageModel guard.
-      const { params, requestOptions } = onDeviceModelConfig(SPEC);
+      const { params, requestOptions } = onDeviceModelConfig(SPEC, new AbortController().signal);
       rawModel = getGenerativeModel(ai, params, requestOptions);
     });
 

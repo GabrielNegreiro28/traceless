@@ -16,7 +16,7 @@ On a browser without the Prompt API, `ONLY_ON_DEVICE` would **silently send raw 
 3. **Post-check:** the runner discards any result whose `inferenceSource !== InferenceSource.ON_DEVICE` (runtime value `'on_device'`, not `'ON_DEVICE'`).
 
 Also: with availability `downloadable`, the SDK still calls `LanguageModel.create()` (~l.986-997) — the runner must require `available` first; download happens only via `initializeDeviceModel` from a click.
-Concurrency: the SDK creates a new Chrome session per `generateContent` and destroys the previous one (~l.1160-1178) → all on-device runners share **one injected serial queue**. On-device inference can't be aborted via the SDK; a timeout must still await the underlying promise before releasing the queue.
+Concurrency: the SDK creates a new Chrome session per `generateContent` and destroys the previous one (~l.1160-1178) → all on-device runners share **one injected serial queue**. Abort: each memoized on-device model owns an AbortController whose signal travels in `onDeviceParams.createOptions.signal` to every `LanguageModel.create()`; aborting it destroys the Chrome session (see §G.2 of `fase2-gate-iteration.md`). A timeout still awaits the underlying promise before releasing the queue.
 
 ## 1. Prompt (`src/ai/prompts/identityScan.v1.ts`)
 
@@ -93,7 +93,7 @@ User prompt: `Report:\n"""\n{chunk}\n"""`.
 - **SDK contract test** (`src/infrastructure/ai/sdkContract.test.ts`): runs the real browser build of `@firebase/ai` (`dist/esm/index.esm.js`; Vitest otherwise resolves the node build, which has no Chrome adapter) with `fetch` spied and a sentinel report string. It proves: Prompt API available → `on_device`, zero network requests; Prompt API missing with layer 1 bypassed → requests only reach `on-device-only.invalid` (removing layer 2 makes it fail); Prompt API present but unusable → zero requests. A firebase upgrade that changes this behaviour fails CI.
 - **Narrow model surface:** `createOnDeviceModel` returns a runtime wrapper exposing only `generateContent(prompt)` and `initializeDeviceModel`. Per-call request options, which would override the dead `baseUrl`, streaming, chat and `countTokens` are unreachable.
 - **Dead `baseUrl` keyed on mode** (`only_on_device`), not on data class.
-- **Hung inference:** a deadline expiry returns `OnDeviceStuck`. While the timed-out inference is still running, new runs fail fast with the same error, and the flag clears when it settles.
+- **Hung inference (updated 2026-11-13, gate-iteration §G.2):** on the 120 s deadline the runner abandons the model (abort + cache eviction; the next call rebuilds through the same guarded factory), waits up to 5 s for the work to settle, and returns `OnDeviceStuck { recoverable }`. Two recoveries per page load; a third stall, or work unsettled after the grace, is terminal and sticky (fail fast until reload). Calls during the grace window currently get the terminal error (known limitation).
 - **Errors:** Prompt API `QuotaExceededError` → `InputTooLong`.
 - **CSP test:** `connect-src` must contain no wildcards or bare schemes, so `*.invalid` stays blocked in production as a fourth barrier.
 - **Assumption:** the app is browser-only. In the node build of `@firebase/ai`, only layer 2 would protect.

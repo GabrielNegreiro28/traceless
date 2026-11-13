@@ -12,6 +12,7 @@ import type {
   EvaluateDetectionParams,
   ReportRunResult,
   SingleRunResult,
+  StallCounts,
   ViewResult,
 } from './evaluateDetection.types';
 import { evaluateReport, type ViewName } from './evaluateReport';
@@ -26,6 +27,7 @@ export type {
   EvaluateDetectionParams,
   ReportRunResult,
   SingleRunResult,
+  StallCounts,
   VariantInfo,
   ViewResult,
 } from './evaluateDetection.types';
@@ -48,14 +50,20 @@ function selectReports(dataset: Dataset, split: EvalSplit): Result<ResolvedRepor
   return ok(resolved);
 }
 
+/**
+ * One run over the reports, strictly in order. A stalled report is a scan failure like any
+ * other and the run goes on with the next report (§G.2); `stalls` counts how it ended.
+ */
 async function runOnce(
   params: EvaluateDetectionParams,
   reports: readonly ResolvedReport[],
   run: number,
+  stalls: Record<keyof StallCounts, number>,
 ): Promise<Readonly<Record<ViewName, SingleRunResult>>> {
   const results: Record<ViewName, ReportRunResult[]> = { raw: [], filtered: [] };
   for (const report of reports) {
     const evaluated = await evaluateReport(report, params.scan);
+    if (evaluated.stall !== null) stalls[evaluated.stall] += 1;
     results.raw.push(evaluated.raw);
     results.filtered.push(evaluated.filtered);
     params.onProgress?.({
@@ -115,8 +123,9 @@ export async function evaluateDetection(
   const startedAt = params.clock.now();
   const rawRuns: SingleRunResult[] = [];
   const filteredRuns: SingleRunResult[] = [];
+  const stalls = { recovered: 0, terminal: 0 };
   for (let run = 1; run <= params.runs; run++) {
-    const once = await runOnce(params, reports.value, run);
+    const once = await runOnce(params, reports.value, run, stalls);
     rawRuns.push(once.raw);
     filteredRuns.push(once.filtered);
   }
@@ -132,5 +141,6 @@ export async function evaluateDetection(
     startedAt,
     ...filtered,
     views: { raw: toView(rawRuns, count, params.split), filtered },
+    stalls,
   });
 }

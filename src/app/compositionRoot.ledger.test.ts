@@ -61,6 +61,19 @@ describe('createServices: privacy ledger wiring (fake AI mode)', () => {
     for (const part of substrings(REPORT, 5)) expect(serialized).not.toContain(part);
   });
 
+  it('records basic checks as pattern rules only, without calling the scanner', () => {
+    const fakeScanner = new FakeIdentityScanner();
+    const services = createServices(FAKE_TEST_ENV, { fakeScanner });
+    const { findings } = services.scanRulesOnly(REPORT);
+    expect(findings.map((f) => [f.quote, f.origin])).toEqual([['q.wex@harbor.example', 'RULE']]);
+    expect(fakeScanner.chunks).toEqual([]);
+    expect(services.privacyLedger.entries()).toMatchObject([
+      { task: 'identityScan', source: 'rules', dataClass: 'RAW', demo: false },
+    ]);
+    const serialized = JSON.stringify(services.privacyLedger.entries());
+    for (const part of substrings(REPORT, 5)) expect(serialized).not.toContain(part);
+  });
+
   it('hands features only the read side of the ledger', () => {
     const services = createServices(FAKE_TEST_ENV);
     expect('record' in services.privacyLedger).toBe(false);

@@ -144,10 +144,12 @@ describe('createOnDeviceModel', () => {
     it('builds exactly the config it passes to getGenerativeModel', () => {
       createOnDeviceModel(fakeAi(), spec());
       const [, params, requestOptions] = lastCall();
-      const config = onDeviceModelConfig(spec());
+      const signal = params.onDeviceParams?.createOptions?.signal;
+      if (signal === undefined) throw new Error('expected an abort signal');
+      const config = onDeviceModelConfig(spec(), signal);
       expect(params).toEqual(config.params);
       expect(requestOptions).toEqual(config.requestOptions);
-      expect(onDeviceModelConfig(spec()).requestOptions).not.toBe(config.requestOptions);
+      expect(onDeviceModelConfig(spec(), signal).requestOptions).not.toBe(config.requestOptions);
     });
 
     it('maps an SDK exception to an AppError and does not memoize the failure', () => {
@@ -174,11 +176,12 @@ describe('createOnDeviceModel', () => {
       };
     }
 
-    it('exposes only generateContent and initializeDeviceModel', () => {
+    it('exposes only generateContent, initializeDeviceModel and abandon', () => {
       sdk.getGenerativeModel.mockImplementation(sdkModel);
       const result = createOnDeviceModel(fakeAi(), spec());
       if (!result.ok) throw new Error('expected a model');
       expect(Object.keys(result.value).sort()).toEqual([
+        'abandon',
         'generateContent',
         'initializeDeviceModel',
       ]);

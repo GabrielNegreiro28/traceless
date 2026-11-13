@@ -55,6 +55,7 @@ export const scanning: ScanningState = {
 export const reviewing: ReviewingState = {
   status: 'reviewing',
   text: TEXT,
+  checks: 'full',
   findings: FINDINGS,
   protectedSpans: [],
   decisions: [],

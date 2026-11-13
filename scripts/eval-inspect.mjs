@@ -84,6 +84,10 @@ async function main() {
   const byId = new Map(dataset.reports.map((r) => [r.id, r]));
   const name = result.variant?.id ?? `${result.promptVersion}/${result.strategy}`;
   console.log(`variant: ${name}, split: ${result.split}`);
+  // `stalls` exists since stuck recovery (§G.2); older result files simply lack it.
+  if (result.stalls !== undefined) {
+    console.log(`stalls: ${result.stalls.recovered} recovered, ${result.stalls.terminal} terminal`);
+  }
   const tally = {};
   const violations = new Map();
   for (const run of runsOf(result, args.view)) {

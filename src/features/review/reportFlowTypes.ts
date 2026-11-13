@@ -30,9 +30,17 @@ export interface ScanningState {
   readonly progress: ScanProgress | null;
 }
 
+/**
+ * Which checks produced the findings: `full` = the scan (on-device AI + pattern rules);
+ * `basic` = pattern rules only, after the on-device AI stalled for good (§G.2). The review
+ * must then say that the AI checks did not run.
+ */
+export type ScanChecks = 'full' | 'basic';
+
 export interface ReviewingState {
   readonly status: 'reviewing';
   readonly text: RawText;
+  readonly checks: ScanChecks;
   readonly findings: readonly Finding[];
   /** Where people who are not the reporter are mentioned; shown read-only in the review. */
   readonly protectedSpans: readonly TextSpan[];
@@ -126,6 +134,11 @@ export type FlowEvent =
       readonly protectedSpans?: readonly TextSpan[];
     }
   | { readonly type: 'SCAN_FAILED'; readonly scanId: string; readonly error: AppError }
+  /**
+   * Only accepted from a terminal OnDeviceStuck error over the composer: the pattern-rule
+   * findings of "Continue with basic checks" open the review with `checks: 'basic'`.
+   */
+  | { readonly type: 'BASIC_CHECKS_DONE'; readonly findings: readonly Finding[] }
   /** Also applied to findings with the identical quote (see propagateDecision). */
   | { readonly type: 'DECIDE'; readonly findingId: string; readonly choice: ReviewChoice }
   | { readonly type: 'UNDO_DECISION'; readonly findingId: string }

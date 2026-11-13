@@ -20,8 +20,13 @@ export type AppError =
   | BaseError<'PermissionDenied'>
   /** A raw-text inference did not run on this device; its result was discarded. */
   | BaseError<'PrivacyViolation'>
-  /** A timed-out on-device inference is still running; new calls fail fast until it ends. */
-  | BaseError<'OnDeviceStuck'>
+  /**
+   * An on-device inference outlived its deadline (docs/design/fase2-gate-iteration.md §G.2).
+   * `recoverable`: its model was abandoned and the work settled, so trying again runs on a
+   * fresh model; false once the page load's recoveries are spent or the abandoned work never
+   * settled (then every later call fails fast until the page is reloaded).
+   */
+  | (BaseError<'OnDeviceStuck'> & { readonly recoverable: boolean })
   /** The input is larger than the on-device model accepts (Prompt API QuotaExceededError). */
   | BaseError<'InputTooLong'>
   | (BaseError<'Misconfigured'> & { readonly missing: readonly string[] })

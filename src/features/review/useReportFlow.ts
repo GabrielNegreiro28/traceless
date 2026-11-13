@@ -17,8 +17,9 @@ import {
 } from './reportFlowMachine';
 import { useApproval } from './useApproval';
 import { useOnDeviceScan } from './useOnDeviceScan';
+import { useStallRecovery, type StallActions } from './useStallRecovery';
 
-export interface ReportFlow {
+export interface ReportFlow extends StallActions {
   readonly state: FlowState;
   /** True while the device is checked just after "Check my report" (before scanning). */
   readonly checking: boolean;
@@ -105,8 +106,8 @@ export function useReportFlow(): ReportFlow {
     [nextScanId],
   );
 
-  const startScan = useCallback(() => {
-    if (checking || latest.current.status !== 'composing') return;
+  /** Checks the device, then routes from the composer (see `route`). */
+  const checkAndRoute = useCallback(() => {
     setChecking(true);
     void (async () => {
       try {
@@ -116,7 +117,14 @@ export function useReportFlow(): ReportFlow {
         if (mounted.current) setChecking(false);
       }
     })();
-  }, [checking, deviceCapability, route]);
+  }, [deviceCapability, route]);
+
+  const startScan = useCallback(() => {
+    if (checking || latest.current.status !== 'composing') return;
+    checkAndRoute();
+  }, [checking, checkAndRoute]);
+
+  const stall = useStallRecovery(latest, dispatch, checkAndRoute);
 
   /** Invalidates a running download's callbacks (the download itself continues in Chrome). */
   const abandonPrepare = useCallback(() => {
@@ -181,5 +189,6 @@ export function useReportFlow(): ReportFlow {
     backToEdit,
     backToReview,
     reset,
+    ...stall,
   };
 }

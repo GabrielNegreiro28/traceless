@@ -22,6 +22,7 @@ export function outboxOf(choices: readonly (readonly [Finding, ReviewChoice])[])
   let state: FlowState = {
     status: 'reviewing',
     text: OUTBOX_TEXT,
+    checks: 'full',
     findings: OUTBOX_FINDINGS,
     protectedSpans: [],
     decisions: [],
