@@ -1,0 +1,36 @@
+/*
+ * Design tokens for Traceless.
+ * Raw values live here as CSS custom properties; Tailwind utilities read them
+ * through the @theme block in src/index.css. Dark mode follows the OS setting.
+ */
+:root {
+  --tl-color-bg: #f7f7f5;
+  --tl-color-surface: #ffffff;
+  --tl-color-text: #1b1d1f;
+  --tl-color-text-muted: #5b6168;
+  --tl-color-border: #e2e3e0;
+  --tl-color-accent: #2f6b55;
+  --tl-color-accent-contrast: #ffffff;
+  --tl-color-danger: #b3261e;
+  --tl-color-warning: #8a5a00;
+
+  --tl-radius-sm: 0.375rem;
+  --tl-radius-md: 0.75rem;
+
+  --tl-font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tl-color-bg: #121416;
+    --tl-color-surface: #1b1e21;
+    --tl-color-text: #ecedee;
+    --tl-color-text-muted: #a3a9b0;
+    --tl-color-border: #2c3035;
+    --tl-color-accent: #7cc4a6;
+    --tl-color-accent-contrast: #0d1f18;
+    --tl-color-danger: #f2b8b5;
+    --tl-color-warning: #f0c36b;
+  }
+}

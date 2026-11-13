@@ -1,0 +1,8 @@
+// Global test setup: DOM matchers for Testing Library and per-test cleanup.
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+});

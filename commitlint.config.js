@@ -1,0 +1,4 @@
+// Conventional Commits (feat:, fix:, chore:, docs:, test:, refactor:, ...).
+export default {
+  extends: ['@commitlint/config-conventional'],
+};

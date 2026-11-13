@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build and test output
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+*.tsbuildinfo
+
+# Local environment (never commit: may contain App Check debug tokens)
+.env.local
+.env.*.local
+
+# Logs
+*.log
+firebase-debug*.log
+firestore-debug.log
+ui-debug.log
+
+# Firebase
+.firebase/

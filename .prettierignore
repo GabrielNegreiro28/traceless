@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+package-lock.json
+.firebase
+playwright-report
+test-results
+.husky/_
+# Context and planning documents are maintained by hand.
+HACKATHON.md
+PLANO.md
+CLAUDE.md
+docs/progress
+.claude
+LICENSE

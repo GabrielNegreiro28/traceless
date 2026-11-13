@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+@import './styles/tokens.css';
+
+/* Expose the design tokens as Tailwind utilities (bg-bg, text-muted, ...). */
+@theme inline {
+  --color-bg: var(--tl-color-bg);
+  --color-surface: var(--tl-color-surface);
+  --color-text: var(--tl-color-text);
+  --color-muted: var(--tl-color-text-muted);
+  --color-border: var(--tl-color-border);
+  --color-accent: var(--tl-color-accent);
+  --color-accent-contrast: var(--tl-color-accent-contrast);
+  --color-danger: var(--tl-color-danger);
+  --color-warning: var(--tl-color-warning);
+  --radius-sm: var(--tl-radius-sm);
+  --radius-md: var(--tl-radius-md);
+  --font-sans: var(--tl-font-sans);
+}
+
+html,
+body {
+  background-color: var(--tl-color-bg);
+  color: var(--tl-color-text);
+  font-family: var(--tl-font-sans);
+}
