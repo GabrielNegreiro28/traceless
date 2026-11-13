@@ -97,6 +97,12 @@ function toFinding(text: string, span: TextSpan, source: ModelFinding): Finding 
   };
 }
 
+export interface LocatedModelFindings {
+  readonly findings: Finding[];
+  /** Raw model findings whose quote resolved to zero spans (hallucinated or too short). */
+  readonly unlocated: number;
+}
+
 /**
  * Turns model quotes into located findings.
  *
@@ -106,18 +112,29 @@ function toFinding(text: string, span: TextSpan, source: ModelFinding): Finding 
  * neighbouring letter/digit (`ward` does not match inside `toward`); the check applies
  * on a side only when the quote itself starts/ends with a letter or digit. Quotes with
  * fewer than 2 non-space characters, and quotes absent from the text (hallucinations),
- * are dropped. Every occurrence becomes its own finding; duplicate ids collapse.
+ * are dropped and counted in `unlocated`. Every occurrence becomes its own finding;
+ * duplicate ids collapse.
  */
-export function locateModelFindings(text: RawText, findings: ModelFinding[]): Finding[] {
+export function locateModelFindingsWithStats(
+  text: RawText,
+  findings: ModelFinding[],
+): LocatedModelFindings {
   const normalized = normalizeWithMap(text);
   const byId = new Map<string, Finding>();
+  let unlocated = 0;
   for (const found of findings) {
     const needle = toNeedle(found.quote);
-    if (needle === null) continue;
-    for (const span of tolerantSpans(text, normalized, needle)) {
+    const spans = needle === null ? [] : tolerantSpans(text, normalized, needle);
+    if (spans.length === 0) unlocated += 1;
+    for (const span of spans) {
       const finding = toFinding(text, span, found);
       if (!byId.has(finding.id)) byId.set(finding.id, finding);
     }
   }
-  return [...byId.values()];
+  return { findings: [...byId.values()], unlocated };
+}
+
+/** Located findings only; see {@link locateModelFindingsWithStats}. */
+export function locateModelFindings(text: RawText, findings: ModelFinding[]): Finding[] {
+  return locateModelFindingsWithStats(text, findings).findings;
 }

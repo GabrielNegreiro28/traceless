@@ -40,3 +40,10 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 ## 2026-11-13 · App Check enforced no AI Logic com replay protection
 - O participante aplicou o enforce no Console com **proteção contra repetição** ligada. Verificado: sem token → 401; token normal → 401; token limited-use → 200; reuso do mesmo token → 401.
 - **Consequência obrigatória para a Fase 2:** `getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true })` deixa de ser só recomendação: sem isso, toda chamada à nuvem falha com 401. Cada chamada consome um token novo (uma troca extra com o App Check por chamada); aceitável no volume do app.
+
+## 2026-11-13 · Paralelismo excepcional: dataset de avaliação
+- **Desvio do PROTOCOL §4.5 (um implementer por vez):** a tarefa 4 (dataset `eval/datasets/reports.v1.json`) roda em paralelo à tarefa 3 (métricas, código), porque é só conteúdo, restrita a `eval/datasets/`, sem rodar CI e sem tocar em `src/`. Motivo: cumprir a meta de avaliação no Chrome em 14/11. O teste de validação do dataset entra depois, junto com a tarefa 5.
+
+## 2026-11-13 · Refinamento do portão da Fase 2 (revisão adversarial das métricas)
+- **Problema:** com as métricas iniciais, um modelo que falha muito (scans excluídos dos denominadores) ou que cita frases inteiras (achados gigantes) passaria no portão.
+- **Decisão (manager, a partir da recomendação do reviewer opus; Fable revisa no portão):** veredito sobre taxas **agregadas (pooled) nas 3 execuções**, com média/mín/máx e a pior execução exibidas (`unstable` se a pior estourar). Critérios no split de teste: `strictRecallAll` ≥ 0,70 (achados gigantes não contam; scans que falharam contam como perdidos); ACCUSED ≤ 0,05; INCIDENT_FACT ≤ 0,10; saída inválida ≤ 0,05; **falha de scan ≤ 0,05**; **achados gigantes ≤ 0,25**. Atribuição de origem (regra/modelo) calculada antes da junção dos achados.

@@ -1,6 +1,6 @@
 import { mergeFindings } from '../../domain/detection/findingMerger';
 import { detectByRules } from '../../domain/detection/ruleDetector';
-import { locateModelFindings } from '../../domain/detection/spanLocator';
+import { locateModelFindingsWithStats } from '../../domain/detection/spanLocator';
 import { chunkText, shiftFindings, type TextChunk } from '../../domain/detection/textChunker';
 import type { Finding } from '../../domain/detection/types';
 import { toRawText, type RawText } from '../../domain/text/brandedText';
@@ -31,12 +31,16 @@ export interface ScanStats {
   readonly chunks: number;
   readonly rawModelFindings: number;
   readonly locatedModelFindings: number;
+  /** Raw model findings whose quote matched nowhere in the text (hallucinated or too short). */
+  readonly unlocatedModelFindings: number;
   readonly retries: number;
   readonly durationMs: number;
 }
 
 export interface ScanReportResult {
   readonly findings: Finding[];
+  /** Located model findings before merging with the rule findings (for evaluation). */
+  readonly modelFindings: Finding[];
   /** IN_CLOUD if any chunk ran in the cloud; ON_DEVICE otherwise (also with no chunks). */
   readonly source: InferenceSourceKind;
   readonly stats: ScanStats;
@@ -46,6 +50,7 @@ interface ModelPass {
   readonly findings: Finding[];
   readonly source: InferenceSourceKind;
   readonly rawModelFindings: number;
+  readonly unlocated: number;
   readonly retries: number;
 }
 
@@ -68,8 +73,15 @@ async function scanChunk(
   const scanned = await scanner.scan(rawChunk);
   if (!scanned.ok) return scanned;
   const { findings, source, retries } = scanned.value;
-  const located = shiftFindings(locateModelFindings(rawChunk, findings), chunk.offset);
-  return ok({ findings: located, source, rawModelFindings: findings.length, retries });
+  const found = locateModelFindingsWithStats(rawChunk, findings);
+  const located = shiftFindings(found.findings, chunk.offset);
+  return ok({
+    findings: located,
+    source,
+    rawModelFindings: findings.length,
+    unlocated: found.unlocated,
+    retries,
+  });
 }
 
 /**
@@ -97,6 +109,7 @@ function combinePasses(passes: readonly ModelPass[]): ModelPass {
     findings: passes.flatMap((p) => p.findings),
     source: passes.some((p) => p.source === 'IN_CLOUD') ? 'IN_CLOUD' : 'ON_DEVICE',
     rawModelFindings: passes.reduce((sum, p) => sum + p.rawModelFindings, 0),
+    unlocated: passes.reduce((sum, p) => sum + p.unlocated, 0),
     retries: passes.reduce((sum, p) => sum + p.retries, 0),
   };
 }
@@ -126,14 +139,16 @@ export async function scanReport(
     chunks,
   );
   if (!pass.ok) return pass;
-  const { findings, source, rawModelFindings, retries } = pass.value;
+  const { findings, source, rawModelFindings, unlocated, retries } = pass.value;
   return ok({
     findings: mergeFindings([...ruleFindings, ...findings]),
+    modelFindings: findings,
     source,
     stats: {
       chunks: chunks.length,
       rawModelFindings,
       locatedModelFindings: findings.length,
+      unlocatedModelFindings: unlocated,
       retries,
       durationMs: deps.clock.now() - startedAt,
     },

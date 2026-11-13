@@ -75,9 +75,35 @@ describe('scanReport', () => {
       chunks: 3,
       rawModelFindings: 4,
       locatedModelFindings: 3,
+      unlocatedModelFindings: 1,
       retries: 0,
       durationMs: 25,
     });
+  });
+
+  it('counts unlocated quotes per raw finding, not per located span', async () => {
+    const text = toRawText('desk 14 here. desk 14 again. desk 14 once more.');
+    const scanner = new FakeIdentityScanner({
+      steps: [
+        {
+          findings: [
+            mf('desk 14', 'LOCATION'),
+            mf('totally invented words', 'LOCATION'),
+            mf('x', 'LOCATION'),
+          ],
+        },
+      ],
+    });
+    const result = await scanReport(text, {
+      scanner,
+      clock: new FakeClock(0, 5),
+      chunkChars: 3000,
+    });
+    if (!result.ok) throw new Error(result.error.kind);
+    expect(result.value.stats.rawModelFindings).toBe(3);
+    expect(result.value.stats.locatedModelFindings).toBe(3);
+    expect(result.value.stats.unlocatedModelFindings).toBe(2);
+    expect(result.value.modelFindings).toHaveLength(3);
   });
 
   it('scans chunks strictly one after another and reports progress', async () => {
@@ -164,11 +190,13 @@ describe('scanReport', () => {
       ok: true,
       value: {
         findings: [],
+        modelFindings: [],
         source: 'ON_DEVICE',
         stats: {
           chunks: 0,
           rawModelFindings: 0,
           locatedModelFindings: 0,
+          unlocatedModelFindings: 0,
           retries: 0,
           durationMs: 25,
         },

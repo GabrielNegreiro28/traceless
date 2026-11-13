@@ -19,7 +19,8 @@ _Atualizado pelo manager a cada iteração._
 
 ## Em andamento
 - **Tarefa 2 commitada** (`9f50798`, 416 testes): camada on-device fail-closed. Revisão adversarial (opus) com sonda no SDK real: nenhum caminho do texto bruto para a rede em produção; a CSP também bloqueia `*.invalid`.
-- Implementer (opus): endurecimento pedido pela revisão — teste de contrato contra o SDK real (fetch espionado), `OnDeviceStuck` para inferência travada, tipo de retorno estreito do modelFactory, baseUrl morto por modo, CSP sem curingas, `QuotaExceededError`.
+- **Endurecimento commitado** (`94b7cfe`, 447 testes; teste de contrato com o SDK real verificado por mutações).
+- Em paralelo: tarefa 3 (sonnet, métricas + `evaluateDetection`) e tarefa 4 (opus, dataset de 24 relatos — só conteúdo em `eval/datasets/`).
 
 ## Próximos passos
 1. Revisar/commitar o endurecimento.

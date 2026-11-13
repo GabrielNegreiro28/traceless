@@ -1,0 +1,518 @@
+{
+  "version": "reports.v1",
+  "reports": [
+    {
+      "id": "r01",
+      "sector": "hospital",
+      "split": "dev",
+      "text": "I am writing about the surgical supply room on the fourth floor. I'm the only sterile processing tech on the weekend overnight, so I see everything that comes in and out between midnight and six. For about two months the charge nurse, Ms. Okafor, has been signing out boxes of laparoscopic staplers that never reach an operating room. The inventory sheets show 31 staplers used last month, but the OR logs only list 9 procedures that needed them. Each stapler costs the hospital around $400. I saw her load two boxes into her car in the staff garage after her shift. I've worked here for 14 years and I have never seen numbers this far off. Please look at the supply cabinet badge logs.",
+      "gold": [
+        { "quote": "the only sterile processing tech", "category": "ROLE_UNIQUE" },
+        { "quote": "on the weekend overnight", "category": "SCHEDULE" },
+        { "quote": "between midnight and six", "category": "SCHEDULE" },
+        { "quote": "I've worked here for 14 years", "category": "PERSONAL_TRAIT" }
+      ],
+      "mustNotFlag": [
+        { "quote": "the charge nurse, Ms. Okafor", "kind": "ACCUSED" },
+        { "quote": "31 staplers used last month", "kind": "INCIDENT_FACT" },
+        { "quote": "only list 9 procedures that needed them", "kind": "INCIDENT_FACT" },
+        { "quote": "costs the hospital around $400", "kind": "INCIDENT_FACT" },
+        { "quote": "load two boxes into her car", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r02",
+      "sector": "warehouse",
+      "split": "dev",
+      "text": "Our shift lead on nights, Brent Kowalczyk, has been clocking in workers who are not in the building. He always leaves the night shift early, around 3 a.m., but his timecard says 6. At least four people on his crew get paid for full shifts they never work, and I think he takes a cut. I pick on the mezzanine level, right above the returns cage, so I can see the time clock from where I stand. Last Thursday I counted only eleven pickers on the floor while the attendance board said seventeen. I have been here since right after I finished my GED and I need this job, but this is wrong. My supervisor told me to keep my head down.\n\nJorge M., picker",
+      "gold": [
+        { "quote": "I pick on the mezzanine level", "category": "LOCATION" },
+        { "quote": "right above the returns cage", "category": "LOCATION" },
+        { "quote": "since right after I finished my GED", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "Jorge M., picker", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "Our shift lead on nights", "kind": "ACCUSED" },
+        { "quote": "Brent Kowalczyk", "kind": "ACCUSED" },
+        { "quote": "He always leaves the night shift early", "kind": "ACCUSED" },
+        { "quote": "his timecard says 6", "kind": "INCIDENT_FACT" },
+        { "quote": "only eleven pickers on the floor", "kind": "INCIDENT_FACT" },
+        { "quote": "the attendance board said seventeen", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r03",
+      "sector": "bank",
+      "split": "dev",
+      "text": "To the Ethics Office: I am submitting this report regarding the commercial lending unit at our downtown branch. Over the last two quarters, the branch manager, Mr. Delacroix-Hunt, has instructed loan officers to backdate appraisal reports so that loans close before the quarter ends. I am one of a team of three underwriters who review these files, and I personally returned six files with appraisal dates that were later than the approval dates. Each time, the files came back approved without changes. The total value of the affected loans is approximately $4.2 million. I raised this with him in my annual review meeting and he told me it was standard practice. I can provide copies of the appraisal cover pages if needed.\n\nEmployee ID: LN-20417",
+      "gold": [
+        { "quote": "our downtown branch", "category": "LOCATION" },
+        { "quote": "one of a team of three underwriters", "category": "TEAM_SIZE" },
+        {
+          "quote": "I raised this with him in my annual review meeting",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        { "quote": "Employee ID: LN-20417", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "the branch manager, Mr. Delacroix-Hunt", "kind": "ACCUSED" },
+        { "quote": "backdate appraisal reports", "kind": "INCIDENT_FACT" },
+        {
+          "quote": "appraisal dates that were later than the approval dates",
+          "kind": "INCIDENT_FACT"
+        },
+        { "quote": "approximately $4.2 million", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r04",
+      "sector": "school",
+      "split": "dev",
+      "text": "Someone in administration at the middle school is changing grades. Over the past semester, the assistant principal has asked teachers to raise failing final grades for athletes before eligibility lists go to the district. At least a dozen students moved from an F to a D-minus after report cards were finalized. The changes were entered under a generic admin login, not under the teachers' own accounts. When one teacher questioned it in a staff meeting, the assistant principal said the decision came from the athletic director, Coach Brannigan. I am reporting this because the students are not getting the help they actually need.",
+      "gold": [],
+      "mustNotFlag": [
+        { "quote": "Someone in administration", "kind": "ACCUSED" },
+        { "quote": "the assistant principal", "kind": "ACCUSED", "occurrence": 1 },
+        { "quote": "raise failing final grades for athletes", "kind": "INCIDENT_FACT" },
+        { "quote": "from an F to a D-minus", "kind": "INCIDENT_FACT" },
+        { "quote": "under a generic admin login", "kind": "INCIDENT_FACT" },
+        { "quote": "one teacher questioned it", "kind": "OTHER_PERSON" },
+        { "quote": "the assistant principal", "kind": "ACCUSED", "occurrence": 2 },
+        { "quote": "the athletic director, Coach Brannigan", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r05",
+      "sector": "construction",
+      "split": "dev",
+      "text": "ok so I dont even know if this goes anywhere but I have to say it. the site super Ray Dunleavy is signing off on concrete pours without the cylinder tests, like the lab guy doesnt even come anymore and Ray just fills in the strength numbers himself, I seen him do it in the trailer. this is a five story building people are going to live in. I am the only Portuguese speaker on the framing crew so I translate for the guys and they told me the same thing, the rebar spacing on level 3 is wrong and nobody fixed it. I come in at 5 every morning to open the gate so I see who is there and who is not, and the inspector has not been on site for weeks but the inspection cards are all signed. please dont tell Ray who said this he will know.",
+      "gold": [
+        { "quote": "I am the only Portuguese speaker", "category": "PERSONAL_TRAIT" },
+        { "quote": "so I translate for the guys", "category": "ROLE_UNIQUE" },
+        { "quote": "I come in at 5 every morning", "category": "SCHEDULE" },
+        { "quote": "to open the gate", "category": "ROLE_UNIQUE" }
+      ],
+      "mustNotFlag": [
+        { "quote": "the site super Ray Dunleavy", "kind": "ACCUSED" },
+        { "quote": "without the cylinder tests", "kind": "INCIDENT_FACT" },
+        { "quote": "the lab guy", "kind": "OTHER_PERSON" },
+        { "quote": "Ray just", "kind": "ACCUSED" },
+        { "quote": "fills in the strength numbers himself", "kind": "INCIDENT_FACT" },
+        { "quote": "the rebar spacing on level 3 is wrong", "kind": "INCIDENT_FACT" },
+        { "quote": "the inspector has not been on site", "kind": "OTHER_PERSON" },
+        { "quote": "the inspection cards are all signed", "kind": "INCIDENT_FACT" },
+        { "quote": "tell Ray who said this", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r06",
+      "sector": "city government",
+      "split": "dev",
+      "text": "Subject: Misuse of road resurfacing funds in the Public Works Department\n\nI am an employee of the city's Public Works Department and I am filing this report because I no longer believe the problem can be fixed internally. I have tried to raise it twice through my chain of command without any result.\n\nBackground. Each year the department receives a state grant for road resurfacing. The grant requires that the money be spent on streets rated 'poor' or 'failing' in the pavement condition survey. Since the start of this fiscal year, the deputy director of operations, Gerald Fairweather, has been directing crews to resurface streets that were rated 'good' in the survey. Almost all of these streets are in the neighborhood where he and two city council members live. At the same time, at least fourteen streets rated 'failing' were moved to next year's list. Residents on those streets who called to complain about potholes were told the repairs were already scheduled, which was not true.\n\nHow I know. I am the only GIS analyst in the department, and I maintain the pavement condition map that the grant reports are generated from. In the spring, I was asked by Mr. Fairweather's assistant, Lorraine Batts, to change the ratings for nine street segments from 'good' to 'poor' in the map before the mid-year report went to the state. I refused and documented the request in an email to my supervisor. Two weeks later I noticed that the ratings had been changed anyway, using a shared administrator account that only the deputy director's office uses.\n\nI also work the Tuesday-to-Saturday schedule, so on Saturdays I am usually the only person in the office on the second floor annex. On three Saturdays this summer I watched Mr. Fairweather come in, use the shared terminal by the plotter, and leave within twenty minutes. The map audit history shows rating edits at exactly those times.\n\nFinancial impact. Based on the work orders, roughly $1.3 million of grant money has been spent on streets that did not qualify. The contractor on most of these jobs is Ridgeline Paving, which was not the lowest bidder on any of them. The work orders were approved by Mr. Fairweather alone, even though the purchasing policy requires a second signature above $50,000. Two change orders on these jobs were also raised after the work was finished, adding about $180,000 that is not explained anywhere in the project files.\n\nWhat I have kept. I have exported the audit history of the pavement map, a copy of the original survey ratings, and the email I sent refusing the change. I have not shared these with anyone outside the department.\n\nWhy I am worried. I was hired as part of the 2019 cohort of the city's veterans hiring program, and I am the only person in my unit who came in that way, so I am easy to single out. After my second complaint, my performance review was moved up by four months and my remote work day was cancelled. I believe this was retaliation, and I am afraid that if this report is traced back to me I will lose my job.\n\nI ask that this report be treated confidentially and that the investigation start with the map audit history and the purchasing records, which do not depend on my testimony.",
+      "gold": [
+        { "quote": "the only GIS analyst in the department", "category": "ROLE_UNIQUE" },
+        { "quote": "I maintain the pavement condition map", "category": "ROLE_UNIQUE" },
+        { "quote": "In the spring, I was asked", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "I also work the Tuesday-to-Saturday schedule", "category": "SCHEDULE" },
+        {
+          "quote": "on Saturdays I am usually the only person in the office",
+          "category": "ROLE_UNIQUE"
+        },
+        { "quote": "on the second floor annex", "category": "LOCATION" },
+        { "quote": "On three Saturdays this summer", "category": "SCHEDULE" },
+        { "quote": "hired as part of the 2019 cohort", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "the city's veterans hiring program", "category": "PERSONAL_TRAIT" },
+        {
+          "quote": "the only person in my unit who came in that way",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "my performance review was moved up by four months",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        { "quote": "my remote work day was cancelled", "category": "SCHEDULE" }
+      ],
+      "mustNotFlag": [
+        { "quote": "the deputy director of operations, Gerald Fairweather", "kind": "ACCUSED" },
+        { "quote": "two city council members", "kind": "OTHER_PERSON" },
+        { "quote": "at least fourteen streets rated 'failing'", "kind": "INCIDENT_FACT" },
+        { "quote": "Mr. Fairweather's assistant", "kind": "ACCUSED" },
+        { "quote": "Lorraine Batts", "kind": "OTHER_PERSON" },
+        { "quote": "a shared administrator account", "kind": "INCIDENT_FACT" },
+        { "quote": "the deputy director's office", "kind": "ACCUSED" },
+        { "quote": "Mr. Fairweather come in", "kind": "ACCUSED" },
+        { "quote": "use the shared terminal by the plotter", "kind": "INCIDENT_FACT" },
+        { "quote": "roughly $1.3 million of grant money", "kind": "INCIDENT_FACT" },
+        { "quote": "Ridgeline Paving", "kind": "INCIDENT_FACT" },
+        { "quote": "Mr. Fairweather alone", "kind": "ACCUSED" },
+        { "quote": "requires a second signature above $50,000", "kind": "INCIDENT_FACT" },
+        { "quote": "adding about $180,000", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r07",
+      "sector": "restaurant",
+      "split": "dev",
+      "text": "The owner of the restaurant, Mr. Castellano, pays the kitchen staff in cash and keeps two sets of books. The real register tape goes in a drawer in his office and a smaller number goes to the accountant. He also tells the dishwashers they are not allowed to take breaks on double shifts. I'm 17 and the youngest person in the kitchen, so I mostly do prep before the dinner rush. I've seen him tear up the tip sheet and split the tips himself, keeping about half. If you need more info you can text me at 555-283-9046.",
+      "gold": [
+        { "quote": "I'm 17 and the youngest person", "category": "PERSONAL_TRAIT" },
+        { "quote": "I mostly do prep before the dinner rush", "category": "SCHEDULE" },
+        { "quote": "text me at 555-283-9046", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The owner of the restaurant, Mr. Castellano", "kind": "ACCUSED" },
+        { "quote": "pays the kitchen staff in cash", "kind": "INCIDENT_FACT" },
+        { "quote": "keeps two sets of books", "kind": "INCIDENT_FACT" },
+        { "quote": "not allowed to take breaks on double shifts", "kind": "INCIDENT_FACT" },
+        { "quote": "keeping about half", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r08",
+      "sector": "tech startup",
+      "split": "dev",
+      "text": "Hi, I'm one of two data engineers at a health-tracking startup and I need to report something. Our CTO, Vikram Sethuraman, told us to keep sending users' heart-rate and location data to an advertising partner even after they turn off sharing in the app settings. The opt-out flag is ignored in the export job, and it was written that way on purpose. I found it the week I came back from paternity leave, when I was asked to fix a failing export. Around 80,000 users have the opt-out turned on. I asked about it in a one-on-one with the CTO and he said legal had approved it, but I don't think legal knows. You can reach me at k.oyelaran.dev@mailbox.example if you need the commit history.",
+      "gold": [
+        { "quote": "one of two data engineers", "category": "TEAM_SIZE" },
+        { "quote": "the week I came back from paternity leave", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "I asked about it in a one-on-one", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "reach me at k.oyelaran.dev@mailbox.example", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "Our CTO, Vikram Sethuraman", "kind": "ACCUSED" },
+        { "quote": "to an advertising partner", "kind": "INCIDENT_FACT" },
+        { "quote": "The opt-out flag is ignored in the export job", "kind": "INCIDENT_FACT" },
+        { "quote": "Around 80,000 users", "kind": "INCIDENT_FACT" },
+        { "quote": "with the CTO", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r09",
+      "sector": "NGO",
+      "split": "test",
+      "text": "I coordinate volunteers for a food bank network, and I want to report how donated food is being handled. The executive director, Ms. Thornbury, has been selling pallets of donated canned goods to a discount grocery chain and recording them as spoiled. In the last quarter alone, 46 pallets were written off as water-damaged, but I helped stack those pallets myself and they were fine. The money from the sales does not appear in the board financials. I am the only staff member who signs for incoming truck deliveries, so the delivery receipts all have my signature on them. I am afraid of being blamed.\n\nRegards, R.T.",
+      "gold": [
+        { "quote": "I coordinate volunteers", "category": "ROLE_UNIQUE" },
+        {
+          "quote": "the only staff member who signs for incoming truck deliveries",
+          "category": "ROLE_UNIQUE"
+        },
+        { "quote": "Regards, R.T.", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The executive director, Ms. Thornbury", "kind": "ACCUSED" },
+        { "quote": "to a discount grocery chain", "kind": "INCIDENT_FACT" },
+        { "quote": "46 pallets were written off as water-damaged", "kind": "INCIDENT_FACT" },
+        { "quote": "does not appear in the board financials", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r10",
+      "sector": "factory",
+      "split": "test",
+      "text": "At the plant, the maintenance manager, Doug Petrakis, has disabled the light curtain on press line 4 so the line runs faster. He keeps the bypass key in his office by the shipping dock. Two operators have already had near-misses with their hands in the die area. I run the quality lab on second shift, and from the lab window I can see line 4 directly. The safety audit last month showed the curtain as working because he reconnected it the morning of the audit and pulled it again after lunch. I have photos with timestamps.",
+      "gold": [
+        { "quote": "I run the quality lab", "category": "ROLE_UNIQUE" },
+        { "quote": "on second shift", "category": "SCHEDULE" },
+        { "quote": "from the lab window", "category": "LOCATION" }
+      ],
+      "mustNotFlag": [
+        { "quote": "the maintenance manager, Doug Petrakis", "kind": "ACCUSED" },
+        { "quote": "disabled the light curtain on press line 4", "kind": "INCIDENT_FACT" },
+        { "quote": "in his office by the shipping dock", "kind": "ACCUSED" },
+        { "quote": "Two operators have already had near-misses", "kind": "OTHER_PERSON" },
+        { "quote": "reconnected it the morning of the audit", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r11",
+      "sector": "retail",
+      "split": "test",
+      "text": "The store manager at our location has been processing fake returns. Several times a week, returns are entered for high-value electronics, mostly headphones and tablets, with no customer present and no item coming back into stock. The refunds go onto the same few gift cards, which are then used online. Shrink for the electronics department went up sharply this year while sales stayed flat. The assistant manager, Tessa Morrow, has mentioned it to the district office but nothing happened. The returns are always entered under the manager's own register login, usually right before close.",
+      "gold": [],
+      "mustNotFlag": [
+        { "quote": "The store manager at our location", "kind": "ACCUSED" },
+        { "quote": "returns are entered for high-value electronics", "kind": "INCIDENT_FACT" },
+        { "quote": "onto the same few gift cards", "kind": "INCIDENT_FACT" },
+        { "quote": "Tessa Morrow", "kind": "OTHER_PERSON" },
+        { "quote": "the manager's own register login", "kind": "ACCUSED" },
+        { "quote": "usually right before close", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r12",
+      "sector": "pharma lab",
+      "split": "test",
+      "text": "I am a QC analyst in the stability testing group, which is just four people, and I am reporting data manipulation in our stability studies. The QC lab supervisor, Dr. Annika Strand, has been instructing analysts to re-run HPLC samples that fail impurity specs until a passing result is obtained, and to delete the failing runs from the chromatography system. I estimate that at least 20 batches released last year have unreported out-of-specification results. I have reduced hours because of my chronic migraines, so I am usually in the lab only on mornings, and I have seen the deletion prompts on the shared workstation. This affects at least two products on the market, including a children's antibiotic suspension. When an analyst refused to delete a run last spring, Dr. Strand moved her to the receiving dock the following week. Please contact me through this channel only.\n\nSigned, Mateus Ilunga",
+      "gold": [
+        { "quote": "a QC analyst in the stability testing group", "category": "ROLE_UNIQUE" },
+        { "quote": "which is just four people", "category": "TEAM_SIZE" },
+        { "quote": "I have reduced hours", "category": "SCHEDULE" },
+        { "quote": "because of my chronic migraines", "category": "PERSONAL_TRAIT" },
+        { "quote": "usually in the lab only on mornings", "category": "SCHEDULE" },
+        { "quote": "Signed, Mateus Ilunga", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The QC lab supervisor, Dr. Annika Strand", "kind": "ACCUSED" },
+        { "quote": "re-run HPLC samples that fail impurity specs", "kind": "INCIDENT_FACT" },
+        { "quote": "delete the failing runs", "kind": "INCIDENT_FACT" },
+        { "quote": "at least 20 batches released last year", "kind": "INCIDENT_FACT" },
+        { "quote": "a children's antibiotic suspension", "kind": "INCIDENT_FACT" },
+        { "quote": "an analyst refused to delete a run", "kind": "OTHER_PERSON" },
+        { "quote": "Dr. Strand moved her to the receiving dock", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r13",
+      "sector": "call center",
+      "split": "test",
+      "text": "I am so tired of this. our team leader Shauna Pike tells us to mark calls as resolved even when the customer is still waiting on a refund, because our bonus depends on first call resolution. she literally goes into the system after we log off and changes the codes herself. I sit at the desk right next to her office so I hear her on the phone with the account manager laughing about the numbers. hundreds of customers have been waiting more than 60 days for refunds and the client thinks they've been paid. I started the Monday after Thanksgiving and I already want to quit, I didn't sign up to lie to people.",
+      "gold": [
+        { "quote": "I sit at the desk right next to her office", "category": "LOCATION" },
+        { "quote": "I started the Monday after Thanksgiving", "category": "PERSONAL_EVENT_DATE" }
+      ],
+      "mustNotFlag": [
+        { "quote": "our team leader Shauna Pike", "kind": "ACCUSED" },
+        { "quote": "mark calls as resolved", "kind": "INCIDENT_FACT" },
+        { "quote": "changes the codes herself", "kind": "INCIDENT_FACT" },
+        { "quote": "the account manager", "kind": "OTHER_PERSON" },
+        { "quote": "waiting more than 60 days for refunds", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r14",
+      "sector": "university lab",
+      "split": "test",
+      "text": "I am a graduate student in a materials science lab and I am reporting research misconduct by my advisor, Professor Lindqvist. In the paper submitted this term, two of the X-ray diffraction figures were copied from an older paper and relabeled as new samples. I know because I am the only person in the lab trained on the diffractometer, and those samples were never measured. When I raised it, he reminded me that my visa depends on my funding. I am the only international student in the group. The raw data folder on the lab server shows the files were last modified under his account, not mine (my username is mchen42).",
+      "gold": [
+        {
+          "quote": "the only person in the lab trained on the diffractometer",
+          "category": "ROLE_UNIQUE"
+        },
+        { "quote": "my visa depends on my funding", "category": "PERSONAL_TRAIT" },
+        { "quote": "the only international student in the group", "category": "PERSONAL_TRAIT" },
+        { "quote": "my username is mchen42", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "my advisor, Professor Lindqvist", "kind": "ACCUSED" },
+        {
+          "quote": "copied from an older paper and relabeled as new samples",
+          "kind": "INCIDENT_FACT"
+        },
+        { "quote": "those samples were never measured", "kind": "INCIDENT_FACT" },
+        { "quote": "last modified under his account", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r15",
+      "sector": "airline ground crew",
+      "split": "test",
+      "text": "I work ramp at the airport for a ground handling contractor. Our ramp supervisor, Kelvin Asante, has been signing off on aircraft weight and balance sheets without the bags actually being counted. On the early morning departures he just copies the bag counts from the previous day. Last week a regional jet left with about 300 kilos more than the load sheet said. I'm on the 4 a.m. split shift, and I drive the belt loader at the far end of the B concourse, so I see every one of those flights go out. He is never at the gate for those departures, he stays in the break room until pushback.",
+      "gold": [
+        { "quote": "I'm on the 4 a.m. split shift", "category": "SCHEDULE" },
+        { "quote": "I drive the belt loader", "category": "ROLE_UNIQUE" },
+        { "quote": "at the far end of the B concourse", "category": "LOCATION" }
+      ],
+      "mustNotFlag": [
+        { "quote": "Our ramp supervisor, Kelvin Asante", "kind": "ACCUSED" },
+        { "quote": "On the early morning departures", "kind": "INCIDENT_FACT" },
+        { "quote": "copies the bag counts from the previous day", "kind": "INCIDENT_FACT" },
+        { "quote": "about 300 kilos more than the load sheet said", "kind": "INCIDENT_FACT" },
+        { "quote": "He is never at the gate", "kind": "ACCUSED" },
+        { "quote": "he stays in the break room until pushback", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r16",
+      "sector": "nursing home",
+      "split": "test",
+      "text": "I've been a nursing assistant at this care home for 22 years and I've never been this scared for the residents. The director of nursing, Mrs. Abernathy, has been cutting the night staffing to two aides for 48 residents, while the state requirement and our posted staffing sheet say four. The posted sheet lists names of people who are not even working. Last month a resident fell and lay on the floor for almost two hours before anyone found her. I work every other weekend, days, and when I come in on Saturday morning the residents are wet and some have not been turned all night. Badge number 3318, if you need to verify I work here.",
+      "gold": [
+        { "quote": "at this care home for 22 years", "category": "PERSONAL_TRAIT" },
+        { "quote": "I work every other weekend, days", "category": "SCHEDULE" },
+        { "quote": "when I come in on Saturday morning", "category": "SCHEDULE" },
+        { "quote": "Badge number 3318", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The director of nursing, Mrs. Abernathy", "kind": "ACCUSED" },
+        { "quote": "cutting the night staffing", "kind": "INCIDENT_FACT" },
+        { "quote": "two aides for 48 residents", "kind": "INCIDENT_FACT" },
+        { "quote": "lists names of people who are not even working", "kind": "INCIDENT_FACT" },
+        { "quote": "lay on the floor for almost two hours", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r17",
+      "sector": "insurance",
+      "split": "test",
+      "text": "I'm an adjuster in the property claims department, which has well over a hundred adjusters across several regional offices, and I review these files every day. Since early this year, the claims director has instructed adjusters to deny water damage claims by default and to reverse the denial only if the policyholder appeals. Internal guidance distributed by email describes this as a 'denial-first workflow'. The appeal rate is low, so most valid claims are never paid. Based on the monthly dashboards, roughly 1,200 claims were denied this way in the first half of the year. Adjusters who approve too many claims are placed on performance plans. The guidance was later removed from the shared drive, but copies exist in the inboxes of the adjusters who received it.\n\nOne family whose basement flooded after a pipe burst was denied twice and was only paid after their lawyer sent a demand letter. The denial letters use the same template language regardless of the facts of the claim, and the template came out of the director's office. Adjusters have asked in team meetings whether this is legal, and the answer has always been that the workflow was approved by senior leadership. Policyholders are not told that an appeal is likely to succeed, and the letters do not mention the state insurance regulator.",
+      "gold": [],
+      "mustNotFlag": [
+        { "quote": "the claims director", "kind": "ACCUSED" },
+        { "quote": "deny water damage claims by default", "kind": "INCIDENT_FACT" },
+        { "quote": "a 'denial-first workflow'", "kind": "INCIDENT_FACT" },
+        { "quote": "roughly 1,200 claims were denied this way", "kind": "INCIDENT_FACT" },
+        { "quote": "placed on performance plans", "kind": "INCIDENT_FACT" },
+        { "quote": "One family whose basement flooded", "kind": "OTHER_PERSON" },
+        { "quote": "the same template language", "kind": "INCIDENT_FACT" },
+        { "quote": "the director's office", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r18",
+      "sector": "hotel",
+      "split": "test",
+      "text": "I want to report the general manager of the hotel where I work, Mr. Pemberton-Lowe. He has been letting a group of 'VIP guests' stay in the penthouse suites without any record in the booking system, and those nights are recorded as rooms out of order for maintenance. The housekeepers are told to clean those suites off the books. This has happened at least once a week for most of the year, which is thousands of dollars in room revenue each time. I am the night auditor, the only one, so the gaps show up on my reports every morning, and I have been told to just adjust them. Most of the regular guests know me as Lucia from the front desk, so please be careful with this.",
+      "gold": [
+        { "quote": "I am the night auditor, the only one", "category": "ROLE_UNIQUE" },
+        { "quote": "me as Lucia", "category": "DIRECT_IDENTIFIER" },
+        { "quote": "from the front desk", "category": "LOCATION" }
+      ],
+      "mustNotFlag": [
+        { "quote": "the general manager", "kind": "ACCUSED" },
+        { "quote": "Mr. Pemberton-Lowe", "kind": "ACCUSED" },
+        { "quote": "without any record in the booking system", "kind": "INCIDENT_FACT" },
+        { "quote": "recorded as rooms out of order for maintenance", "kind": "INCIDENT_FACT" },
+        { "quote": "The housekeepers", "kind": "OTHER_PERSON" },
+        { "quote": "thousands of dollars in room revenue", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r19",
+      "sector": "trucking logistics",
+      "split": "test",
+      "text": "I've been going back and forth for weeks about whether to send this, so I'm just going to write everything down and let you decide what to do with it.\n\nI'm a dispatcher at a regional trucking company that hauls refrigerated freight, mostly produce and dairy, for grocery distribution centers. There are only two of us on dispatch and I cover the overnight desk alone from Sunday through Wednesday, so anything that happens between 10 p.m. and 6 a.m. goes through me. That's how I found out about this.\n\nThe operations manager, Wade Hollister, has been telling drivers to run their electronic logging devices in a way that hides how long they are actually driving. He has them log off-duty time while they are waiting at the shipper, then drive straight through without the required break, and he edits the logs afterwards under the carrier admin account. Drivers who complain get the worst loads or get taken off the schedule for a week. I have heard him say on speakerphone that if the logs look clean, the insurance doesn't care.\n\nIt's not just a paperwork problem. Two months ago one of our drivers, a guy named Felipe Ortega, had been driving close to 16 hours when he rear-ended a car at a toll plaza. Nobody was killed, thank God, but the woman in the car was hurt badly. After the accident, Wade had the logs for that trip edited to show a ten-hour break that never happened. I know because I was the one on the phone with Felipe for most of that night trying to keep him awake, and the original log was on my screen before it changed.\n\nThere is also the reefer temperature issue. When a trailer's refrigeration unit fails on the road, the temperature logs are supposed to be sent to the customer and the load rejected. Wade has told the drivers to unplug the temperature recorders when that happens and plug them back in before delivery, so the gap looks like a sensor glitch. I've seen at least six loads of dairy delivered this way since the summer. The customers are grocery chains and that milk goes on shelves.\n\nI keep a notebook at my desk because my memory isn't great since my concussion last year, and I wrote down the truck numbers, the trips and the times whenever something like this happened. I also took pictures of the log screens on my phone, before and after the edits. I know that probably wasn't allowed, but I didn't know what else to do.\n\nI'm also scared because I'm the only one at the company who speaks Punjabi with the owner-operators, so a lot of the drivers come to me when they have problems, and Wade knows that. If he figures out that someone reported the log edits, he will think it was me or one of the drivers I talk to.\n\nWhat I'm asking is that someone checks the ELD edit history for the carrier admin account, especially for the toll plaza accident trip, and the temperature recorder data for the dairy loads. I'm not asking for anything for myself. I just don't want somebody to die because a manager wanted to keep the trucks moving.\n\nSorry this is so long. I'm 58 and I don't know how easy it would be for me to find another job if this goes wrong, so I didn't know how to make it shorter without leaving things out.",
+      "gold": [
+        { "quote": "There are only two of us on dispatch", "category": "TEAM_SIZE" },
+        { "quote": "I cover the overnight desk alone", "category": "ROLE_UNIQUE" },
+        { "quote": "from Sunday through Wednesday", "category": "SCHEDULE" },
+        { "quote": "between 10 p.m. and 6 a.m.", "category": "SCHEDULE" },
+        { "quote": "I was the one on the phone", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "since my concussion last year", "category": "PERSONAL_TRAIT" },
+        { "quote": "the only one at the company who speaks Punjabi", "category": "PERSONAL_TRAIT" },
+        {
+          "quote": "a lot of the drivers come to me when they have problems",
+          "category": "PERSONAL_TRAIT"
+        },
+        { "quote": "I'm 58", "category": "PERSONAL_TRAIT" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The operations manager, Wade Hollister", "kind": "ACCUSED" },
+        {
+          "quote": "log off-duty time while they are waiting at the shipper",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "edits the logs afterwards under the carrier admin account",
+          "kind": "INCIDENT_FACT"
+        },
+        { "quote": "Felipe Ortega", "kind": "OTHER_PERSON" },
+        { "quote": "had been driving close to 16 hours", "kind": "INCIDENT_FACT" },
+        { "quote": "the woman in the car", "kind": "OTHER_PERSON" },
+        { "quote": "Wade had", "kind": "ACCUSED" },
+        { "quote": "a ten-hour break that never happened", "kind": "INCIDENT_FACT" },
+        { "quote": "Wade has told", "kind": "ACCUSED" },
+        { "quote": "unplug the temperature recorders", "kind": "INCIDENT_FACT" },
+        { "quote": "at least six loads of dairy", "kind": "INCIDENT_FACT" },
+        { "quote": "Wade knows", "kind": "ACCUSED" }
+      ]
+    },
+    {
+      "id": "r20",
+      "sector": "dental clinic",
+      "split": "test",
+      "text": "I'm writing about the dental practice where I've worked since I graduated from hygiene school two years ago. The owner, Dr. Farrokh Malik, bills Medicaid for deep cleanings and fillings on children that were never done. I see the schedule and the claims because I fill in at the front desk on Fridays when the receptionist is off. A regular checkup for a six-year-old gets billed as four quadrants of scaling and root planing. I estimate it's dozens of claims a month. When I asked about one chart, he said I should focus on my own patients and reminded me that my contract renews in the spring.",
+      "gold": [
+        {
+          "quote": "since I graduated from hygiene school two years ago",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        { "quote": "I fill in at the front desk", "category": "ROLE_UNIQUE" },
+        { "quote": "on Fridays when the receptionist is off", "category": "SCHEDULE" },
+        { "quote": "my contract renews in the spring", "category": "PERSONAL_EVENT_DATE" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The owner, Dr. Farrokh Malik", "kind": "ACCUSED" },
+        { "quote": "bills Medicaid for deep cleanings and fillings", "kind": "INCIDENT_FACT" },
+        { "quote": "four quadrants of scaling and root planing", "kind": "INCIDENT_FACT" },
+        { "quote": "dozens of claims a month", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r21",
+      "sector": "water utility",
+      "split": "test",
+      "text": "I am reporting falsified water quality testing at the municipal water treatment plant. The plant superintendent, Mr. Osei-Bonsu, has instructed staff to collect lead and copper samples only from homes known to have new plumbing, instead of the sampling sites listed in the state-approved plan. Results from the older neighborhoods, which used to exceed the action level, have quietly disappeared from the reports. I am part of a lab crew of three, and I work out of the satellite lab at the north reservoir, so the sample bottles come through my hands. I can share the chain-of-custody forms if needed.\n\nContact: water.sampler.77@inbox.example",
+      "gold": [
+        { "quote": "a lab crew of three", "category": "TEAM_SIZE" },
+        { "quote": "the satellite lab at the north reservoir", "category": "LOCATION" },
+        { "quote": "the sample bottles come through my hands", "category": "ROLE_UNIQUE" },
+        { "quote": "Contact: water.sampler.77@inbox.example", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The plant superintendent, Mr. Osei-Bonsu", "kind": "ACCUSED" },
+        { "quote": "only from homes known to have new plumbing", "kind": "INCIDENT_FACT" },
+        { "quote": "used to exceed the action level", "kind": "INCIDENT_FACT" },
+        { "quote": "have quietly disappeared from the reports", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r22",
+      "sector": "food processing",
+      "split": "test",
+      "text": "Management at the poultry processing plant has been hiding positive salmonella swabs. When an environmental swab on the deboning line comes back positive, the plant manager has the sample relabeled as coming from a non-food-contact surface, which does not require stopping the line or notifying the inspector. This has happened repeatedly over the past few months. The line has not been fully sanitized after any of those results. The relabeled swab reports are signed by the food safety coordinator, Glenn Achterberg, who told staff that a shutdown would cost the company about $90,000 a day. The original lab reports still show the true swab locations.",
+      "gold": [],
+      "mustNotFlag": [
+        { "quote": "Management at the poultry processing plant", "kind": "ACCUSED" },
+        { "quote": "hiding positive salmonella swabs", "kind": "INCIDENT_FACT" },
+        { "quote": "the plant manager", "kind": "ACCUSED" },
+        { "quote": "relabeled as coming from a non-food-contact surface", "kind": "INCIDENT_FACT" },
+        { "quote": "the inspector", "kind": "OTHER_PERSON" },
+        { "quote": "the food safety coordinator, Glenn Achterberg", "kind": "ACCUSED" },
+        { "quote": "about $90,000 a day", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r23",
+      "sector": "car dealership",
+      "split": "test",
+      "text": "The used car manager at the dealership, Curtis Vance, has been rolling back odometers on trade-ins before they go on the lot. I'm the detail guy, the only one they have, so every car passes through my bay before it gets photographed for the website. I write down the mileage when I vacuum the floor mats, it's a habit. In the last two months at least nine cars dropped between 30,000 and 60,000 miles between my bay and the listing. One SUV came in with 142,000 and was listed at 81,000. I wear a hearing aid so people talk in front of me like I can't hear, and I heard Curtis tell the sales manager the guy with the tool comes Tuesdays. The guys all call me Big Tom here.",
+      "gold": [
+        { "quote": "I'm the detail guy, the only one they have", "category": "ROLE_UNIQUE" },
+        { "quote": "passes through my bay", "category": "LOCATION" },
+        { "quote": "I write down the mileage when I vacuum", "category": "ROLE_UNIQUE" },
+        { "quote": "I wear a hearing aid", "category": "PERSONAL_TRAIT" },
+        { "quote": "call me Big Tom", "category": "DIRECT_IDENTIFIER" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The used car manager at the dealership, Curtis Vance", "kind": "ACCUSED" },
+        { "quote": "rolling back odometers on trade-ins", "kind": "INCIDENT_FACT" },
+        { "quote": "One SUV came in with 142,000", "kind": "INCIDENT_FACT" },
+        { "quote": "listed at 81,000", "kind": "INCIDENT_FACT" },
+        { "quote": "Curtis tell", "kind": "ACCUSED" },
+        { "quote": "the sales manager", "kind": "OTHER_PERSON" },
+        { "quote": "the guy with the tool comes Tuesdays", "kind": "INCIDENT_FACT" }
+      ]
+    },
+    {
+      "id": "r24",
+      "sector": "public transit",
+      "split": "test",
+      "text": "I want to report unsafe practices at the bus maintenance garage. The fleet maintenance supervisor, Arturo Benavides, has been signing off on brake inspections that were never done so buses can go back into service faster. Mechanics are told to mark the brake checklist complete during the morning pull-out and do the actual work later, if at all. At least three buses had brake failures on routes this fall, including one that rolled through an intersection. I am one of only two women mechanics at this garage, and I came back to work after my knee surgery right around when this started, so I was on light duty in the parts window and saw the work orders. Please investigate the inspection records against the parts orders.",
+      "gold": [
+        { "quote": "one of only two women mechanics", "category": "PERSONAL_TRAIT" },
+        { "quote": "I came back to work after my knee surgery", "category": "PERSONAL_EVENT_DATE" },
+        { "quote": "on light duty in the parts window", "category": "LOCATION" }
+      ],
+      "mustNotFlag": [
+        { "quote": "The fleet maintenance supervisor, Arturo Benavides", "kind": "ACCUSED" },
+        {
+          "quote": "signing off on brake inspections that were never done",
+          "kind": "INCIDENT_FACT"
+        },
+        { "quote": "during the morning pull-out", "kind": "INCIDENT_FACT" },
+        { "quote": "At least three buses had brake failures", "kind": "INCIDENT_FACT" }
+      ]
+    }
+  ]
+}
