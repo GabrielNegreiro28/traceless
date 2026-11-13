@@ -3,21 +3,26 @@
 _Atualizado pelo manager a cada iteração._
 
 - **Data da última atualização:** 2026-11-12
-- **Fase atual:** Fase 0 — Fundação do repositório (em andamento)
+- **Fase atual:** Fase 0 concluída localmente (commit 50e082f); Fase 1 (código Firebase) em preparação
 - **Prazo:** **2026-11-30 às 19:00 GMT-3** (horário de Brasília). Rascunho completo até 28/11; congelamento de funcionalidades em 25/11; submeter com folga, nunca na última hora.
 
 ## Concluído
+- **Fase 0 (12/11):** scaffold revisado e aprovado pelo reviewer; `npm run ci` verde (34 testes); commit `50e082f`. TypeScript fixado em 6.0.3 (typescript-eslint 8.72.2 não suporta TS 7).
 - Pesquisa, ideia (Traceless) e plano aprovados — ver `HACKATHON.md` e `PLANO.md`.
 - Máquina do participante verificada: Gemini Nano disponível (`LanguageModel.availability()` → `'available'`).
 - Estrutura de agentes criada: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`, `.claude/settings.json`.
 
 ## Em andamento
-- `git init -b main` feito (12/11). Repo GitHub `traceless` ainda NÃO existe (verificado com `gh repo list`); criar como PRIVADO no primeiro push.
-- Implementer (opus) executando o scaffold da Fase 0 (Vite/React/TS, ESLint de fronteiras, Vitest, Husky, CI, LICENSE, `.env.example`/`.env.local`, `result`/`appError`/`logger`/`brandedText`).
+- Repositório privado no GitHub criado e `main` enviado (12/11): https://github.com/GabrielNegreiro28/traceless
+- Correções da revisão da Fase 0 commitadas (`9d5ca1f`).
+- Implementer (sonnet): núcleo de detecção do domínio da Fase 2 (`types`, `ruleDetector`, `spanLocator`, `findingMerger`, `textChunker`). Revisão (opus) pediu mudanças: ReDoS no regex de employee-id, ocorrências com outra caixa ignoradas, sem limite de palavra, merger dependente da ordem, falsos positivos. **Rodada de correção 1 em andamento.** Depois: `riskScorer`.
+- Fable consultado sobre a Fase 1 → decisões em DECISIONS.md (12/11, "Fase 1: design da integração Firebase"). Debug token gerado em `.env.development.local` (git-ignored). **Próximo implementer (opus) = código da Fase 1 conforme essa entrada**, depois do implementer de domínio terminar.
 
 ## Próximos passos
-1. Fase 0: `git init`, Vite + React + TS strict, Tailwind, ESLint (fronteiras), Prettier, Husky, commitlint, Vitest, `.nvmrc`, `.npmrc`, `.env.example`, LICENSE Apache-2.0, esqueleto de pastas, README inicial, CI.
-2. Atualizar `CLAUDE.md` com as regras de engenharia (PLANO §1) — já feito no setup; manter atualizado.
+1. Commitar as correções da revisão da Fase 0.
+2. Fase 1 (código): `firebase.json`, `.firebaserc`, `firebase/*` (regras deny-all, índices, template do Remote Config), `src/infrastructure/firebase/*`, env tipado, scripts `emulators`/`deploy`; aplicar as recomendações do Fable.
+3. Fase 2 (domínio de detecção) pode começar em paralelo à espera dos passos humanos do Console.
+4. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
 
 ## Firebase
 - **ID do projeto Firebase:** `traceless-92f85` (criado pelo participante em 12/11). Usar em `.firebaserc` (`default`).

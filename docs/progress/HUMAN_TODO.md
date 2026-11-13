@@ -15,7 +15,9 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
      - Location: escolha **nam5 (United States)**. ⚠️ Não dá para mudar depois.
      - Regras: escolha **Start in production mode** (tudo bloqueado; os agentes vão publicar as regras certas depois) → **Create**.
   4. **Remote Config:** menu **Run → Remote Config** → se aparecer **Create configuration**, clique e depois feche/cancele a criação do primeiro parâmetro (os agentes publicam o template pelo terminal). Basta a página abrir sem pedir para "Get started".
-  5. Me avise no chat ("feito") — eu confiro pelo terminal.
+  5. **App Check: registrar o token de desenvolvimento.** O valor do token está no arquivo `C:\Users\Gabriel\hackathon\.env.development.local`, depois de `VITE_APPCHECK_DEBUG_TOKEN=`. Abra esse arquivo com o Bloco de Notas (botão direito → Abrir com → Bloco de Notas) e copie só o valor. Ele **não** vai para o GitHub e não deve ser compartilhado. Menu **Build → App Check** (ou **Security → App Check**) → aba **Apps** → na linha **traceless-web**, clique nos **três pontinhos (⋮)** → **Manage debug tokens** → **Add debug token** → Name: `dev-laptop` → Value: cole o token → **Save**.
+  6. **App Check: conferir o enforce.** Na mesma página, aba **APIs**: veja se **Firebase AI Logic** aparece como **Enforced**. Se aparecer "Unenforced" ou "Monitoring", **não mude nada**. Só me diga o que aparece. **Não** ative o enforce do Cloud Firestore ainda.
+  7. Me avise no chat ("feito") — eu confiro pelo terminal.
 
 
 ## Arquivos a remover
@@ -25,6 +27,7 @@ _(os agentes não apagam arquivos; listam aqui o que poderia ser removido)_
 
 ## Concluídos
 
+- [x] **Repositório PRIVADO no GitHub** (12/11): https://github.com/GabrielNegreiro28/traceless criado; `main` enviado (commits `50e082f`, `9d5ca1f`). O login do `gh` ganhou o escopo `workflow`, necessário para enviar `.github/workflows/ci.yml`.
 - [x] **Java JDK 21 instalado** (12/11): Eclipse Temurin 21.0.13 em `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.9-hotspot`; `JAVA_HOME` configurado e primeiro no PATH (à frente do Java 8). Vale para sessões/terminais abertos depois da instalação.
 - [x] **Prazo confirmado** (12/11): **30/11/2026 às 19:00 GMT-3 (horário de Brasília)**, conforme o Devpost.
 - [x] **Firebase Console** (12/11): projeto `traceless-92f85`, app Web `traceless-web`, AI Logic ativado (chamada de teste à nuvem respondeu "OK"), chave reCAPTCHA Enterprise criada e registrada no App Check (não aplicado/enforced).
