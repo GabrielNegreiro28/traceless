@@ -34,10 +34,17 @@ const FORBID_INFRASTRUCTURE = {
  * approveReport use case, so only that file may import the internal factory.
  */
 const FORBID_SANITIZED_FACTORY = {
-  regex: '(^|/)brandedText$',
+  regex: '(^|/)brandedText(\\.[cm]?[jt]sx?)?$',
   importNames: ['unsafeCreateSanitizedText'],
   message: 'Only src/application/usecases/approveReport.ts may create SanitizedText.',
 };
+
+const brandAssertion = (/** @type {string} */ kind) => ({
+  selector: `${kind}[typeAnnotation.type='TSTypeReference'][typeAnnotation.typeName.name=/^(SanitizedText|ConsentedRawText)$/]`,
+  message:
+    'SanitizedText/ConsentedRawText may only be created by approveReport()/the consent use case — never by a type assertion.',
+});
+const FORBID_BRAND_ASSERTIONS = ['TSAsExpression', 'TSTypeAssertion'].map(brandAssertion);
 
 const restrict = (/** @type {object[]} */ ...patterns) => ({
   '@typescript-eslint/no-restricted-imports': ['error', { patterns }],
@@ -113,6 +120,13 @@ export default defineConfig([
   { files: ['src/ai/**/*.{ts,tsx}'], rules: restrict(...AI, FORBID_SANITIZED_FACTORY) },
   // The single place allowed to create SanitizedText (keeps the application rules).
   { files: ['src/application/usecases/approveReport.ts'], rules: restrict(...APPLICATION) },
+
+  // Brands are built only inside brandedText.ts.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/domain/text/brandedText.ts'],
+    rules: { 'no-restricted-syntax': ['error', ...FORBID_BRAND_ASSERTIONS] },
+  },
 
   // The logger is the only module that may write to the console.
   { files: ['src/shared/logger.ts'], rules: { 'no-console': 'off' } },
