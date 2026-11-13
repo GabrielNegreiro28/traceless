@@ -25,6 +25,16 @@ You (the manager) plan, write briefs, verify, commit and keep the records. Avoid
 - **fable** — advice and audits only (via `fable-advisor`).
 Use `effort: "lower"` for mechanical briefs and `effort: "higher"` for the hard pieces.
 
+## 2b. Token economy (owner request, 2026-11-13; overrides conflicting defaults below)
+
+- **Reviewer model:** `sonnet` for UI, copy, tests and docs. `opus` only for privacy-critical changes: fail-closed AI layers, `approveReport`/SanitizedText, cloud data paths and consent, Firestore rules, App Check/Auth, eval integrity.
+- **Implementer model:** `sonnet` by default; `opus` only for the same privacy-critical list.
+- **One fix round max.** Only `major` findings get a fix round. `minor` findings go to the cleanup backlog in `STATUS.md` and are fixed in batched cleanup tasks.
+- **Bigger, coherent tasks.** Group related screens/features into one brief to avoid repeated cold starts.
+- **Fable only at gates:** the Fase 2 test-split decision, Fase 8 start, and the final audit. Other choices: the manager decides and records it in `DECISIONS.md`.
+- **Short owner messages:** only when the owner must act or a phase completes.
+- **Context:** at each phase milestone, make sure `STATUS.md` is complete so the owner can `/clear` and restart the loop.
+
 ## 3. When to consult Fable (mandatory)
 
 - Choosing between ≥2 valid approaches, or any deviation from `PLANO.md`.
@@ -44,7 +54,7 @@ Every iteration:
 3. **Decide**: if §3 applies → consult `fable-advisor` first.
 4. **Brief**: write a task brief — goal, context files, exact files/modules to create or change, function boundaries, acceptance criteria, tests to write, checks to run, prohibitions reminder.
 5. **Implement**: spawn ONE `implementer` at a time for code changes (they share the working tree — never run two code-writing agents in parallel). Read-only agents (Explore, fable-advisor, reviewer) may run in parallel with each other.
-6. **Review**: spawn `reviewer` (use a different model from the implementer when practical). On `changes-requested`, send the findings back to the implementer (SendMessage to continue it, or a new brief). Max 2 fix rounds, then escalate to Fable.
+6. **Review**: spawn `reviewer` (use a different model from the implementer when practical). On `changes-requested`, send the findings back to the implementer (SendMessage to continue it, or a new brief). Max 1 fix round for major findings (see §2b); if it still fails, escalate to Fable.
 7. **Verify yourself**: run the checks (`npm run ci` once it exists) and look at `git diff --stat`. Never trust a claim you didn't verify.
 8. **Commit**: small Conventional Commits (`feat(domain): add span locator`), ending with the attribution trailer required by the session. Push to `origin` (no force) when a remote exists. Never commit secrets — check `git diff --cached` for tokens/keys/.env files first.
 9. **Record**: update `STATUS.md` (phase, done, in progress, next, metrics, risks). Add human-only actions to `HUMAN_TODO.md` with exact, numbered, beginner-friendly instructions in **Portuguese**, then send a short `PushNotification` (load it via ToolSearch) when a new human item blocks progress or a phase completes.

@@ -83,3 +83,6 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
   4. um clique do participante: dev ×3 de single2+regras e single3+regras; depois teste ×3 **uma vez**, mesmo com recall de dev < 0,72;
   5. limiares do §D inalterados; resultado de teste com recall 0,55–0,70 = "ship with disclosed miss" (portão NÃO atingido, números publicados, Second look obrigatório).
 - **Rejeitado:** chunk 1.500 (os erros não são de texto longo), v3 com campo `subject`, mover limiares.
+
+## 2026-11-13 · Modo econômico de tokens (pedido do participante)
+- A sessão anterior custou ~US$ 80 (74% em opus). O participante aprovou: revisor e implementer sonnet por padrão (opus só no que é crítico para privacidade), no máximo 1 rodada de correção (só achados major; minors vão para limpeza em lote), tarefas maiores, Fable só nos portões, mensagens curtas. Registrado em `.claude/manager/PROTOCOL.md` §2b.
