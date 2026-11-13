@@ -25,6 +25,12 @@ export function friendlyKindMessage(kind: AppErrorKind): string {
       return 'A report is longer than the on-device model accepts.';
     case 'Misconfigured':
       return 'The tool is not set up correctly.';
+    case 'DirectIdentifierRemains':
+      return 'The report still contains a direct identifier, such as an email or phone number.';
+    case 'RiskNotAcknowledged':
+      return 'The report still carries identifying details that were not acknowledged.';
+    case 'EmptyReport':
+      return 'The report is empty.';
     case 'Unknown':
       return 'Something went wrong. Reload the page and try again.';
   }

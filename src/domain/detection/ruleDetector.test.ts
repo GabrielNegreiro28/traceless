@@ -174,3 +174,10 @@ describe('detectByRules: performance (ReDoS regression)', () => {
     expect(performance.now() - t0).toBeLessThan(LIMIT_MS);
   });
 });
+
+describe('rule suggestions', () => {
+  it('are replacement text or null (remove), never instructions to the reporter', () => {
+    const findings = detectByRules(toRawText('Mail jo@acme.com or call 555-0142 on March 3.'));
+    expect(findings.map((f) => f.suggestion)).toEqual([null, null, 'a recent date']);
+  });
+});

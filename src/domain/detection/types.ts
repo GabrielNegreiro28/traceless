@@ -28,6 +28,7 @@ export interface Finding {
   readonly quote: string;
   readonly category: FindingCategory;
   readonly reason: string;
+  /** Replacement text for the quote (applied on ACCEPTED); null means remove it. */
   readonly suggestion: string | null;
   readonly origin: FindingOrigin;
 }

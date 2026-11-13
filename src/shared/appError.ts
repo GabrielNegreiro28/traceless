@@ -25,6 +25,14 @@ export type AppError =
   /** The input is larger than the on-device model accepts (Prompt API QuotaExceededError). */
   | BaseError<'InputTooLong'>
   | (BaseError<'Misconfigured'> & { readonly missing: readonly string[] })
+  /** Approval refused: deterministic rules still find direct identifiers (count only, no text). */
+  | (BaseError<'DirectIdentifierRemains'> & { readonly count: number })
+  /** Approval refused: remaining risk needs an acknowledgement the reporter did not give. */
+  | (BaseError<'RiskNotAcknowledged'> & {
+      readonly level: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
+    })
+  /** Approval refused: the rewritten report has no text left. */
+  | BaseError<'EmptyReport'>
   | BaseError<'Unknown'>;
 
 export type AppErrorKind = AppError['kind'];
@@ -41,6 +49,9 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'OnDeviceStuck',
   'InputTooLong',
   'Misconfigured',
+  'DirectIdentifierRemains',
+  'RiskNotAcknowledged',
+  'EmptyReport',
   'Unknown',
 ];
 

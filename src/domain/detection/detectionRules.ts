@@ -13,7 +13,8 @@ export interface DetectionRule {
   readonly flags: string;
   readonly category: FindingCategory;
   readonly reason: string;
-  readonly suggestion: string;
+  /** Replacement text applied when the reporter accepts it; null removes the match. */
+  readonly suggestion: string | null;
 }
 
 const MONTH = String.raw`(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)`;
@@ -34,15 +35,15 @@ const EMPLOYEE_LABEL = '(?:employee|badge|staff|personnel)';
 
 const DATE = {
   reason: 'An exact date can be matched against records to find who was there.',
-  suggestion: 'Use an approximate period, such as "earlier this year".',
+  suggestion: 'a recent date',
 };
 const PHONE = {
   reason: 'A phone number identifies a specific person.',
-  suggestion: 'Remove the phone number.',
+  suggestion: null,
 };
 const ID = {
   reason: 'A personal ID number points directly to one person.',
-  suggestion: 'Remove the number.',
+  suggestion: null,
 };
 
 export const DETECTION_RULES: readonly DetectionRule[] = [
@@ -52,7 +53,7 @@ export const DETECTION_RULES: readonly DetectionRule[] = [
     flags: 'g',
     category: 'DIRECT_IDENTIFIER',
     reason: 'An email address identifies a specific person.',
-    suggestion: 'Remove the email address.',
+    suggestion: null,
   },
   {
     name: 'url',
@@ -60,7 +61,7 @@ export const DETECTION_RULES: readonly DetectionRule[] = [
     flags: 'g',
     category: 'DIRECT_IDENTIFIER',
     reason: 'A link can lead back to your profile, account or workplace.',
-    suggestion: 'Remove the link or describe it in general terms.',
+    suggestion: null,
   },
   {
     name: 'phone-international',

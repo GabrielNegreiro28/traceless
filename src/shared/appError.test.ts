@@ -41,6 +41,18 @@ describe('createAppError', () => {
   });
 });
 
+describe('approval errors', () => {
+  it('reports how many direct identifiers remain, without any text', () => {
+    const error = createAppError('DirectIdentifierRemains', { message: 'Remove them.', count: 2 });
+    expect(error).toEqual({ kind: 'DirectIdentifierRemains', message: 'Remove them.', count: 2 });
+  });
+
+  it('carries the unacknowledged risk level', () => {
+    const error = createAppError('RiskNotAcknowledged', { message: 'Confirm.', level: 'HIGH' });
+    expect(error.level).toBe('HIGH');
+  });
+});
+
 describe('APP_ERROR_KINDS', () => {
   it('lists every AppError kind exactly once', () => {
     // A missing or extra key here is a compile error, so the list cannot drift.
@@ -56,6 +68,9 @@ describe('APP_ERROR_KINDS', () => {
       OnDeviceStuck: true,
       InputTooLong: true,
       Misconfigured: true,
+      DirectIdentifierRemains: true,
+      RiskNotAcknowledged: true,
+      EmptyReport: true,
       Unknown: true,
     };
     expect([...APP_ERROR_KINDS].sort()).toEqual(Object.keys(everyKind).sort());

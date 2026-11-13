@@ -1,0 +1,172 @@
+import { describe, expect, it } from 'vitest';
+import { remainingRisk } from '../../domain/review/reviewState';
+import { toRawText } from '../../domain/text/brandedText';
+import { reportFlowReducer, type FlowState, type ReviewingState } from './reportFlowMachine';
+import {
+  DOCK,
+  FAILURE,
+  FINDINGS,
+  NAME_1,
+  NAME_2,
+  ROLE,
+  TEXT,
+  approved,
+  approvedReport,
+  outbox,
+  reviewing,
+  submitting,
+} from './reportFlowTestKit';
+
+function decide(
+  state: FlowState,
+  findingId: string,
+  action: 'ACCEPTED' | 'KEPT_RISK' | 'NOT_ABOUT_ME',
+) {
+  return reportFlowReducer(state, { type: 'DECIDE', findingId, choice: { action } });
+}
+
+function asReviewing(state: FlowState): ReviewingState {
+  if (state.status !== 'reviewing') throw new Error(`expected reviewing, got ${state.status}`);
+  return state;
+}
+
+describe('reportFlowReducer: reviewing decisions', () => {
+  it('DECIDE records the decision and lowers the live risk', () => {
+    const next = asReviewing(decide(reviewing, ROLE.id, 'ACCEPTED'));
+    expect(next.decisions).toEqual([{ findingId: ROLE.id, action: 'ACCEPTED' }]);
+    expect(next.risk).toEqual(remainingRisk(FINDINGS, next.decisions));
+    expect(next.risk.score).toBeLessThan(reviewing.risk.score);
+  });
+
+  it('DECIDE propagates to identical quotes ("not about me" on a name)', () => {
+    const next = asReviewing(decide(reviewing, NAME_1.id, 'NOT_ABOUT_ME'));
+    expect(next.decisions).toEqual([
+      { findingId: NAME_1.id, action: 'NOT_ABOUT_ME' },
+      { findingId: NAME_2.id, action: 'NOT_ABOUT_ME', propagatedFrom: NAME_1.id },
+    ]);
+  });
+
+  it('DECIDE replaces an earlier decision for the same finding', () => {
+    const once = decide(reviewing, DOCK.id, 'ACCEPTED');
+    const twice = asReviewing(decide(once, DOCK.id, 'KEPT_RISK'));
+    expect(twice.decisions).toEqual([{ findingId: DOCK.id, action: 'KEPT_RISK' }]);
+  });
+
+  it('DECIDE ignores an unknown finding or an EDITED choice without replacement', () => {
+    expect(decide(reviewing, 'ghost', 'ACCEPTED')).toBe(reviewing);
+    const noReplacement = reportFlowReducer(reviewing, {
+      type: 'DECIDE',
+      findingId: DOCK.id,
+      choice: { action: 'EDITED' },
+    });
+    expect(noReplacement).toBe(reviewing);
+  });
+
+  it('UNDO_DECISION removes the decision and its copies, restoring the risk', () => {
+    const decided = decide(reviewing, NAME_1.id, 'NOT_ABOUT_ME');
+    const undone = asReviewing(
+      reportFlowReducer(decided, { type: 'UNDO_DECISION', findingId: NAME_1.id }),
+    );
+    expect(undone.decisions).toEqual([]);
+    expect(undone.risk).toEqual(reviewing.risk);
+  });
+
+  it('UNDO_DECISION on a copy keeps that finding pending despite later propagation', () => {
+    const decided = decide(reviewing, NAME_1.id, 'NOT_ABOUT_ME');
+    const cleared = reportFlowReducer(decided, { type: 'UNDO_DECISION', findingId: NAME_2.id });
+    const again = asReviewing(decide(cleared, NAME_1.id, 'KEPT_RISK'));
+    expect(again.decisions).toContainEqual({ findingId: NAME_2.id, action: 'PENDING_BY_USER' });
+    expect(again.decisions).toContainEqual({ findingId: NAME_1.id, action: 'KEPT_RISK' });
+  });
+
+  it('UNDO_DECISION without a decision is a no-op', () => {
+    expect(reportFlowReducer(reviewing, { type: 'UNDO_DECISION', findingId: DOCK.id })).toBe(
+      reviewing,
+    );
+  });
+});
+
+describe('reportFlowReducer: leaving review', () => {
+  it('EDIT_TEXT with new text invalidates the findings (back to composing)', () => {
+    const text = toRawText('A different report.');
+    expect(reportFlowReducer(reviewing, { type: 'EDIT_TEXT', text })).toEqual({
+      status: 'composing',
+      text,
+    });
+  });
+
+  it('EDIT_TEXT with the same text keeps the review', () => {
+    expect(reportFlowReducer(reviewing, { type: 'EDIT_TEXT', text: TEXT })).toBe(reviewing);
+  });
+
+  it('BACK_TO_EDIT returns to the composer with the text', () => {
+    expect(reportFlowReducer(reviewing, { type: 'BACK_TO_EDIT' })).toEqual({
+      status: 'composing',
+      text: TEXT,
+    });
+  });
+
+  it('OPEN_OUTBOX previews the rewritten text, keeping the review', () => {
+    const decided = decide(reviewing, DOCK.id, 'ACCEPTED');
+    expect(reportFlowReducer(decided, { type: 'OPEN_OUTBOX' })).toEqual({
+      ...decided,
+      status: 'outbox',
+      preview: TEXT.replace('Dock B', '[place]'),
+    });
+  });
+
+  it('OPEN_OUTBOX with a stale review shows the error and returns to the review', () => {
+    const stale: ReviewingState = {
+      ...reviewing,
+      decisions: [{ findingId: 'ghost', action: 'ACCEPTED' }],
+    };
+    const next = reportFlowReducer(stale, { type: 'OPEN_OUTBOX' });
+    expect(next).toMatchObject({ status: 'error', error: { kind: 'Unknown' }, previous: stale });
+  });
+});
+
+describe('reportFlowReducer: outbox, approval and submission', () => {
+  it('outbox: APPROVE_OK moves to approved with the report', () => {
+    const report = approvedReport();
+    expect(reportFlowReducer(outbox, { type: 'APPROVE_OK', report })).toEqual({
+      ...outbox,
+      status: 'approved',
+      report,
+    });
+  });
+
+  it('outbox: APPROVE_FAILED shows the error and returns to the outbox', () => {
+    const next = reportFlowReducer(outbox, { type: 'APPROVE_FAILED', error: FAILURE });
+    expect(next).toEqual({ status: 'error', error: FAILURE, previous: outbox });
+    expect(reportFlowReducer(next, { type: 'BACK_TO_EDIT' })).toBe(outbox);
+  });
+
+  it('outbox: BACK_TO_EDIT reopens the review with its decisions', () => {
+    expect(reportFlowReducer(outbox, { type: 'BACK_TO_EDIT' })).toEqual(reviewing);
+  });
+
+  it('approved: BACK_TO_EDIT returns to the outbox and drops the approval', () => {
+    expect(reportFlowReducer(approved(), { type: 'BACK_TO_EDIT' })).toEqual(outbox);
+  });
+
+  it('approved: SUBMIT starts submitting', () => {
+    const state = approved();
+    expect(reportFlowReducer(state, { type: 'SUBMIT' })).toEqual({
+      ...state,
+      status: 'submitting',
+    });
+  });
+
+  it.each([true, false])('submitting: SUBMIT_OK records caseKeyPresent=%s', (caseKeyPresent) => {
+    expect(reportFlowReducer(submitting(), { type: 'SUBMIT_OK', caseKeyPresent })).toEqual({
+      status: 'submitted',
+      caseKeyPresent,
+    });
+  });
+
+  it('submitting: SUBMIT_FAILED shows the error and returns to approved to retry', () => {
+    const next = reportFlowReducer(submitting(), { type: 'SUBMIT_FAILED', error: FAILURE });
+    expect(next).toEqual({ status: 'error', error: FAILURE, previous: approved() });
+    expect(reportFlowReducer(next, { type: 'BACK_TO_EDIT' })).toEqual(approved());
+  });
+});
