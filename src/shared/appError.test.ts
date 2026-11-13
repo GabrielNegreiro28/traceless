@@ -22,6 +22,14 @@ describe('createAppError', () => {
     expect(error.cause).toBe(cause);
   });
 
+  it('lists the misconfigured variable names', () => {
+    const error = createAppError('Misconfigured', {
+      message: 'Missing environment variables',
+      missing: ['VITE_FIREBASE_API_KEY'],
+    });
+    expect(error.missing).toEqual(['VITE_FIREBASE_API_KEY']);
+  });
+
   it('allows an unknown download progress', () => {
     const error = createAppError('ModelDownloading', { message: 'Downloading', progress: null });
     expect(error.progress).toBeNull();

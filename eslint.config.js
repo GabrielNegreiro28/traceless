@@ -46,6 +46,26 @@ const brandAssertion = (/** @type {string} */ kind) => ({
 });
 const FORBID_BRAND_ASSERTIONS = ['TSAsExpression', 'TSTypeAssertion'].map(brandAssertion);
 
+/**
+ * Environment access (DECISIONS 2026-11-12): only src/app/env.ts reads
+ * `import.meta.env`, variable by variable, so a debug token cannot leak via
+ * an accidental whole-object read elsewhere.
+ */
+const FORBID_ENV_ACCESS = {
+  selector:
+    "MemberExpression[object.type='MetaProperty'][object.meta.name='import'][object.property.name='meta'][property.name='env']",
+  message: 'Read import.meta.env only in src/app/env.ts (use readEnv() / isDev).',
+};
+const BRAND_FACTORY_FILE = 'src/domain/text/brandedText.ts';
+const ENV_READER_FILES = [
+  'src/app/env.ts',
+  // Shared logger needs the build mode but must not depend on src/app; it reads only DEV/MODE.
+  'src/shared/logger.ts',
+];
+const restrictSyntax = (/** @type {object[]} */ ...selectors) => ({
+  'no-restricted-syntax': ['error', ...selectors],
+});
+
 const restrict = (/** @type {object[]} */ ...patterns) => ({
   '@typescript-eslint/no-restricted-imports': ['error', { patterns }],
 });
@@ -121,12 +141,22 @@ export default defineConfig([
   // The single place allowed to create SanitizedText (keeps the application rules).
   { files: ['src/application/usecases/approveReport.ts'], rules: restrict(...APPLICATION) },
 
-  // Brands are built only inside brandedText.ts.
+  // no-restricted-syntax: a later block replaces the whole selector list, so each
+  // block below states the complete set for the files it matches.
+  // Everywhere: no import.meta.env outside the env reader files.
+  {
+    files: ['**/*.{ts,tsx}'],
+    ignores: [...ENV_READER_FILES, '*.config.{js,ts}'],
+    rules: restrictSyntax(FORBID_ENV_ACCESS),
+  },
+  // src (except the brand factory and env readers): no brand assertions + no env access.
   {
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/domain/text/brandedText.ts'],
-    rules: { 'no-restricted-syntax': ['error', ...FORBID_BRAND_ASSERTIONS] },
+    ignores: [BRAND_FACTORY_FILE, ...ENV_READER_FILES],
+    rules: restrictSyntax(...FORBID_BRAND_ASSERTIONS, FORBID_ENV_ACCESS),
   },
+  // Env readers may touch import.meta.env but still cannot assert brands.
+  { files: ENV_READER_FILES, rules: restrictSyntax(...FORBID_BRAND_ASSERTIONS) },
 
   // The logger is the only module that may write to the console.
   { files: ['src/shared/logger.ts'], rules: { 'no-console': 'off' } },
@@ -137,7 +167,7 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.{js,mjs}'],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
   },

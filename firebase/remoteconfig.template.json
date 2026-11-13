@@ -1,0 +1,47 @@
+{
+  "conditions": [],
+  "parameters": {
+    "report_categories": {
+      "defaultValue": {
+        "value": "[\"Fraud or financial misconduct\",\"Health and safety\",\"Harassment or discrimination\",\"Environmental harm\",\"Privacy or data protection\",\"Other\"]"
+      },
+      "valueType": "JSON",
+      "description": "Report categories offered to the reporter (JSON array of strings)."
+    },
+    "ack_deadline_days": {
+      "defaultValue": {
+        "value": "7"
+      },
+      "valueType": "NUMBER",
+      "description": "Days the handler has to acknowledge receipt (EU Directive 2019/1937)."
+    },
+    "feedback_deadline_days": {
+      "defaultValue": {
+        "value": "90"
+      },
+      "valueType": "NUMBER",
+      "description": "Days the handler has to give feedback to the reporter (EU Directive 2019/1937)."
+    },
+    "cloud_model_name": {
+      "defaultValue": {
+        "value": "gemini-3.5-flash-lite"
+      },
+      "valueType": "STRING",
+      "description": "Cloud model used for tasks on sanitized text only."
+    },
+    "rights_advice_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Shows the grounded legal-rights guidance feature."
+    },
+    "identity_prompt_version": {
+      "defaultValue": {
+        "value": "v1"
+      },
+      "valueType": "STRING",
+      "description": "Version of the on-device identity scan prompt."
+    }
+  }
+}

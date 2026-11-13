@@ -15,7 +15,8 @@ _Atualizado pelo manager a cada iteração._
 ## Em andamento
 - Repositório privado no GitHub criado e `main` enviado (12/11): https://github.com/GabrielNegreiro28/traceless
 - Correções da revisão da Fase 0 commitadas (`9d5ca1f`).
-- Implementer (sonnet): núcleo de detecção do domínio da Fase 2 (`types`, `ruleDetector`, `spanLocator`, `findingMerger`, `textChunker`). Revisão (opus) pediu mudanças: ReDoS no regex de employee-id, ocorrências com outra caixa ignoradas, sem limite de palavra, merger dependente da ordem, falsos positivos. **Rodada de correção 1 em andamento.** Depois: `riskScorer`.
+- **Núcleo de detecção commitado** (`e4f223f`, 202 testes) após 2 rodadas de revisão.
+- Implementer (opus): código da Fase 1 (Firebase) conforme DECISIONS 12/11.
 - Fable consultado sobre a Fase 1 → decisões em DECISIONS.md (12/11, "Fase 1: design da integração Firebase"). Debug token gerado em `.env.development.local` (git-ignored). **Próximo implementer (opus) = código da Fase 1 conforme essa entrada**, depois do implementer de domínio terminar.
 
 ## Próximos passos
@@ -25,6 +26,7 @@ _Atualizado pelo manager a cada iteração._
 4. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
 
 ## Firebase
+- **Console pronto (12/11, verificado):** Auth (Anonymous e Email/Password), Firestore `(default)` em nam5 (Standard/Native), Remote Config ativo, debug token `dev-laptop` registrado (troca → OK; AI Logic com token → 200).
 - **ID do projeto Firebase:** `traceless-92f85` (criado pelo participante em 12/11). Usar em `.firebaserc` (`default`).
 - Domínios de produção: `traceless-92f85.web.app` e `traceless-92f85.firebaseapp.com` (para a chave do reCAPTCHA Enterprise).
 - **App Check:** usar `ReCaptchaEnterpriseProvider` (o reCAPTCHA clássico/v3 foi descontinuado em favor do Google Cloud Fraud Defense). Chave Web (baseada em pontuação, sem checkbox) criada pelo participante em 12/11: **`6LdToB0uAAAAAABzcCtn3w5sysp8c74sIwBeq-cr`** (pública; vai em `.env.local` como `VITE_RECAPTCHA_ENTERPRISE_SITE_KEY` e o nome da variável é documentado em `.env.example`). **Não aplicar (enforce) até o manager decidir.** Confirmar com o participante se ela já foi registrada no Firebase (App Check → Apps → traceless-web → reCAPTCHA Enterprise).
@@ -47,4 +49,4 @@ _Atualizado pelo manager a cada iteração._
 
 ## Riscos
 - Qualidade do Gemini Nano na detecção de quasi-identificadores (portão da Fase 2).
-- Passos humanos no Console do Firebase podem atrasar Fases 1/4/5.
+- App Check ainda NÃO está enforced no Firebase AI Logic (verificado em 12/11: uma chamada sem token foi aceita). Console (aba APIs): "Básico: não aplicado", data de aplicação automática **21/01/2027** (depois do prazo, então o enforce tem que ser manual), proteção contra repetição desativada; métricas de 12/11: 1 chamada verificada e 1 sem verificação (os dois testes do manager). Obrigatório antes da submissão; aplicar depois que o app enviar tokens (Fase 1) e testar o debug token.

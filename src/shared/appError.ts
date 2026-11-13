@@ -18,6 +18,7 @@ export type AppError =
   | BaseError<'Offline'>
   | BaseError<'QuotaExceeded'>
   | BaseError<'PermissionDenied'>
+  | (BaseError<'Misconfigured'> & { readonly missing: readonly string[] })
   | BaseError<'Unknown'>;
 
 export type AppErrorKind = AppError['kind'];
@@ -30,6 +31,7 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'Offline',
   'QuotaExceeded',
   'PermissionDenied',
+  'Misconfigured',
   'Unknown',
 ];
 
