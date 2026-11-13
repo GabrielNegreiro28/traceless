@@ -16,8 +16,9 @@ _Atualizado pelo manager a cada iteração._
 - Estrutura de agentes criada: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`, `.claude/settings.json`.
 
 ## Em andamento
-- Implementer (sonnet): `riskScorer` + pendências menores (chunker NBSP/maxChars, falsos positivos de faixas/frações, canário com logger, testes CSP/bootstrap, emuladores só em dev).
-- Fable: estratégia do prompt de detecção no Gemini Nano, schema, arquitetura da camada de IA e harness `/eval` → vira a sequência de tarefas da Fase 2.
+- `riskScorer` + endurecimento das regras commitados (`70e8efd`, 272 testes; revisão opus pegou regressão de privacidade — telefones após "from/to" e datas antes de "the" — corrigida com testes). CI do GitHub verde em todos os commits.
+- Fable entregou o desenho da Fase 2 → `docs/design/fase2-ai-layer.md` (fonte da verdade; 7 tarefas em série) + DECISIONS 12/11. **Achado crítico:** no firebase 13.3.0, `ONLY_ON_DEVICE` chama a nuvem se `window.LanguageModel` não existe → três camadas fail-closed obrigatórias.
+- Implementer (opus): **tarefa 1** do desenho (política, schema, prompt v1, ports, `scanReport`, `FakeIdentityScanner`).
 
 ## Próximos passos
 1. Camada de IA da Fase 2 (política, modelFactory, deviceCapability, errorMapper, OnDeviceIdentityScanner, prompt v1, schema, scanReport) conforme o Fable.

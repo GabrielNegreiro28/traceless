@@ -28,3 +28,15 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 - Limite de palavra estilo `\b`: só checado no lado em que a citação começa/termina com letra ou dígito (`#4471` casa após letra).
 - Não detectados pelas regras (o modelo é o backstop): datas com ponto e ano de 2 dígitos (`14.03.26`), `Staff ABC 1234`, "March 2026", "may 5" minúsculo, "In May 12 people quit" (falso positivo documentado em teste).
 - Pendências menores para a próxima tarefa de domínio: chunks só com espaço via NBSP; clamp de `maxChars` NaN/≤0 deve cair no tamanho padrão (não em 2); faixas numéricas (`300-4000`) e frações após gatilho (`on 3/4 of`) ainda são marcadas.
+
+## 2026-11-12 · Fase 2: estratégia de detecção on-device e harness de avaliação (consulta ao Fable)
+- **Achado crítico (verificado no código do SDK firebase 13.3.0):** se `window.LanguageModel` não existe, `ONLY_ON_DEVICE` chama a NUVEM silenciosamente. **Decisão:** três camadas fail-closed para dados RAW (guarda na factory antes de criar o modelo; `baseUrl` morto `https://on-device-only.invalid`; descarte se `inferenceSource !== 'on_device'`). Fila serial única para chamadas on-device. Exigir `available` antes de chamar (evita download sem gesto).
+- **Prompt:** um prompt v1 parametrizado por grupo de categorias; estratégia `single` por padrão, `grouped2` só se ganhar ≥ ~8 pontos de recall. System prompt + 2 few-shots em `initialPrompts`. Sem temperature/topK (não existem na API). Chunks de 3.000 caracteres para o modelo; regras no texto inteiro. `WRITING_STYLE` fora do enum do modelo.
+- **Schema:** um JSON Schema compartilhado device/nuvem + zod com salvamento por item.
+- **Portão da Fase 2 (split de teste, média de 3 execuções):** recall combinado ≥ 0,70; violações ACCUSED ≤ 0,05; INCIDENT_FACT ≤ 0,10; saída inválida ≤ 0,05.
+- **Desenho completo:** `docs/design/fase2-ai-layer.md`. Sequência de 7 tarefas; a execução real do `/eval` é passo humano (meta 14/11 à noite; portão 15/11).
+- **Decisão do manager:** aceita integralmente. `riskScorer` já foi feito (fica para uso na Fase 3).
+
+## 2026-11-13 · App Check enforced no AI Logic com replay protection
+- O participante aplicou o enforce no Console com **proteção contra repetição** ligada. Verificado: sem token → 401; token normal → 401; token limited-use → 200; reuso do mesmo token → 401.
+- **Consequência obrigatória para a Fase 2:** `getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true })` deixa de ser só recomendação: sem isso, toda chamada à nuvem falha com 401. Cada chamada consome um token novo (uma troca extra com o App Check por chamada); aceitável no volume do app.

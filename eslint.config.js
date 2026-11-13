@@ -88,6 +88,15 @@ const APPLICATION = [
     message: 'Use cases depend on ports, never on UI or concrete adapters.',
   },
 ];
+// application tests: may additionally use the deterministic fakes (never real adapters).
+const APPLICATION_TESTS = [
+  FORBID_REACT,
+  FORBID_FIREBASE,
+  {
+    regex: `${layer('(features|app|ui)')}|(^|/)infrastructure(/(?!fakes/)|$)`,
+    message: 'Use-case tests may import only src/infrastructure/fakes, never real adapters.',
+  },
+];
 // features/ui: presentation only; services arrive via useServices().
 const PRESENTATION = [FORBID_FIREBASE, FORBID_INFRASTRUCTURE];
 // ai: prompts, schemas and policy; Firebase *types* from firebase/ai only (Schema types).
@@ -132,6 +141,10 @@ export default defineConfig([
   {
     files: ['src/application/**/*.{ts,tsx}'],
     rules: restrict(...APPLICATION, FORBID_SANITIZED_FACTORY),
+  },
+  {
+    files: ['src/application/**/*.test.{ts,tsx}'],
+    rules: restrict(...APPLICATION_TESTS, FORBID_SANITIZED_FACTORY),
   },
   {
     files: ['src/features/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}'],
