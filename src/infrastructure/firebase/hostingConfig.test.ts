@@ -49,6 +49,25 @@ describe('firebase.json hosting', () => {
     expect(csp).toContain("frame-ancestors 'none'");
   });
 
+  it('allows reCAPTCHA scripts and frames', () => {
+    const csp = headerOn('**', 'Content-Security-Policy') ?? '';
+    const directive = (name: string): string[] =>
+      (csp.split(';').find((part) => part.trim().startsWith(name)) ?? '').trim().split(/\s+/);
+
+    expect(directive('script-src')).toEqual(
+      expect.arrayContaining([
+        'https://www.google.com/recaptcha/',
+        'https://www.gstatic.com/recaptcha/',
+      ]),
+    );
+    expect(directive('frame-src')).toEqual(
+      expect.arrayContaining([
+        'https://www.google.com/recaptcha/',
+        'https://recaptcha.google.com/recaptcha/',
+      ]),
+    );
+  });
+
   it('never sends a referrer (the case key must not leak)', () => {
     expect(headerOn('**', 'Referrer-Policy')).toBe('no-referrer');
   });

@@ -1,11 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppEnv } from './env';
 import {
   appCheckOptionsFor,
+  bootstrapFirebase,
   EMULATOR_PROJECT_ID,
   firebaseConfigFor,
   shouldInitAppCheck,
 } from './firebaseBootstrap';
+
+const mocks = vi.hoisted(() => ({
+  app: { name: 'fake-app' },
+  getFirebaseApp: vi.fn(),
+  initAppCheck: vi.fn(),
+}));
+
+vi.mock('../infrastructure/firebase/app', () => ({ getFirebaseApp: mocks.getFirebaseApp }));
+vi.mock('../infrastructure/firebase/appCheck', () => ({ initAppCheck: mocks.initAppCheck }));
 
 const ENV: AppEnv = {
   firebase: {
@@ -59,5 +69,33 @@ describe('firebaseConfigFor', () => {
   it('forces the demo project id with emulators', () => {
     expect(firebaseConfigFor({ ...ENV, useEmulators: true }).projectId).toBe(EMULATOR_PROJECT_ID);
     expect(EMULATOR_PROJECT_ID).toBe('demo-traceless');
+  });
+});
+
+describe('bootstrapFirebase', () => {
+  beforeEach(() => {
+    mocks.getFirebaseApp.mockReturnValue(mocks.app);
+    mocks.getFirebaseApp.mockClear();
+    mocks.initAppCheck.mockClear();
+  });
+
+  it('creates the app with the emulator project and skips App Check for fake AI', () => {
+    const app = bootstrapFirebase({ ...ENV, aiMode: 'fake', useEmulators: true });
+
+    expect(app).toBe(mocks.app);
+    expect(mocks.getFirebaseApp).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: EMULATOR_PROJECT_ID }),
+    );
+    expect(mocks.initAppCheck).not.toHaveBeenCalled();
+  });
+
+  it('initializes App Check with the site key for real AI', () => {
+    bootstrapFirebase(ENV);
+
+    expect(mocks.initAppCheck).toHaveBeenCalledTimes(1);
+    expect(mocks.initAppCheck).toHaveBeenCalledWith(
+      mocks.app,
+      expect.objectContaining({ siteKey: 'site-key' }),
+    );
   });
 });

@@ -4,6 +4,13 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
+- [ ] **Ligar a proteção App Check para a IA (enforce do Firebase AI Logic)** (adicionado em 12/11, ~1 minuto). Hoje qualquer pessoa com o ID do projeto consegue usar a sua cota de IA. Ligar a proteção agora é seguro: o seu computador de desenvolvimento já tem o token registrado, e o site publicado ainda não chama a IA.
+  1. Abra https://console.firebase.google.com/project/traceless-92f85/appcheck/apis
+  2. Na linha **Firebase AI Logic**, clique em **Enforce** (Aplicar).
+  3. Na janela de confirmação, clique em **Enforce** de novo. A linha deve passar a mostrar **Enforced**.
+  4. **Não** mexa na linha do **Cloud Firestore**; isso fica para depois.
+  5. Me avise ("feito"). Eu confiro pelo terminal: uma chamada sem token tem que ser recusada.
+
 _(nenhuma no momento)_
 
 

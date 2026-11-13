@@ -20,12 +20,19 @@ const PARAGRAPH = /\S[\s\S]*?(?=\r?\n[ \t]*\r?\n|$)/g;
 const SEPARATORS: readonly RegExp[] = [/\n/g, /[.!?]+["')\]]*\s+/g];
 
 /**
- * Clamps the limit instead of failing: NaN and values below MIN_CHUNK_CHARS become
- * MIN_CHUNK_CHARS, fractions are floored and Infinity means "never split".
+ * Default chunk size: Gemini Nano's ~9216-token window minus the prompt and output
+ * budget leaves roughly 6000 characters of report text per call.
+ */
+export const DEFAULT_CHUNK_CHARS = 6000;
+
+/**
+ * Never throws: NaN, -Infinity and values < 1 fall back to DEFAULT_CHUNK_CHARS,
+ * Infinity means "never split", fractions are floored and small positive values are
+ * clamped up to MIN_CHUNK_CHARS.
  */
 export function normalizeMaxChars(maxChars: number): number {
-  if (Number.isNaN(maxChars)) return MIN_CHUNK_CHARS;
   if (maxChars === Infinity) return Number.MAX_SAFE_INTEGER;
+  if (!Number.isFinite(maxChars) || maxChars < 1) return DEFAULT_CHUNK_CHARS;
   return Math.max(MIN_CHUNK_CHARS, Math.floor(maxChars));
 }
 
@@ -109,7 +116,9 @@ function packRanges(ranges: readonly Range[], max: number): Range[] {
  */
 export function chunkText(text: string, maxChars: number): TextChunk[] {
   const max = normalizeMaxChars(maxChars);
-  const units = paragraphRanges(text).flatMap((p) => splitRange(text, p, max));
+  const units = paragraphRanges(text)
+    .flatMap((p) => splitRange(text, p, max))
+    .filter((r) => text.slice(r.start, r.end).trim() !== '');
   return packRanges(units, max).map((r) => ({ text: text.slice(r.start, r.end), offset: r.start }));
 }
 

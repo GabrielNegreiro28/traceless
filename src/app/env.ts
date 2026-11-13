@@ -49,7 +49,7 @@ function dropBlankValues(source: EnvSource): EnvSource {
   );
 }
 
-function toAppEnv(parsed: ParsedEnv): AppEnv {
+function toAppEnv(parsed: ParsedEnv, dev: boolean): AppEnv {
   const token = parsed.VITE_APPCHECK_DEBUG_TOKEN;
   return {
     firebase: {
@@ -63,7 +63,8 @@ function toAppEnv(parsed: ParsedEnv): AppEnv {
     recaptchaSiteKey: parsed.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY,
     ...(token === undefined ? {} : { appCheckDebugToken: token }),
     aiMode: parsed.VITE_AI_MODE,
-    useEmulators: parsed.VITE_USE_EMULATORS === 'true',
+    // Emulators are honoured only in dev builds or with fake AI (CI/E2E).
+    useEmulators: parsed.VITE_USE_EMULATORS === 'true' && (dev || parsed.VITE_AI_MODE === 'fake'),
   };
 }
 
@@ -71,9 +72,9 @@ function toAppEnv(parsed: ParsedEnv): AppEnv {
  * Validates raw env values. The error lists variable NAMES only; values never
  * appear in it (and the zod error is not attached as `cause`).
  */
-export function parseEnv(source: EnvSource): Result<AppEnv, AppError> {
+export function parseEnv(source: EnvSource, dev = false): Result<AppEnv, AppError> {
   const parsed = ENV_SCHEMA.safeParse(dropBlankValues(source));
-  if (parsed.success) return ok(toAppEnv(parsed.data));
+  if (parsed.success) return ok(toAppEnv(parsed.data, dev));
 
   const missing = [...new Set(parsed.error.issues.map((issue) => String(issue.path[0])))];
   return err(
@@ -86,20 +87,23 @@ export function parseEnv(source: EnvSource): Result<AppEnv, AppError> {
 
 /** Reads the build-time environment, variable by variable. */
 export function readEnv(): Result<AppEnv, AppError> {
-  return parseEnv({
-    VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY,
-    VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    VITE_FIREBASE_STORAGE_BUCKET: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    VITE_FIREBASE_MESSAGING_SENDER_ID: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID,
-    VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY,
-    // `DEV` is a literal `false` in production builds, so the bundler drops the
-    // token entirely (guarded by scripts/verify-no-debug-token.mjs).
-    VITE_APPCHECK_DEBUG_TOKEN: import.meta.env.DEV
-      ? import.meta.env.VITE_APPCHECK_DEBUG_TOKEN
-      : undefined,
-    VITE_AI_MODE: import.meta.env.VITE_AI_MODE,
-    VITE_USE_EMULATORS: import.meta.env.VITE_USE_EMULATORS,
-  });
+  return parseEnv(
+    {
+      VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY,
+      VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      VITE_FIREBASE_STORAGE_BUCKET: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      VITE_FIREBASE_MESSAGING_SENDER_ID: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID,
+      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY,
+      // `DEV` is a literal `false` in production builds, so the bundler drops the
+      // token entirely (guarded by scripts/verify-no-debug-token.mjs).
+      VITE_APPCHECK_DEBUG_TOKEN: import.meta.env.DEV
+        ? import.meta.env.VITE_APPCHECK_DEBUG_TOKEN
+        : undefined,
+      VITE_AI_MODE: import.meta.env.VITE_AI_MODE,
+      VITE_USE_EMULATORS: import.meta.env.VITE_USE_EMULATORS,
+    },
+    import.meta.env.DEV,
+  );
 }

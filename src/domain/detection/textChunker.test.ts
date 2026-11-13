@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { MIN_CHUNK_CHARS, chunkText, normalizeMaxChars, shiftFindings } from './textChunker';
+import {
+  DEFAULT_CHUNK_CHARS,
+  MIN_CHUNK_CHARS,
+  chunkText,
+  normalizeMaxChars,
+  shiftFindings,
+} from './textChunker';
 import type { Finding } from './types';
 
 const LONG_SENTENCE = 'word '.repeat(30).trim() + '.';
@@ -105,13 +111,23 @@ describe('chunkText behaviour', () => {
 });
 
 describe('maxChars guard', () => {
-  it('clamps NaN, zero, negative and fractional limits to the minimum', () => {
-    expect(normalizeMaxChars(Number.NaN)).toBe(MIN_CHUNK_CHARS);
-    expect(normalizeMaxChars(0)).toBe(MIN_CHUNK_CHARS);
-    expect(normalizeMaxChars(-5)).toBe(MIN_CHUNK_CHARS);
-    expect(normalizeMaxChars(-Infinity)).toBe(MIN_CHUNK_CHARS);
+  it('falls back to the default for NaN, zero, negative and -Infinity limits', () => {
+    for (const bad of [Number.NaN, 0, 0.5, -5, -Infinity]) {
+      expect(normalizeMaxChars(bad)).toBe(DEFAULT_CHUNK_CHARS);
+    }
+    expect(DEFAULT_CHUNK_CHARS).toBe(6000);
+  });
+
+  it('floors fractions and clamps small positive limits to the minimum', () => {
+    expect(normalizeMaxChars(1)).toBe(MIN_CHUNK_CHARS);
     expect(normalizeMaxChars(2.9)).toBe(2);
     expect(normalizeMaxChars(10.7)).toBe(10);
+  });
+
+  it('never yields a whitespace-only chunk (NBSP-only line)', () => {
+    const chunks = chunkText('aaaa bbbb\n \ncccc dddd', 5);
+    expect(chunks.length).toBeGreaterThan(0);
+    for (const chunk of chunks) expect(chunk.text.trim()).not.toBe('');
   });
 
   it('treats Infinity as "never split"', () => {
@@ -119,9 +135,10 @@ describe('maxChars guard', () => {
     expect(chunkText(text, Infinity)).toHaveLength(1);
   });
 
-  it('still chunks safely with a clamped limit', () => {
-    expect(chunkText('abcd', Number.NaN).map((c) => c.text)).toEqual(['ab', 'cd']);
-    expect(chunkText('abcd', -1).map((c) => c.text)).toEqual(['ab', 'cd']);
+  it('still chunks safely with a fallback or clamped limit', () => {
+    expect(chunkText('abcd', Number.NaN).map((c) => c.text)).toEqual(['abcd']);
+    expect(chunkText('abcd', -1).map((c) => c.text)).toEqual(['abcd']);
+    expect(chunkText('abcd', 1).map((c) => c.text)).toEqual(['ab', 'cd']);
   });
 });
 

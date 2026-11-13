@@ -3,26 +3,26 @@
 _Atualizado pelo manager a cada iteração._
 
 - **Data da última atualização:** 2026-11-12
-- **Fase atual:** Fase 0 concluída localmente (commit 50e082f); Fase 1 (código Firebase) em preparação
+- **Fase atual:** Fase 2 (detecção) em andamento; Fase 1 concluída exceto o enforce do App Check no AI Logic (passo humano)
 - **Prazo:** **2026-11-30 às 19:00 GMT-3** (horário de Brasília). Rascunho completo até 28/11; congelamento de funcionalidades em 25/11; submeter com folga, nunca na última hora.
 
 ## Concluído
+- **Fase 1, código (12/11):** commit `eadc293` (245 testes, revisado). **Primeiro deploy no Hosting**: https://traceless-92f85.web.app abre; CSP, Referrer-Policy, Permissions-Policy e cache verificados com curl. Regras deny-all + índices publicados no Firestore; template do Remote Config publicado (versão 1). Emuladores (auth, firestore) sobem com `npm run emulators`.
+- **Núcleo de detecção (12/11):** commit `e4f223f` (2 rodadas de revisão).
+- Repositório privado no GitHub: https://github.com/GabrielNegreiro28/traceless (`main` sincronizado a cada commit).
 - **Fase 0 (12/11):** scaffold revisado e aprovado pelo reviewer; `npm run ci` verde (34 testes); commit `50e082f`. TypeScript fixado em 6.0.3 (typescript-eslint 8.72.2 não suporta TS 7).
 - Pesquisa, ideia (Traceless) e plano aprovados — ver `HACKATHON.md` e `PLANO.md`.
 - Máquina do participante verificada: Gemini Nano disponível (`LanguageModel.availability()` → `'available'`).
 - Estrutura de agentes criada: `.claude/agents/` (fable-advisor, implementer, reviewer), `.claude/manager/PROTOCOL.md`, `.claude/settings.json`.
 
 ## Em andamento
-- Repositório privado no GitHub criado e `main` enviado (12/11): https://github.com/GabrielNegreiro28/traceless
-- Correções da revisão da Fase 0 commitadas (`9d5ca1f`).
-- **Núcleo de detecção commitado** (`e4f223f`, 202 testes) após 2 rodadas de revisão.
-- Implementer (opus): código da Fase 1 (Firebase) conforme DECISIONS 12/11.
-- Fable consultado sobre a Fase 1 → decisões em DECISIONS.md (12/11, "Fase 1: design da integração Firebase"). Debug token gerado em `.env.development.local` (git-ignored). **Próximo implementer (opus) = código da Fase 1 conforme essa entrada**, depois do implementer de domínio terminar.
+- Implementer (sonnet): `riskScorer` + pendências menores (chunker NBSP/maxChars, falsos positivos de faixas/frações, canário com logger, testes CSP/bootstrap, emuladores só em dev).
+- Fable: estratégia do prompt de detecção no Gemini Nano, schema, arquitetura da camada de IA e harness `/eval` → vira a sequência de tarefas da Fase 2.
 
 ## Próximos passos
-1. Commitar as correções da revisão da Fase 0.
-2. Fase 1 (código): `firebase.json`, `.firebaserc`, `firebase/*` (regras deny-all, índices, template do Remote Config), `src/infrastructure/firebase/*`, env tipado, scripts `emulators`/`deploy`; aplicar as recomendações do Fable.
-3. Fase 2 (domínio de detecção) pode começar em paralelo à espera dos passos humanos do Console.
+1. Camada de IA da Fase 2 (política, modelFactory, deviceCapability, errorMapper, OnDeviceIdentityScanner, prompt v1, schema, scanReport) conforme o Fable.
+2. Dataset `eval/datasets/reports.v1.json` + página `/eval` (só em dev) → rodar no Chrome do participante → portão da Fase 2 (meta: decisão até 15/11).
+3. Após o participante aplicar o enforce: verificar que chamada sem token ao AI Logic é recusada; portão da Fase 1 com o Fable.
 4. Nota para a Fase 8: HACKATHON.md, PLANO.md e docs/progress estão em português e contêm detalhes pessoais (máquina, nome). Decidir antes de tornar o repo público se ficam ou vão para fora do repo.
 
 ## Firebase

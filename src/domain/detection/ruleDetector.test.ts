@@ -39,10 +39,24 @@ describe('detectByRules: identifiers', () => {
     expect(quotes(`Call ${input} please`)).toEqual([input]);
   });
 
+  it.each([
+    'from 555-0132 to HR',
+    'I called HR from 555-0132.',
+    'send it to 555-0132',
+    'forward to 555-0132',
+    'He calls from 555-0132 every night',
+    'My number is 555-0132 days or nights',
+  ])('still finds the phone in "%s"', (input) => {
+    expect(quotes(input)).toEqual(['555-0132']);
+  });
+
   it('does not treat money, years, short numbers or case numbers as phones', () => {
     expect(quotes('I was underpaid $4,500 in 2019 across 12 weeks, room 4471.')).toEqual([]);
     expect(quotes('Total was 1,234,567 units')).toEqual([]);
     expect(quotes('Case 2025-0412 was filed')).toEqual([]);
+    expect(quotes('Sold 300-4000 units')).toEqual([]);
+    expect(quotes('see pages 120-1450')).toEqual([]);
+    expect(quotes('about 300-4000 people')).toEqual([]);
   });
 
   it.each([
@@ -80,6 +94,9 @@ describe('detectByRules: dates', () => {
     ['Dated 14.03.2026 exactly.', '14.03.2026'],
     ['Dated 2026-03-14 exactly.', '2026-03-14'],
     ['He left on 12/03 without notice.', '12/03'],
+    ['On 12/03 the supervisor fired me', '12/03'],
+    ['On 3/4 the manager yelled', '3/4'],
+    ['Since 4/5 the line has been closed', '4/5'],
   ])('finds date in "%s"', (input, expected) => {
     const found = detectByRules(toRawText(input));
     expect(found.map((f) => f.quote)).toEqual([expected]);
@@ -93,6 +110,8 @@ describe('detectByRules: dates', () => {
       'Section 12.3.14 applies',
       'host 10.10.10.10 is down',
       'I scored 9/10',
+      'on 3/4 of the days',
+      'from 9/10 people',
       'ratio 2026-13-45',
     ]) {
       expect(quotes(text)).toEqual([]);

@@ -25,6 +25,10 @@ const DAY_MONTH = `${DAY_NUM}/${MONTH_NUM}`;
 const MONTH_DAY_DOT = String.raw`${MONTH_NUM}\.${DAY_NUM}`;
 const DAY_MONTH_DOT = String.raw`${DAY_NUM}\.${MONTH_NUM}`;
 const NOT_DATE_NEIGHBOUR = String.raw`(?<![\d./-])`;
+// A "ddd-dddd" next to a counting word is a range ("pages 120-1450", "300-4000 units"),
+// not a phone. Simplest robust rule: skip it when such a word comes right before/after.
+const COUNT_WORD_BEFORE = String.raw`\b(?:[Pp]ages?|pp|[Uu]nits?|[Ss]old|[Ii]tems?|[Rr]ooms?|[Ll]ines?|[Ss]teps?)[ \t]{1,3}`;
+const COUNT_WORD_AFTER = String.raw`[ \t]{1,3}(?:units?|pages?|items?|people|staff|copies)\b`;
 const ID_TAIL = String.raw`\d{3,}(?:-\d{1,12}){0,5}\b`;
 const EMPLOYEE_LABEL = '(?:employee|badge|staff|personnel)';
 
@@ -81,7 +85,7 @@ export const DETECTION_RULES: readonly DetectionRule[] = [
   },
   {
     name: 'phone-local-seven',
-    pattern: String.raw`(?<![\w$.,+-]|\d{3}\)?[\s.-]?)\d{3}-\d{4}(?![\d-])`,
+    pattern: String.raw`(?<![\w$.,+-]|\d{3}\)?[\s.-]?|${COUNT_WORD_BEFORE})\d{3}-\d{4}(?![\d-]|${COUNT_WORD_AFTER})`,
     flags: 'g',
     category: 'DIRECT_IDENTIFIER',
     ...PHONE,
@@ -139,7 +143,7 @@ export const DETECTION_RULES: readonly DetectionRule[] = [
   {
     // Short "12/03" is only trusted after a date-introducing word (avoids "9/10").
     name: 'date-short',
-    pattern: String.raw`(?<=\b(?:[Oo]n|[Ss]ince|[Bb]efore|[Aa]fter|[Uu]ntil|[Ff]rom)[ \t]{1,3})(?:${MONTH_DAY}|${DAY_MONTH})(?![\d./])`,
+    pattern: String.raw`(?<=\b(?:[Oo]n|[Ss]ince|[Bb]efore|[Aa]fter|[Uu]ntil|[Ff]rom)[ \t]{1,3})(?:${MONTH_DAY}|${DAY_MONTH})(?![\d./]|[ \t]{1,3}(?:of|people|staff|units)\b)`,
     flags: 'g',
     category: 'PERSONAL_EVENT_DATE',
     ...DATE,

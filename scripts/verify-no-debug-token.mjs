@@ -31,7 +31,11 @@ async function buildWithCanary(outDir) {
       outDir,
       emptyOutDir: false,
       rolldownOptions: {
-        input: { index: join(root, 'index.html'), env: join(root, 'src/app/env.ts') },
+        input: {
+          index: join(root, 'index.html'),
+          env: join(root, 'src/app/env.ts'),
+          logger: join(root, 'src/shared/logger.ts'),
+        },
         preserveEntrySignatures: 'strict',
       },
     },
@@ -48,6 +52,7 @@ async function findLeaks(outDir) {
   return { files, leaks };
 }
 
+// The temp dir is intentionally NOT removed afterwards (project rule: never delete files).
 const outDir = await mkdtemp(join(tmpdir(), 'traceless-canary-'));
 await buildWithCanary(outDir);
 const { files, leaks } = await findLeaks(outDir);

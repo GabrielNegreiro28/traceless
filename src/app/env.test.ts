@@ -48,6 +48,16 @@ describe('parseEnv', () => {
     });
   });
 
+  it('ignores VITE_USE_EMULATORS outside dev unless AI is fake', () => {
+    const on = { ...VALID, VITE_USE_EMULATORS: 'true' };
+
+    expect(parseEnv(on, false)).toMatchObject({ value: { useEmulators: false } });
+    expect(parseEnv(on, true)).toMatchObject({ value: { useEmulators: true } });
+    expect(parseEnv({ ...on, VITE_AI_MODE: 'fake' }, false)).toMatchObject({
+      value: { useEmulators: true },
+    });
+  });
+
   it('omits a blank debug token', () => {
     const result = parseEnv({ ...VALID, VITE_APPCHECK_DEBUG_TOKEN: '  ' });
 
