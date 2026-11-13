@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { createMemoryRouter } from 'react-router';
+import { createMemoryRouter, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAppRoutes } from './router';
@@ -9,10 +9,19 @@ afterEach(() => {
   vi.resetModules();
 });
 
+const topLevel = (routes: readonly RouteObject[]) => routes.map((r) => r.path);
+const shellChildren = (routes: readonly RouteObject[]) =>
+  (routes[0]?.children ?? []).map((r) => (r.index === true ? '(index)' : r.path));
+
 describe('route table', () => {
-  it('always has the landing page and appends extra routes', () => {
-    expect(createAppRoutes([]).map((r) => r.path)).toEqual(['/', '*']);
-    expect(createAppRoutes([{ path: '/x' }]).map((r) => r.path)).toEqual(['/', '/x', '*']);
+  it('has the shell with landing, report and case, then a catch-all', () => {
+    const routes = createAppRoutes([]);
+    expect(topLevel(routes)).toEqual(['/', '*']);
+    expect(shellChildren(routes)).toEqual(['(index)', 'report', 'case']);
+  });
+
+  it('appends extra routes between the shell and the catch-all', () => {
+    expect(topLevel(createAppRoutes([{ path: '/x' }]))).toEqual(['/', '/x', '*']);
   });
 
   it('registers /eval in development', async () => {
@@ -31,8 +40,7 @@ describe('route table', () => {
 });
 
 describe('navigation', () => {
-  const landing = () =>
-    screen.getByRole('heading', { level: 1, name: 'Report wrongdoing without leaving a trace.' });
+  const heading = (name: string) => screen.getByRole('heading', { level: 1, name });
   const open = (path: string) =>
     render(
       <RouterProvider
@@ -40,13 +48,24 @@ describe('navigation', () => {
       />,
     );
 
-  it('renders the landing page at /', () => {
+  it('renders the landing page inside the shell at /', () => {
     open('/');
-    expect(landing()).toBeInTheDocument();
+    expect(heading('Report wrongdoing without leaving a trace.')).toBeInTheDocument();
+    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/report', 'Compose your report'],
+    ['/case', 'Follow up on your case'],
+  ])('renders the %s placeholder inside the shell', (path, title) => {
+    open(path);
+    expect(heading(title)).toBeInTheDocument();
+    expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
   it.each(['/nope', '/eval'])('redirects unknown path %s to the landing page', (path) => {
     open(path);
-    expect(landing()).toBeInTheDocument();
+    expect(heading('Report wrongdoing without leaving a trace.')).toBeInTheDocument();
   });
 });
