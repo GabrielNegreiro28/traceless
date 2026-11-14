@@ -1,3 +1,4 @@
+import { rulePackOrDefault } from '../../domain/detection/rulePacks';
 import { aggregateRuns } from '../../domain/evaluation/aggregateRuns';
 import type { Dataset } from '../../domain/evaluation/datasetSchema';
 import { evaluateGate } from '../../domain/evaluation/gate';
@@ -61,8 +62,9 @@ async function runOnce(
   stalls: Record<keyof StallCounts, number>,
 ): Promise<Readonly<Record<ViewName, SingleRunResult>>> {
   const results: Record<ViewName, ReportRunResult[]> = { raw: [], filtered: [] };
+  const rulePack = rulePackOrDefault(params.variant.rulePack);
   for (const report of reports) {
-    const evaluated = await evaluateReport(report, params.scan);
+    const evaluated = await evaluateReport(report, params.scan, rulePack);
     if (evaluated.stall !== null) stalls[evaluated.stall] += 1;
     results.raw.push(evaluated.raw);
     results.filtered.push(evaluated.filtered);

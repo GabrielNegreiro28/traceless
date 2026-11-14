@@ -1,3 +1,4 @@
+import type { RulePack } from '../../domain/detection/rulePacks';
 import type { AggregatedMetrics } from '../../domain/evaluation/aggregateRuns';
 import type { Dataset, Split } from '../../domain/evaluation/datasetSchema';
 import type { GateResult } from '../../domain/evaluation/gate';
@@ -30,6 +31,11 @@ export interface VariantInfo {
   readonly strategy: string;
   readonly chunkChars: number;
   readonly postFilters: readonly string[];
+  /**
+   * The deterministic rules the scan ran (§G.3); RULE-origin metrics recompute them with the
+   * same pack. Result files saved before §G.3 have none: read a missing pack as `core`.
+   */
+  readonly rulePack?: RulePack;
 }
 
 export interface EvaluateDetectionParams {

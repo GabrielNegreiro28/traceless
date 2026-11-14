@@ -11,6 +11,14 @@ describe('STRATEGIES', () => {
 
   it('adds single2: the full category list twice (design §C.3)', () => {
     expect(STRATEGIES.single2).toEqual([MODEL_FINDING_CATEGORIES, MODEL_FINDING_CATEGORIES]);
-    expect(Object.keys(STRATEGIES)).toEqual(['single', 'grouped2', 'single2']);
+  });
+
+  it('adds single3: the full category list three times (design §G.4)', () => {
+    expect(STRATEGIES.single3).toEqual([
+      MODEL_FINDING_CATEGORIES,
+      MODEL_FINDING_CATEGORIES,
+      MODEL_FINDING_CATEGORIES,
+    ]);
+    expect(Object.keys(STRATEGIES)).toEqual(['single', 'grouped2', 'single2', 'single3']);
   });
 });

@@ -1,25 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseDataset, type Dataset } from '../../domain/evaluation/datasetSchema';
 import { FakeClock } from '../../infrastructure/fakes/FakeClock';
 import { FakeIdentityScanner } from '../../infrastructure/fakes/FakeIdentityScanner';
+import { loadEvalDataset } from '../../test/evalDataset';
 import type { EvalScan } from './evaluateDetection';
 import { runEval as run } from './evaluateDetection.testKit';
 import { scanReport } from './scanReport';
-
-// Read as raw text at build time: the project has no Node type definitions for `fs`.
-const files = import.meta.glob<string>('../../../eval/datasets/reports.v1.json', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-function realDataset(): Dataset {
-  const text = Object.values(files)[0];
-  if (text === undefined) throw new Error('eval/datasets/reports.v1.json not found');
-  const parsed = parseDataset(JSON.parse(text));
-  if (!parsed.ok) throw new Error('dataset does not parse');
-  return parsed.value;
-}
 
 /** Rules only: the model never finds anything. */
 function rulesOnly(): EvalScan {
@@ -41,8 +26,11 @@ describe('evaluateDetection rules-only baseline', () => {
     expect(metrics?.hallucinatedQuoteRate).toBeNull();
   });
 
-  it('never flags a must-not span of the real dataset with a rule (all splits)', async () => {
-    const result = await run(rulesOnly(), 'all', 1, undefined, realDataset());
+  // Dev split only (docs/design/fase2-gate-iteration.md §G.3): a deterministic assertion over
+  // the test split would leak test-split feedback into rule design.
+  it('never flags a must-not span of the real dataset with a rule (dev split only)', async () => {
+    const result = await run(rulesOnly(), 'dev', 1, undefined, loadEvalDataset());
+    expect(result.split).toBe('dev');
     const ruleViolations = Object.entries(result.summary.pooled).filter(([key]) =>
       /^violation:[A-Z_]+:RULE$/.test(key),
     );
@@ -52,7 +40,7 @@ describe('evaluateDetection rules-only baseline', () => {
   });
 
   it('catches the dev sign-off with the sign-off rule', async () => {
-    const result = await run(rulesOnly(), 'dev', 1, undefined, realDataset());
+    const result = await run(rulesOnly(), 'dev', 1, undefined, loadEvalDataset());
     expect(result.summary.pooled['recall:DIRECT_IDENTIFIER']).toBe(1);
   });
 });

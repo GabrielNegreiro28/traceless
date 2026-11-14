@@ -1,6 +1,7 @@
 import { mergeFindings } from '../../domain/detection/findingMerger';
 import { applyPostFilters, type PostFilterName } from '../../domain/detection/postFilters';
 import { detectByRules } from '../../domain/detection/ruleDetector';
+import type { RulePack } from '../../domain/detection/rulePacks';
 import { chunkText } from '../../domain/detection/textChunker';
 import type { Finding, TextSpan } from '../../domain/detection/types';
 import type { RawText } from '../../domain/text/brandedText';
@@ -23,6 +24,8 @@ export interface ScanReportDeps {
   readonly allowCloud?: boolean;
   /** Deterministic filters on the model findings (none by default). */
   readonly postFilters?: readonly PostFilterName[];
+  /** Which deterministic rules run over the full text (default `core`, §G.3). */
+  readonly rulePack?: RulePack;
 }
 
 export interface ScanReportOptions {
@@ -72,9 +75,10 @@ const NO_PROGRESS = (): void => undefined;
 function buildResult(
   text: RawText,
   pass: ModelPass,
-  postFilters: readonly PostFilterName[],
+  deps: ScanReportDeps,
 ): Omit<ScanReportResult, 'stats'> & { readonly suppressed: number } {
-  const ruleFindings = detectByRules(text);
+  const ruleFindings = detectByRules(text, deps.rulePack);
+  const postFilters = deps.postFilters ?? [];
   const filtered = applyPostFilters(text, pass.findings, pass.protectedQuotes, postFilters);
   return {
     findings: mergeFindings([...ruleFindings, ...filtered.kept]),
@@ -114,7 +118,7 @@ export async function scanReport(
     chunks,
   );
   if (!pass.ok) return pass;
-  const { suppressed, ...result } = buildResult(text, pass.value, deps.postFilters ?? []);
+  const { suppressed, ...result } = buildResult(text, pass.value, deps);
   return ok({
     ...result,
     stats: {

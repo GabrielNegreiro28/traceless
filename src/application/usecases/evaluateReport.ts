@@ -1,4 +1,5 @@
 import { detectByRules } from '../../domain/detection/ruleDetector';
+import type { RulePack } from '../../domain/detection/rulePacks';
 import {
   countReport,
   type EvalFinding,
@@ -86,14 +87,18 @@ function stallOf(scanned: Result<ScanReportResult, AppError>): EvaluatedReport['
   return scanned.error.recoverable ? 'recovered' : 'terminal';
 }
 
-/** Scans the report once and evaluates the scan once per view. */
+/**
+ * Scans the report once and evaluates the scan once per view. RULE-origin attribution uses
+ * the rule findings of `rulePack`, the pack the scan itself ran.
+ */
 export async function evaluateReport(
   report: ResolvedReport,
   scan: EvalScan,
+  rulePack: RulePack,
 ): Promise<EvaluatedReport> {
   const text = toRawText(report.text);
   const scanned = await safeScan(scan, text);
-  const ruleFindings = detectByRules(text);
+  const ruleFindings = detectByRules(text, rulePack);
   return {
     raw: reportResult(report, scanned, ruleFindings, 'raw'),
     filtered: reportResult(report, scanned, ruleFindings, 'filtered'),

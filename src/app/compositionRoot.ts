@@ -64,7 +64,8 @@ export type ScanVariantSpec = ScanPipelineSpec;
 
 /**
  * The product default: v2-single2 (identityScan.v2, strategy single2, the shipped chunk size,
- * post-filters protectedMentions + thirdPerson), identical to the `v2-single2` eval variant.
+ * post-filters protectedMentions + thirdPerson, core rules), identical to the `v2-single2` eval
+ * variant. The first-person rule pack (§G.3) stays off until the test split decides (§G.4).
  * docs/design/fase2-gate-iteration.md §G.1: a default BY DOMINANCE on the dev matrix, NOT a
  * gate pass; the final default is whichever variant goes to the test split.
  */
@@ -88,11 +89,11 @@ function bindScanReport(
   scanner: IdentityScanner,
   variant: ScanVariantSpec,
 ): Services['scanReport'] {
-  const { chunkChars, postFilters } = variant;
+  const { chunkChars, postFilters, rulePack } = variant;
   return (text, onProgress, isCancelled) =>
     scanReport(
       text,
-      { scanner, clock: systemClock, chunkChars, postFilters },
+      { scanner, clock: systemClock, chunkChars, postFilters, rulePack },
       {
         ...(onProgress === undefined ? {} : { onProgress }),
         ...(isCancelled === undefined ? {} : { isCancelled }),
@@ -121,7 +122,7 @@ function buildServices(ai: AiServices, variant: ScanVariantSpec, context: Ledger
 }
 
 function variantKey(v: ScanVariantSpec): string {
-  return `${v.promptVersion}|${v.strategy}|${v.chunkChars}|${v.postFilters.join(',')}`;
+  return `${v.promptVersion}|${v.strategy}|${v.chunkChars}|${v.postFilters.join(',')}|${v.rulePack}`;
 }
 
 /**

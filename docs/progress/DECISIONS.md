@@ -86,3 +86,12 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 
 ## 2026-11-13 · Modo econômico de tokens (pedido do participante)
 - A sessão anterior custou ~US$ 80 (74% em opus). O participante aprovou: revisor e implementer sonnet por padrão (opus só no que é crítico para privacidade), no máximo 1 rodada de correção (só achados major; minors vão para limpeza em lote), tarefas maiores, Fable só nos portões, mensagens curtas. Registrado em `.claude/manager/PROTOCOL.md` §2b.
+
+## 2026-11-14 · Pacote de regras de 1ª pessoa: revisão e endurecimentos (§G.3, "diffs logged")
+- **Revisão opus (changes-requested, 3 major), 1 rodada de correção (implementer opus):**
+  1. **Privacidade, produto padrão:** o merger renomeava para RULE um DIRECT_IDENTIFIER do modelo que engolia um e-mail da regra, e ele deixava de bloquear o approveReport. Agora todo DIRECT_IDENTIFIER pendente que não tem o mesmo span de um identificador das regras bloqueia, qualquer que seja a origem (fail-closed). Teste de regressão incluído.
+  2. **Tempo de casa:** `been … for N` só dispara com um contexto de trabalho de lista fechada (here/there, at/with the company…, in this role…, a/an + cargo genérico de `TENURE_ROLE_NOUNS`). A duração do incidente ("I've been off work for two months") não dispara mais.
+  3. **Fala citada:** uma ocorrência dentro de aspas abertas, ou depois de um verbo de fala seguido de ':', é rejeitada (o "I" do acusado não conta como âncora).
+  - Menores incorporados: verbos no passado sozinhos não disparam (do-family removido; o roster "I was/we were on" exige termo regular); target/victim/witness/survivor/complainant excluídos de onlyOne/oneOfN; o preset "Dev matrix" ficou fixo nas 4 variantes originais.
+- **Decisão (manager):** todas as mudanças só restringem e foram motivadas por frases inventadas, não pelo dataset. A lista `TENURE_ROLE_NOUNS` é vocabulário novo, mas só estreita o caminho `been`: aceita sob o §G.3. Guarda de dev inalterado (onlyOne 3/1,00, oneOfN 1/1,00, tenure 1/1,00; recall só-regras 0,257; 0 ACCUSED/INCIDENT/OTHER).
+- Sem segunda revisão (PROTOCOL §2b, uma rodada): o manager conferiu o diff de `directIdentifiers.ts` e o CI (1663 testes).

@@ -5,9 +5,15 @@ import {
   type EvalRunResult,
 } from '../../application/usecases/evaluateDetection';
 import type { AppError } from '../../shared/appError';
-import { datasetForPreset, EVAL_PRESETS, type EvalPreset, type PresetId } from './evalPresets';
+import {
+  datasetForPreset,
+  EVAL_PRESETS,
+  variantsForPreset,
+  type EvalPreset,
+  type PresetId,
+} from './evalPresets';
 import type { EvalServices } from './evalServices';
-import { EVAL_VARIANTS, type EvalVariant } from './evalVariants';
+import type { EvalVariant } from './evalVariants';
 
 export type SaveState =
   | { readonly kind: 'saved'; readonly file: string }
@@ -48,7 +54,7 @@ const TICK_MS = 500;
 
 export interface EvalRunner {
   readonly state: RunState;
-  /** Runs the preset; presets with `variants: 'all'` ignore `variant` and run every one. */
+  /** Runs the preset; presets that name their variants (or `all`) ignore `variant`. */
   readonly start: (presetId: PresetId, variant: EvalVariant) => void;
 }
 
@@ -73,9 +79,13 @@ export function useEvalRunner(services: EvalServices): EvalRunner {
     (presetId: PresetId, variant: EvalVariant) => {
       const preset = EVAL_PRESETS.find((p) => p.id === presetId);
       if (preset === undefined || busy.current) return;
+      const variants = variantsForPreset(preset, variant);
+      if (!variants.ok) {
+        setState({ phase: 'error', error: variants.error });
+        return;
+      }
       busy.current = true;
-      const variants = preset.variants === 'all' ? EVAL_VARIANTS : [variant];
-      void execute(services, preset, variants, startedAt, setState).finally(() => {
+      void execute(services, preset, variants.value, startedAt, setState).finally(() => {
         busy.current = false;
       });
     },

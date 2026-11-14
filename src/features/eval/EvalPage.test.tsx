@@ -29,7 +29,8 @@ describe('EvalPage', () => {
     expect(button(/2\. Dev split/)).toBeEnabled();
     expect(button(/3\. Dev split, 3 runs/)).toBeEnabled();
     expect(button(/4\. Dev matrix/)).toBeEnabled();
-    expect(button(/5\. Full evaluation/)).toBeEnabled();
+    expect(button(/5\. Round 2: dev x 3 runs, 2 variants only/)).toBeEnabled();
+    expect(button(/6\. Full evaluation/)).toBeEnabled();
   });
 
   it('offers to prepare the model when it is downloadable', async () => {
@@ -69,7 +70,8 @@ describe('EvalPage', () => {
       /2\. Dev split \(/,
       /3\. Dev split, 3/,
       /4\. Dev matrix/,
-      /5\. Full/,
+      /5\. Round 2/,
+      /6\. Full/,
     ])
       expect(button(name)).toBeDisabled();
 
@@ -95,7 +97,7 @@ describe('EvalPage', () => {
     await screen.findByText(/On-device AI is ready/);
 
     // The test dataset has no test-split reports, so the full evaluation cannot start.
-    await userEvent.click(button(/5\. Full evaluation/));
+    await userEvent.click(button(/6\. Full evaluation/));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/not set up correctly/);
   });

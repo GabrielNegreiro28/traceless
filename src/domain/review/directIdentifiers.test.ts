@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { detectByRules } from '../detection/ruleDetector';
+import { mergeFindings } from '../detection/findingMerger';
 import type { Finding } from '../detection/types';
 import { applyDecisions, type ReviewDecision } from '../rewrite/rewriteApplier';
 import { accept, edit, findingOf, keep, notAboutMe } from '../rewrite/rewriteTestKit';
@@ -93,5 +94,43 @@ describe('assessDirectIdentifiers: partial coverage never excuses an identifier'
   it('the PENDING_BY_USER marker counts as pending', () => {
     const marker: ReviewDecision = { findingId: email.id, action: 'PENDING_BY_USER' };
     expect(status([email], [marker]).undecided).toBe(1);
+  });
+});
+
+describe('assessDirectIdentifiers: a model identifier relabeled RULE by the merger', () => {
+  const raw = toRawText('Please contact Jane Roe, jane.roe@example.com, at the depot.');
+  const [email] = detectByRules(raw) as [Finding];
+  const contact = findingOf(raw, 'Jane Roe, jane.roe@example.com', {
+    category: 'DIRECT_IDENTIFIER',
+    suggestion: 'a colleague',
+  });
+  const place = findingOf(raw, 'jane.roe@example.com, at the depot', { suggestion: 'at work' });
+
+  function status(findings: readonly Finding[], decisions: readonly ReviewDecision[]) {
+    const rewritten = applyDecisions(raw, findings, decisions);
+    if (!rewritten.ok) throw new Error('unexpected error');
+    return assessDirectIdentifiers(raw, rewritten.value, findings, decisions);
+  }
+
+  it('still blocks while it is pending, even with origin RULE', () => {
+    const merged = mergeFindings([email, contact, place]);
+    const relabeled = merged.find((f) => f.category === 'DIRECT_IDENTIFIER');
+    expect(relabeled).toMatchObject({ origin: 'RULE', quote: contact.quote });
+    expect(status(merged, [accept(place)]).undecided).toBe(1);
+  });
+
+  it('no longer blocks once it is accepted', () => {
+    const merged = mergeFindings([email, contact, place]);
+    const relabeled = merged.find((f) => f.category === 'DIRECT_IDENTIFIER') as Finding;
+    expect(status(merged, [accept(place), accept(relabeled)]).undecided).toBe(0);
+  });
+
+  it('counts a pure pending RULE identifier exactly once', () => {
+    expect(status([email], []).undecided).toBe(1);
+    expect(status([email, place], []).undecided).toBe(1);
+  });
+
+  it('a pure RULE identifier kept through a containing finding is not counted again', () => {
+    expect(status([email, place], [keep(place)])).toEqual({ undecided: 0, keptAtRisk: 1 });
   });
 });

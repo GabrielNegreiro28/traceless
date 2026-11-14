@@ -3,7 +3,7 @@ import { getPromptModule } from '../../ai/prompts/promptRegistry';
 import { SHIPPED_SCAN_PIPELINE } from '../../ai/prompts/scanPipelines';
 import { STRATEGIES } from '../../ai/prompts/strategies';
 import { POST_FILTERS } from '../../domain/detection/postFilters';
-import { EVAL_VARIANTS, findVariant } from './evalVariants';
+import { EVAL_VARIANTS, findVariant, ROUND2_VARIANT_IDS } from './evalVariants';
 
 describe('EVAL_VARIANTS', () => {
   it('has unique file-name-safe ids, registered prompts, strategies and filters', () => {
@@ -29,16 +29,33 @@ describe('EVAL_VARIANTS', () => {
     expect(findVariant('nope')).toBeUndefined();
   });
 
-  it('registers the dev matrix M0-M3, every v2 variant with both post-filters', () => {
-    expect(EVAL_VARIANTS.map((v) => [v.id, v.promptVersion, v.strategy])).toEqual([
-      ['v1-single', 'identityScan.v1', 'single'],
-      ['v2-single', 'identityScan.v2', 'single'],
-      ['v2-grouped2', 'identityScan.v2', 'grouped2'],
-      ['v2-single2', 'identityScan.v2', 'single2'],
+  it('registers M0-M3 and the round-2 pair, every v2 variant with both post-filters', () => {
+    expect(EVAL_VARIANTS.map((v) => [v.id, v.promptVersion, v.strategy, v.rulePack])).toEqual([
+      ['v1-single', 'identityScan.v1', 'single', 'core'],
+      ['v2-single', 'identityScan.v2', 'single', 'core'],
+      ['v2-grouped2', 'identityScan.v2', 'grouped2', 'core'],
+      ['v2-single2', 'identityScan.v2', 'single2', 'core'],
+      ['v2-single2-rules', 'identityScan.v2', 'single2', 'core+firstPerson'],
+      ['v2-single3-rules', 'identityScan.v2', 'single3', 'core+firstPerson'],
     ]);
     for (const variant of EVAL_VARIANTS.slice(1)) {
       expect(variant.postFilters).toEqual(['protectedMentions', 'thirdPerson']);
       expect(variant.chunkChars).toBe(3000);
+    }
+  });
+
+  it('the round-2 variants differ from v2-single2 only in strategy and rule pack (§G.4)', () => {
+    const base = findVariant('v2-single2');
+    expect(ROUND2_VARIANT_IDS).toEqual(['v2-single2-rules', 'v2-single3-rules']);
+    for (const id of ROUND2_VARIANT_IDS) {
+      expect(findVariant(id)).toEqual({
+        promptVersion: base?.promptVersion,
+        chunkChars: base?.chunkChars,
+        postFilters: base?.postFilters,
+        id,
+        strategy: id === 'v2-single2-rules' ? 'single2' : 'single3',
+        rulePack: 'core+firstPerson',
+      });
     }
   });
 

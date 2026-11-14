@@ -113,7 +113,7 @@ function VariantResults({ outcome }: { readonly outcome: VariantOutcome }) {
       <h3 className="font-semibold">
         Variant {variant.id} ({variant.promptVersion}, {variant.strategy}, {variant.chunkChars}{' '}
         chars, filters: {variant.postFilters.length === 0 ? 'none' : variant.postFilters.join(', ')}
-        )
+        , rules: {variant.rulePack})
       </h3>
       <SummaryTable outcome={outcome} />
       <GateList outcome={outcome} />

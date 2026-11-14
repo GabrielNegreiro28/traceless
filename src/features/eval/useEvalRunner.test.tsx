@@ -5,7 +5,7 @@ import { createAppError } from '../../shared/appError';
 import { err, ok } from '../../shared/result';
 import type { EvalServices } from './evalServices';
 import { EMPTY_SCAN, fakeServices } from './evalTestKit';
-import { DEFAULT_EVAL_VARIANT, EVAL_VARIANTS, type EvalVariant } from './evalVariants';
+import { DEFAULT_EVAL_VARIANT, MATRIX_VARIANT_IDS, type EvalVariant } from './evalVariants';
 import { useEvalRunner } from './useEvalRunner';
 
 describe('useEvalRunner', () => {
@@ -26,7 +26,7 @@ describe('useEvalRunner', () => {
     expect(outcome?.result.strategy).toBe('grouped2');
   });
 
-  it('runs every registered variant, in order, for the matrix preset', async () => {
+  it('runs the pinned matrix variants, in order, for the matrix preset', async () => {
     const scanFor = vi.fn<EvalServices['scanFor']>(() => EMPTY_SCAN);
     const saveResult = vi.fn(() => Promise.resolve(ok('f.json')));
     const { result } = renderHook(() => useEvalRunner(fakeServices({ scanFor, saveResult })));
@@ -34,10 +34,33 @@ describe('useEvalRunner', () => {
     act(() => result.current.start('devMatrix', OTHER));
 
     await waitFor(() => expect(result.current.state.phase).toBe('done'));
-    expect(scanFor.mock.calls.map(([v]) => v.id)).toEqual(EVAL_VARIANTS.map((v) => v.id));
-    expect(saveResult).toHaveBeenCalledTimes(EVAL_VARIANTS.length);
+    expect(scanFor.mock.calls.map(([v]) => v.id)).toEqual(MATRIX_VARIANT_IDS);
+    expect(saveResult).toHaveBeenCalledTimes(MATRIX_VARIANT_IDS.length);
     const state = result.current.state;
-    expect(state.phase === 'done' && state.outcomes).toHaveLength(EVAL_VARIANTS.length);
+    expect(state.phase === 'done' && state.outcomes).toHaveLength(MATRIX_VARIANT_IDS.length);
+  });
+
+  it('runs exactly the two round-2 variants, dev x 3, whatever is selected', async () => {
+    const scanFor = vi.fn<EvalServices['scanFor']>(() => EMPTY_SCAN);
+    const { result } = renderHook(() => useEvalRunner(fakeServices({ scanFor })));
+
+    act(() => result.current.start('round2', OTHER));
+
+    await waitFor(() => expect(result.current.state.phase).toBe('done'));
+    expect(scanFor.mock.calls.map(([v]) => [v.id, v.rulePack])).toEqual([
+      ['v2-single2-rules', 'core+firstPerson'],
+      ['v2-single3-rules', 'core+firstPerson'],
+    ]);
+    const state = result.current.state;
+    const outcomes = state.phase === 'done' ? state.outcomes : [];
+    expect(outcomes.map((o) => [o.result.split, o.result.runs.length])).toEqual([
+      ['dev', 3],
+      ['dev', 3],
+    ]);
+    expect(outcomes.map((o) => o.result.variant.rulePack)).toEqual([
+      'core+firstPerson',
+      'core+firstPerson',
+    ]);
   });
 
   it('ignores a second start() while a run is in progress', async () => {

@@ -57,7 +57,12 @@ function respond(inferenceSource: InferenceSource, text = MODEL_JSON): void {
   sdk.generateContent.mockResolvedValue({ response: { inferenceSource, text: () => text } });
 }
 
-const V1 = { promptVersion: 'identityScan.v1', chunkChars: 3000, postFilters: [] } as const;
+const V1 = {
+  promptVersion: 'identityScan.v1',
+  chunkChars: 3000,
+  postFilters: [],
+  rulePack: 'core',
+} as const;
 
 /** The abort signal the factory put in the n-th created model's createOptions. */
 function signalOf(call: number): AbortSignal | undefined {
@@ -212,6 +217,7 @@ describe('createServices (real AI mode, SDK mocked)', () => {
         strategy: 'single',
         chunkChars: 3000,
         postFilters: [],
+        rulePack: 'core',
       } as const;
       expect(() => servicesFor(unknown)).toThrow('Unknown prompt version: identityScan.v0');
       expect(sdk.getGenerativeModel).not.toHaveBeenCalled();

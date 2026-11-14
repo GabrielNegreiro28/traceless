@@ -50,8 +50,9 @@ export function EvalPage() {
           ))}
         </select>
         <p className="mt-1 text-sm text-muted">
-          A variant is a prompt version, strategy, chunk size and post-filters. The Dev matrix runs
-          every variant and ignores this choice; the other presets run the selected one.
+          A variant is a prompt version, strategy, chunk size, post-filters and rule pack. The Dev
+          matrix (its four round-1 variants) and Round 2 (only its two named variants) ignore this
+          choice; the other presets run the selected one.
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
           {EVAL_PRESETS.map((preset) => (

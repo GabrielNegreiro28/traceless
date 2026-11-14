@@ -64,7 +64,7 @@ function toNeedle(quote: string): string | null {
 }
 
 /** True when the match is not glued to a neighbouring letter/digit of the original text. */
-function hasWordBoundaries(text: string, span: TextSpan): boolean {
+export function hasWordBoundaries(text: string, span: TextSpan): boolean {
   const first = text.slice(span.start, span.start + 2);
   const last = text.slice(Math.max(0, span.end - 2), span.end);
   const before = text.slice(Math.max(0, span.start - 2), span.start);

@@ -2,7 +2,7 @@
 
 _Atualizado pelo manager a cada iteração._
 
-- **Data da última atualização:** 2026-11-13
+- **Data da última atualização:** 2026-11-14
 - **Fase atual:** Fase 2 (detecção + avaliação) em andamento — tarefa 2 de 7. Fase 1 concluída (App Check enforced no AI Logic, verificado em 13/11).
 - **Prazo:** **2026-11-30 às 19:00 GMT-3** (horário de Brasília). Rascunho completo até 28/11; congelamento de funcionalidades em 25/11; submeter com folga, nunca na última hora.
 
@@ -26,8 +26,10 @@ _Atualizado pelo manager a cada iteração._
 - **Fase 3 parte C commitada** (1426 testes; revisão opus aprovada): Outbox (prévia, regra única de confirmação `approvalCheck.ts`, trava de texto ≠ prévia `ApprovalMismatch`), ApprovedScreen (envio desabilitado até a Fase 4), registro de privacidade (port + memória, decorators no composition root; fonte vem do `inferenceSource`; modo fake = "demo scanner").
 - **Sobras menores (fazer numa tarefa de limpeza):** ledger registra aprovação antes da trava de mismatch; badge "Checked on your device" fixo (derivar da fonte antes do scan na nuvem); regex ESLint de approveReport sem extensão; teste de que `fakeScanner` é ignorado em modo real; dividir reportFlowMachine/Review tests; FindingCard diz "On-device AI" mesmo no modo demo.
 - **§G.1 + §G.2 commitados** (1473 testes; revisão adversarial opus aprovada): padrão do produto = v2-single2 (`scanPipelines.ts`, mesma definição da variante de eval); recuperação de travamento (AbortController por modelo verificado no SDK 3.1.0, `abandon()`, 5 s de carência, limite 2, terminal fixo), UI "Try again" / "Continue with basic checks" (scan só regras, ledger `rules`) / "Copy my text and reload"; eval registra `stalls`. Falta confirmar no Chrome real que o abort encerra a sessão.
+- **Sobras menores do pacote de regras:** `clauseStart` quadrático em cláusula sem pontuação (desprezível a 6.000 caracteres); achado renomeado RULE mostra o selo "Rules" com texto do modelo; `firstPersonFamilies.ts` com 197 linhas.
 - **Sobras desta tarefa:** chamadas na janela de 5 s recebem erro terminal; chamada enfileirada atrás de travamento terminal espera sem prazo; modo basic com 0 achados mostra risco NONE (decidir: exigir confirmação no Outbox quando `checks === 'basic'`).
-- **Próximo (§G):** (2) pacote de regras de 1ª pessoa; (3) pedir dev ×3 ao participante; (4) teste ×3 uma vez.
+- **§G.3 + §G.4 commitados (14/11, 1663 testes; revisão opus + 1 rodada de correção):** pacote de regras de 1ª pessoa (`firstPerson*.ts`, `rulePacks.ts`, 6 famílias, fala citada rejeitada), `STRATEGIES.single3`, variantes `v2-single2-rules` e `v2-single3-rules`, preset "Round 2" no /eval. Correção de privacidade no `directIdentifiers` (DIRECT_IDENTIFIER renomeado RULE pelo merger voltou a bloquear). Padrão do produto e basic checks continuam com o pacote `core`. Recall só-regras no dev: 0,114 → 0,257, sem alarme falso.
+- **Próximo (§G):** (3) participante roda o preset Round 2 (dev ×3) → manager escolhe a variante pelo §G.4 → (4) teste ×3 uma única vez → portão com o Fable. Enquanto isso: deploy v0.1 + caminho sem Nano (scan na nuvem com consentimento).
 - **T2 commitado** (13/11, 1024 testes; implementer opus + 2 rodadas de revisão opus): identityScan.v2 (rótulos REPORTED_PERSON/OTHER_PERSON → menções protegidas + filtro de 3ª pessoa; nunca suprime REGRA nem 1ª pessoa), single2, regra de assinatura (`signOffRule.ts`), 3 few-shots inventados (checagem lexical e semântica contra o split de teste), sobras do T1. Variantes: v1-single, v2-single, v2-grouped2, v2-single2. Padrão do produto continua v1/single até o portão. Limitações conhecidas documentadas no §B.3 do desenho (sobrenome/primeiro nome compartilhado com o acusado).
 - **Tarefa 2** (`9f50798`) + **endurecimento** (`94b7cfe`): camada on-device fail-closed; revisão adversarial com sonda no SDK real; teste de contrato verificado por mutações.
 - **Tarefas 3+4 commitadas** (`e51d2ee`, 491 testes): métricas + portão (refinado após revisão adversarial: pooled, strictRecallAll, falhas de scan, achados gigantes) e dataset de 24 relatos (88 gold, 150 must-not; revisado e corrigido).
@@ -58,7 +60,7 @@ _Atualizado pelo manager a cada iteração._
 - npm 12 bloqueia scripts de instalação de dependências (re2, protobufjs, @firebase/util postinstall) — sem impacto.
 
 ## Métricas
-- Testes: 1024 (13/11).
+- Testes: 1663 (14/11).
 - **1ª avaliação real (13/11, identityScan.v1, single, teste 16×3, pooled):** strictRecallAll **0,604** (meta ≥ 0,70) · violações ACCUSED **0,632** (meta ≤ 0,05; todas do modelo) · INCIDENT_FACT 0,091 (passa, instável) · OTHER_PERSON 0,267 · precisão 0,387 · acurácia de categoria 0,724 · aspas inventadas 0,083 · falhas 0 · saída inválida 0 · latência p50 ~7,1 s / máx ~19,3 s por relato. **Portão: REPROVADO** (recall e ACCUSED). Latência baixa deixa margem para mais inferência por relato.
 
 ## Riscos

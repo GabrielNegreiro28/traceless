@@ -7,11 +7,20 @@ import { EMPTY_SCAN, fakeServices } from './evalTestKit';
 import { EVAL_VARIANTS, type EvalVariant } from './evalVariants';
 import { useEvalRunner } from './useEvalRunner';
 
-// Exactly two registered variants, so the matrix order is easy to follow.
+// Exactly two registered matrix variants, so the matrix order is easy to follow.
 vi.mock('./evalVariants', async (importOriginal) => {
   const actual = await importOriginal<{ EVAL_VARIANTS: readonly EvalVariant[] }>();
   const first = actual.EVAL_VARIANTS[0]!;
-  return { ...actual, EVAL_VARIANTS: [first, { ...first, id: 'second', strategy: 'grouped2' }] };
+  const variants: readonly EvalVariant[] = [
+    first,
+    { ...first, id: 'second', strategy: 'grouped2' },
+  ];
+  return {
+    ...actual,
+    EVAL_VARIANTS: variants,
+    MATRIX_VARIANT_IDS: variants.map((v) => v.id),
+    findVariant: (id: string) => variants.find((v) => v.id === id),
+  };
 });
 
 type SaveResult = Result<string, AppError>;

@@ -1,5 +1,7 @@
 import type { RawText } from '../text/brandedText';
 import { DETECTION_RULES, type DetectionRule } from './detectionRules';
+import { detectFirstPerson } from './firstPersonRules';
+import { DEFAULT_RULE_PACK, type RulePack } from './rulePacks';
 import { detectSignOff } from './signOffRule';
 import { buildFindingId } from './span';
 import type { Finding } from './types';
@@ -21,15 +23,17 @@ function matchRule(text: string, rule: DetectionRule): Finding[] {
 }
 
 /**
- * Deterministic detection of direct identifiers (including a name or initials signing
- * the last line) and explicit dates.
+ * Deterministic detection. The `core` pack finds direct identifiers (including a name or
+ * initials signing the last line) and explicit dates; `core+firstPerson` adds the
+ * first-person rule pack (firstPersonRules.ts). On an id clash the core finding wins.
  * Known limitation: "In May 12 people quit" is read as the date "May 12".
  */
-export function detectByRules(text: RawText): Finding[] {
+export function detectByRules(text: RawText, rulePack: RulePack = DEFAULT_RULE_PACK): Finding[] {
   const byId = new Map<string, Finding>();
   const found = [
     ...DETECTION_RULES.flatMap((rule) => matchRule(text, rule)),
     ...detectSignOff(text),
+    ...(rulePack === 'core+firstPerson' ? detectFirstPerson(text) : []),
   ];
   for (const finding of found) {
     if (!byId.has(finding.id)) byId.set(finding.id, finding);

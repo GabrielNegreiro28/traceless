@@ -65,12 +65,25 @@ function countUnmatched(finalIdentifiers: readonly Finding[], allowed: readonly 
   return unmatched;
 }
 
-/** Model direct identifiers still pending and in the text, not already counted by a rule. */
-function pendingModelIdentifiers(context: ReviewContext, counted: readonly Finding[]): number {
+function sameSpan(a: TextSpan, b: TextSpan): boolean {
+  return a.start === b.start && a.end === b.end;
+}
+
+/**
+ * Direct-identifier findings that are not one of the rule identifiers (`ruleSpans`) and are
+ * still pending and in the text, minus those overlapping an already counted rule one. Keyed on
+ * the span, not on `origin`: the merger relabels a MODEL identifier that swallowed a rule one
+ * as origin RULE, and it must still block (fail closed).
+ */
+function pendingOtherIdentifiers(
+  context: ReviewContext,
+  ruleSpans: readonly TextSpan[],
+  counted: readonly Finding[],
+): number {
   return context.findings.filter(
     (f) =>
-      f.origin === 'MODEL' &&
       f.category === 'DIRECT_IDENTIFIER' &&
+      !ruleSpans.some((span) => sameSpan(span, f.span)) &&
       !isDecided(context.decisions.get(f.id)) &&
       !context.changed.some((c) => spanContains(c, f.span)) &&
       !counted.some((rule) => spansOverlap(rule.span, f.span)),
@@ -85,7 +98,8 @@ function pendingModelIdentifiers(context: ReviewContext, counted: readonly Findi
  * NOT_ABOUT_ME finding contains it: allowed, the accused's email can be evidence) or
  * PENDING (blocks). The rules then re-run on the FINAL text; final identifiers that do
  * not match, by exact quote, a kept or pending original one are new (typed into an edit)
- * and block too. Pending MODEL direct-identifier findings block as well.
+ * and block too. Pending direct-identifier findings that are not a rule identifier (model
+ * ones, including those the merger relabeled RULE) block as well.
  */
 export function assessDirectIdentifiers(
   originalText: RawText,
@@ -107,6 +121,7 @@ export function assessDirectIdentifiers(
   const blocking = withStatus('PENDING', 'MANGLED');
   const allowed = withStatus('PENDING', 'KEPT_RISK', 'NOT_ABOUT_ME').map((f) => f.quote);
   const fresh = countUnmatched(directRules(finalText), allowed);
-  const undecided = blocking.length + fresh + pendingModelIdentifiers(context, blocking);
+  const ruleSpans = classified.map((c) => c.identifier.span);
+  const undecided = blocking.length + fresh + pendingOtherIdentifiers(context, ruleSpans, blocking);
   return { undecided, keptAtRisk: withStatus('KEPT_RISK').length };
 }
