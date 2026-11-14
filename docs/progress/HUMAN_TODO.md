@@ -5,11 +5,11 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 ## Pendentes
 
 - [ ] **Rodada "Round 2" no Chrome (14/11, ~40–60 min, pode deixar rodando sozinho).** Serve para escolher a versão final da detecção.
-  1. Deixe o Claude Code aberto (o servidor local roda nele). Se o computador tiver reiniciado, digite no Claude Code: `! npx vite --port 5173` e espere aparecer "ready".
+  1. Deixe o Claude Code aberto (o servidor local roda nele, numa cópia congelada do código, para as mudanças em andamento não atrapalharem). Se a página não abrir, avise no chat em vez de rodar comandos: o manager religa o servidor.
   2. No **Chrome** (não use o Edge), abra: `http://localhost:5173/eval`
   3. No seletor de preset, escolha **"5. Round 2: dev x 3 runs, 2 variants only"**.
   4. Clique no botão de rodar e **não feche nem minimize a aba** até terminar (o computador pode ficar parado; só não deixe ele dormir).
-  5. Ao terminar, a página mostra que salvou os resultados. Não precisa copiar nada: eles vão sozinhos para a pasta `eval/results/`.
+  5. Ao terminar, a página mostra que salvou os resultados. Não precisa copiar nada: o manager recolhe os resultados.
   6. Se aparecer **"OnDeviceStuck"** ou a página travar por mais de 5 minutos: recarregue a aba e rode o preset 5 de novo, do começo.
   7. Avise no chat: "rodei o round 2".
   - **Não rode o preset 6 (Full evaluation / test split).** Ele só pode ser rodado uma única vez, e o manager vai pedir na hora certa.
