@@ -4,7 +4,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Firebase + colocar o site no ar (~10 min, hoje ou amanhã).**
+- [x] **(Concluído 16/11: regras, config e hosting publicados; teste manual OK, a chave abriu o caso) Firebase + colocar o site no ar (~10 min, hoje ou amanhã).**
   1. Abra https://console.firebase.google.com → projeto **traceless-92f85**.
   2. Menu **Security → App Check** → aba **APIs** → linha **Cloud Firestore** → **Enforce** → confirme. Deve aparecer "Enforced".
   3. No Claude Code, digite um de cada vez (cada um deve terminar com **"Deploy complete!"**):

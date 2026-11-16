@@ -7,8 +7,9 @@ _Atualizado pelo manager a cada iteração._
   1. ✅ Modo nuvem com consentimento + checagem básica + passos para ativar o modo local (commits `79a14bd`…`8b2eadc`, 1876 testes, revisão opus + 1 rodada).
   2. ✅ Detecção congelada (`b065f9c`): `v2-single2-rules` no produto, Second look obrigatório, textos honestos.
   3. ⏳ Fase 4: ✅ envio + chave do caso + /case + regras com testes no emulador (`9ec25f3`…`6071748`, 2008 testes + 31 de regras; revisão opus + 1 rodada). ⏳ `structureReport` híbrido (implementer opus em andamento).
-  4. Deploy + um passe de polimento.
-  5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable.
+  4. ✅ Polimento (`c04c61d`) + deploy (16/11: regras, Remote Config e hosting publicados pelo participante; envio real → chave → /case verificado à mão no site). ⏳ Bugs do teste no navegador (texto reescrito quebrado, assinatura, cartões duplicados, risco que não cai, retry de 5xx), implementer opus em andamento. Depois: commit + `deploy:hosting` de novo.
+  - Teste E2E: Playwright 1.65.1 instalado (devDependency; o roteiro de teste está em `node_modules/.walk.mjs`, não versionado). No headless, o App Check com reCAPTCHA dá 403 (esperado com robôs).
+  5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable. **Adiado pelo participante (16/11): foco no MVP primeiro.**
   - Cortado (roadmap): rights advisor, UI de quem investiga, triageCase, respostas ao denunciante.
 - **Portão da Fase 2 (16/11): SHIP WITH DISCLOSED MISS.** Teste ×3 `v2-single2-rules`: recall estrito 0,604 (meta 0,70), ACCUSED 0,046, INCIDENT 0,030, precisão 0,656, p50 10,2 s / máx 36,7 s. Detecção congelada.
 - **Prazo:** **2026-11-30 às 19:00 GMT-3**. Rascunho até 28/11; congelamento em 25/11.
