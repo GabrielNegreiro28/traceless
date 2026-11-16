@@ -88,11 +88,13 @@ describe('/report outbox and approval on fake services', () => {
     const approved = screen.getByRole('figure', { name: 'Approved text' });
     expect(approved.querySelector('p')?.textContent).toBe(previewText);
     expect(screen.getByRole('button', { name: 'Send to organization' })).toBeEnabled();
+    await screen.findByText('Organized by the demo organizer (no AI)');
 
     await userEvent.click(screen.getByText('What happened to your text'));
     expect(ledgerLines()).toEqual([
       'Identity scan · on your device (demo scanner) · your original text, never left this device',
       'Approval · on your device · created the text you approved',
+      'Organized for the organization · on your device (demo organizer) · only the text you approved',
     ]);
 
     await click('Back');

@@ -5,6 +5,7 @@ import type { LedgerEntry, LedgerTask } from '../../application/ports/PrivacyLed
 const TASK_LABELS: Readonly<Record<LedgerTask, string>> = {
   identityScan: 'Identity scan',
   approve: 'Approval',
+  structureReport: 'Organized for the organization',
   submit: 'Sent to the organization',
 };
 
@@ -19,15 +20,21 @@ export function whereLabel(entry: LedgerEntry): string {
     case 'rules':
       return 'on your device (pattern rules only)';
     case 'local':
-      return entry.demo ? 'on your device (demo scanner)' : 'on your device';
+      if (!entry.demo) return 'on your device';
+      return entry.task === 'structureReport'
+        ? 'on your device (demo organizer)'
+        : 'on your device (demo scanner)';
     case 'cloud':
-      return 'in the cloud, with your consent';
+      // Approved text needs no consent; only raw text does.
+      return entry.dataClass === 'SANITIZED' ? 'in the cloud' : 'in the cloud, with your consent';
   }
 }
 
 /** What happened to the text in that step. */
 export function whatLabel(entry: LedgerEntry): string {
-  if (entry.task === 'submit') return 'only the text you approved';
+  if (entry.task === 'submit' || entry.task === 'structureReport') {
+    return 'only the text you approved';
+  }
   if (entry.dataClass === 'SANITIZED') return 'created the text you approved';
   return entry.source === 'cloud'
     ? 'your original text, sent for this scan only'

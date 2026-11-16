@@ -7,7 +7,8 @@ import type { ApprovedReport, ApproveReportInput } from '../application/usecases
 import type { CloudScanConsent } from '../application/usecases/consentToCloudScan';
 import type { ScanReportResult } from '../application/usecases/scanReport';
 import type { RulesOnlyScanResult } from '../application/usecases/scanReportRulesOnly';
-import type { SubmittedReport } from '../application/usecases/submitReport';
+import type { StructureOutcome } from '../application/ports/ReportStructurer';
+import type { SubmitDetails, SubmittedReport } from '../application/usecases/submitReport';
 import type { CaseKey } from '../domain/case/caseKey';
 import type { RawText, SanitizedText } from '../domain/text/brandedText';
 import type { AppError } from '../shared/appError';
@@ -58,7 +59,16 @@ export interface Services {
   readonly submitReport: (
     text: SanitizedText,
     caseKey: CaseKey,
+    /** Optional: the category from structureReport, as the reporter left it. */
+    details?: SubmitDetails,
   ) => Promise<Result<SubmittedReport, AppError>>;
+  /**
+   * Organizes the approved text (category, summary, when, where) on the hybrid model:
+   * PREFER_ON_DEVICE, so on the device when Gemini Nano is ready, in the cloud otherwise.
+   * Accepts only SanitizedText; optional, never blocks sending. Recorded in the privacy ledger
+   * with where it really ran.
+   */
+  readonly structureReport: (text: SanitizedText) => Promise<Result<StructureOutcome, AppError>>;
   /** The read-only follow-up: one case by the key the reporter typed (NotFound otherwise). */
   readonly lookUpCase: (input: string) => Promise<Result<CaseRecord, AppError>>;
   /** Session-only record of what happened to the text (read-only; the root records). */

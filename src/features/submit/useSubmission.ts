@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch } from 'react';
 import { useServices } from '../../app/services/useServices';
 import type { CaseKey } from '../../domain/case/caseKey';
+import type { ReportCategory } from '../../domain/report/structuredReport';
 import type { SanitizedText } from '../../domain/text/brandedText';
 import { createAppError } from '../../shared/appError';
 import { logger } from '../../shared/logger';
@@ -46,7 +47,12 @@ function approvedToSend(state: FlowState): ApprovedState | null {
  * reused while the text is the same, so a retry after an unconfirmed send finds the report
  * that already arrived instead of creating a second case. Closing the tab mid-send warns.
  */
-export function useSubmission(state: FlowState, dispatch: Dispatch<FlowEvent>): Submission {
+export function useSubmission(
+  state: FlowState,
+  dispatch: Dispatch<FlowEvent>,
+  /** The structured card's category, sent with the text when present (never required). */
+  category: ReportCategory | null = null,
+): Submission {
   const { submitReport, issueCaseKey } = useServices();
   const [caseKey, setCaseKey] = useState<CaseKey | null>(null);
   const mounted = useRef(true);
@@ -76,7 +82,7 @@ export function useSubmission(state: FlowState, dispatch: Dispatch<FlowEvent>): 
     const text = approved.report.text;
     if (state.status === 'error') dispatch({ type: 'BACK_TO_EDIT' });
     dispatch({ type: 'SUBMIT' });
-    void submitReport(text, keyFor(text))
+    void submitReport(text, keyFor(text), category === null ? {} : { category })
       .catch(() => ({ ok: false as const, error: CRASHED }))
       .then((result) => {
         sending.current = false;
@@ -90,7 +96,7 @@ export function useSubmission(state: FlowState, dispatch: Dispatch<FlowEvent>): 
         logger.warn('Send failed', { kind: result.error.kind });
         dispatch({ type: 'SUBMIT_FAILED', error: result.error });
       });
-  }, [dispatch, keyFor, state, submitReport]);
+  }, [category, dispatch, keyFor, state, submitReport]);
 
   const finish = useCallback(() => {
     pending.current = null;

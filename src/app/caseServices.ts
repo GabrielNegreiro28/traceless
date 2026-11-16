@@ -60,8 +60,8 @@ export function withSubmitLedger(
   clock: Clock,
   kind: ScannerKind,
 ): Services['submitReport'] {
-  return async (text, caseKey) => {
-    const result = await submit(text, caseKey);
+  return async (text, caseKey, details) => {
+    const result = await submit(text, caseKey, details);
     if (result.ok) {
       const demo = kind === 'demo';
       const source = demo ? 'local' : 'cloud';
@@ -81,7 +81,8 @@ export function bindCaseServices(
   kind: ScannerKind,
 ): CaseServices {
   const deps = { ...backend, isOnline: isBrowserOnline };
-  const submit: Services['submitReport'] = (text, caseKey) => submitReport(text, caseKey, deps);
+  const submit: Services['submitReport'] = (text, caseKey, details) =>
+    submitReport(text, caseKey, deps, details);
   return {
     issueCaseKey: () => generateCaseKey(cryptoRandomBytes),
     submitReport: withSubmitLedger(submit, ledger, clock, kind),

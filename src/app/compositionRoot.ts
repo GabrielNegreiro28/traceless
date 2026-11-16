@@ -5,6 +5,7 @@ import type { ConfigService } from '../application/ports/ConfigService';
 import type { ConsentedIdentityScanner } from '../application/ports/ConsentedIdentityScanner';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import type { PrivacyLedger } from '../application/ports/PrivacyLedger';
+import type { ReportStructurer } from '../application/ports/ReportStructurer';
 import { approveReport } from '../application/usecases/approveReport';
 import { scanReport } from '../application/usecases/scanReport';
 import { scanReportRulesOnly } from '../application/usecases/scanReportRulesOnly';
@@ -13,6 +14,7 @@ import { FakeConfigService } from '../infrastructure/fakes/FakeConfigService';
 import { FakeConsentedIdentityScanner } from '../infrastructure/fakes/FakeConsentedIdentityScanner';
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
 import { FakeIdentityScanner } from '../infrastructure/fakes/FakeIdentityScanner';
+import { FakeReportStructurer } from '../infrastructure/fakes/FakeReportStructurer';
 import { createInMemoryPrivacyLedger } from '../infrastructure/ledger/inMemoryPrivacyLedger';
 import {
   bindCaseServices,
@@ -33,6 +35,7 @@ import {
 } from './ledgerDecorators';
 import { createOnDeviceInfra, createRealAi, type AiServices, type ScanGroups } from './onDeviceAi';
 import type { Services } from './servicesContract';
+import { bindStructureReport, createReportStructurer } from './structureServices';
 
 export type { ProgressCallback, Services } from './servicesContract';
 
@@ -62,6 +65,8 @@ export interface ServiceFakes {
   readonly config?: ConfigService;
   /** Replaces the auth + report repository in any mode (tests of sending and follow-up). */
   readonly caseBackend?: CaseBackend;
+  /** Replaces the report structurer in any mode (tests of the structured card). */
+  readonly reportStructurer?: ReportStructurer;
 }
 
 export interface ServiceOptions extends ServiceFakes {
@@ -101,6 +106,8 @@ interface AppContext {
   readonly config: ConfigService;
   /** Sending and follow-up: one backend per app, shared by every variant. */
   readonly cases: CaseServices;
+  /** structureReport (hybrid model, or the demo structurer): one per app. */
+  readonly structure: Services['structureReport'];
 }
 
 interface VariantAi extends AiServices {
@@ -108,7 +115,7 @@ interface VariantAi extends AiServices {
 }
 
 function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppContext): Services {
-  const { ledger, kind, config, cases } = context;
+  const { ledger, kind, config, cases, structure } = context;
   const { consentedScanner, ...onDevice } = ai;
   const scan = bindScanReport(ai.identityScanner, variant);
   const cloudScan = bindCloudScan(consentedScanner, config, variant);
@@ -121,6 +128,7 @@ function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppCont
     scanRulesOnly: withRulesOnlyLedger(scanReportRulesOnly, ledger, systemClock),
     approveReport: withApprovalLedger(approve, ledger),
     ...cases,
+    structureReport: structure,
     privacyLedger: ledgerView(ledger),
     config,
     demoAi: kind === 'demo',
@@ -137,11 +145,14 @@ function appContext(env: AppEnv, demo: boolean, fakes: ServiceFakes): AppContext
     fakes.caseBackend ?? (demo ? createFakeCaseBackend() : createRealCaseBackend(env));
   const ledger = createInMemoryPrivacyLedger();
   const kind: ScannerKind = demo ? 'demo' : 'onDevice';
+  const structurer =
+    fakes.reportStructurer ?? (demo ? new FakeReportStructurer() : createReportStructurer(env));
   return {
     ledger,
     kind,
     config: fakes.config ?? fallback,
     cases: bindCaseServices(backend, ledger, { now: () => Date.now() }, kind),
+    structure: bindStructureReport(structurer, ledger, systemClock, kind),
   };
 }
 

@@ -143,6 +143,7 @@ function screenFor(flow: ReportFlow, demo: boolean) {
           onBack={flow.backToEdit}
           onSend={flow.submission.submit}
           demo={demo}
+          structure={flow.structure}
         />
       );
     case 'error':

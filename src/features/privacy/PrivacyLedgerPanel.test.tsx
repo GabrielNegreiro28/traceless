@@ -38,6 +38,18 @@ describe('ledgerLine', () => {
       entry({ task: 'approve', source: 'local', dataClass: 'SANITIZED' }),
       'Approval · on your device · created the text you approved',
     ],
+    [
+      entry({ task: 'structureReport', dataClass: 'SANITIZED' }),
+      'Organized for the organization · on your device (on-device AI) · only the text you approved',
+    ],
+    [
+      entry({ task: 'structureReport', source: 'cloud', dataClass: 'SANITIZED' }),
+      'Organized for the organization · in the cloud · only the text you approved',
+    ],
+    [
+      entry({ task: 'structureReport', source: 'local', dataClass: 'SANITIZED', demo: true }),
+      'Organized for the organization · on your device (demo organizer) · only the text you approved',
+    ],
   ])('%o reads as a plain sentence', (value, line) => {
     expect(ledgerLine(value)).toBe(line);
   });
