@@ -1,5 +1,6 @@
 import type { CaseKey } from '../../domain/case/caseKey';
 import { MAX_SUBMITTED_CHARS } from '../../domain/case/caseStatus';
+import type { ReportCategory } from '../../domain/report/structuredReport';
 import type { SanitizedText } from '../../domain/text/brandedText';
 import { createAppError, type AppError } from '../../shared/appError';
 import { err, ok, type Result } from '../../shared/result';
@@ -11,6 +12,11 @@ export interface SubmitReportDeps {
   readonly repository: ReportRepository;
   /** The browser's connectivity hint (navigator.onLine). */
   readonly isOnline: () => boolean;
+}
+
+/** Optional extras sent with the approved text (never reporter-written content). */
+export interface SubmitDetails {
+  readonly category?: ReportCategory;
 }
 
 export interface SubmittedReport {
@@ -31,19 +37,24 @@ const TOO_LONG = createAppError('InputTooLong', {
  * SanitizedText. Offline it fails at once ("Reconnect to send"): there is no queued offline
  * submit (DECISIONS 2026-11-13). Signs in anonymously only now, then creates the report under
  * `caseKey` (issued by generateCaseKey with a CSPRNG), which is returned for the reporter to
- * save. Idempotent: retrying the same text with the same key after an unconfirmed send
+ * save, with the optional category from structureReport. Idempotent: retrying the same text with the same key after an unconfirmed send
  * succeeds if the first attempt arrived, instead of creating a second case.
  */
 export async function submitReport(
   text: SanitizedText,
   caseKey: CaseKey,
   deps: SubmitReportDeps,
+  details: SubmitDetails = {},
 ): Promise<Result<SubmittedReport, AppError>> {
   if (!deps.isOnline()) return err(OFFLINE);
   if (text.length > MAX_SUBMITTED_CHARS) return err(TOO_LONG);
   const signedIn = await deps.auth.ensureSignedIn();
   if (!signedIn.ok) return signedIn;
-  const saved = await deps.repository.submit({ caseKey, text });
+  const saved = await deps.repository.submit({
+    caseKey,
+    text,
+    ...(details.category === undefined ? {} : { category: details.category }),
+  });
   if (!saved.ok) return saved;
   return ok({ caseKey });
 }

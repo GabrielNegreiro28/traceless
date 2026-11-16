@@ -39,6 +39,7 @@ class CaseKeyTaken extends Error {}
 function newReportData(report: NewReport) {
   return {
     sanitizedText: report.text,
+    ...(report.category === undefined ? {} : { category: report.category }),
     status: 'received',
     createdAt: serverTimestamp(),
     schemaVersion: REPORT_SCHEMA_VERSION,

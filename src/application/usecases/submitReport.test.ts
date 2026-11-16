@@ -35,6 +35,11 @@ describe('submitReport', () => {
     expect(repository.submitted).toEqual([{ caseKey: KEY, text: TEXT }]);
   });
 
+  it('sends the optional category with the text', async () => {
+    await submitReport(TEXT, KEY, deps(), { category: 'fraud' });
+    expect(repository.submitted).toEqual([{ caseKey: KEY, text: TEXT, category: 'fraud' }]);
+  });
+
   it('is idempotent: a retry with the same text and key succeeds without a second case', async () => {
     await submitReport(TEXT, KEY, deps());
     const retry = await submitReport(TEXT, KEY, deps());

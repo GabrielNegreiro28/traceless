@@ -1,5 +1,6 @@
 import type { CaseKey } from '../../domain/case/caseKey';
 import type { CaseStatus } from '../../domain/case/caseStatus';
+import type { ReportCategory } from '../../domain/report/structuredReport';
 import type { SanitizedText } from '../../domain/text/brandedText';
 import type { AppError } from '../../shared/appError';
 import type { Result } from '../../shared/result';
@@ -12,6 +13,8 @@ import type { Result } from '../../shared/result';
 export interface NewReport {
   readonly caseKey: CaseKey;
   readonly text: SanitizedText;
+  /** The category the reporter saw (and could change) on the approved screen; optional. */
+  readonly category?: ReportCategory;
 }
 
 /** A case as the follow-up page shows it (read-only). */

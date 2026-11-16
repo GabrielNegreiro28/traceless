@@ -6,7 +6,7 @@
  */
 
 /** Tasks that touch the reporter's text (grows with the policy table). */
-export type LedgerTask = 'identityScan' | 'approve' | 'submit';
+export type LedgerTask = 'identityScan' | 'approve' | 'structureReport' | 'submit';
 
 /**
  * Where the task ran: the on-device model, the cloud, deterministic pattern rules only, or

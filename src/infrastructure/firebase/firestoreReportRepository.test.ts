@@ -69,6 +69,17 @@ describe('FirestoreReportRepository.submit', () => {
     );
   });
 
+  it('adds the optional category (the only extra field the rules allow)', async () => {
+    await repository().submit({ ...REPORT, category: 'fraud' });
+    expect(sdk.transaction.set).toHaveBeenCalledWith(expect.anything(), {
+      sanitizedText: TEXT,
+      category: 'fraud',
+      status: 'received',
+      createdAt: sdk.serverTime,
+      schemaVersion: 1,
+    });
+  });
+
   it('runs as a single-attempt transaction (never queued offline)', async () => {
     await repository().submit(REPORT);
     expect(sdk.runTransaction).toHaveBeenCalledWith(DB, expect.any(Function), {
