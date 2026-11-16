@@ -1,3 +1,4 @@
+import { uniteOverlaps } from './overlapUnion';
 import { spanContains } from './span';
 import type { Finding, TextSpan } from './types';
 
@@ -97,17 +98,20 @@ function compareOrder(a: Finding, b: Finding): number {
  *    (rule 1), or a wider MODEL finding that swallowed the RULE one (it keeps its own
  *    suggestion and becomes origin RULE). A RULE finding that swallows a narrower MODEL one
  *    keeps its own suggestion: the model's would replace only part of the RULE's text.
- * 4. Containment across different categories and partial overlaps (any category) keep
- *    both findings, because each is a distinct risk the reporter should review.
- * 5. The result is sorted by start, end, category, then id (deterministic).
+ * 4. Partial overlaps of the SAME category merge into one finding over the union of their
+ *    spans (overlapUnion.ts): origin RULE if either is a RULE, the best finding's id and
+ *    reason, and a MODEL suggestion only when that finding covers the whole union.
+ * 5. Containment and partial overlaps across different categories keep both findings,
+ *    because each is a distinct risk the reporter should review.
+ * 6. The result is sorted by start, end, category, then id (deterministic).
  *
- * Note: the output may still contain overlapping spans (rule 4). The rewriteApplier
+ * Note: the output may still contain overlapping spans (rule 5). The rewriteApplier
  * handles overlaps explicitly when applying edits.
  */
 export function mergeFindings(findings: Finding[]): Finding[] {
   const unique = dedupeBySpanAndCategory(findings);
-  return unique
+  const survivors = unique
     .filter((finding) => !isSwallowed(finding, unique))
-    .map((finding) => keepRuleOrigin(finding, unique))
-    .sort(compareOrder);
+    .map((finding) => keepRuleOrigin(finding, unique));
+  return uniteOverlaps(survivors, compareQuality).sort(compareOrder);
 }

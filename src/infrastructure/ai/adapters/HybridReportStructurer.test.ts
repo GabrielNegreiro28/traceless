@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { approvedText } from '../../../application/usecases/submitReport.testKit';
 import { createAppError } from '../../../shared/appError';
 import { err, ok } from '../../../shared/result';
+import type { TransientRetryOptions } from '../transientRetry';
 import { HybridReportStructurer, type StructurableModel } from './HybridReportStructurer';
 
 const TEXT = approvedText('A manager approved false invoices at the depot.');
@@ -90,6 +91,41 @@ describe('HybridReportStructurer', () => {
     const pending = structurer(model, 500).structure(TEXT);
     await vi.advanceTimersByTimeAsync(500);
     expect(await pending).toMatchObject({ ok: false, error: { kind: 'Offline' } });
+  });
+
+  it('retries a transient cloud HTTP 500, but never a permission error', async () => {
+    const noWait: TransientRetryOptions = {
+      delaysMs: [600, 1_500],
+      sleep: () => Promise.resolve(),
+    };
+    const failOnceWith = (status: number) => {
+      let calls = 0;
+      const generateContent = vi.fn<StructurableModel['generateContent']>(() => {
+        calls += 1;
+        return calls === 1
+          ? Promise.reject(new AIError(AIErrorCode.FETCH_ERROR, 'x', { status }))
+          : Promise.resolve({ response: { text: () => VALID } });
+      });
+      const model: StructurableModel = { generateContent };
+      return { model, generateContent };
+    };
+    const transient = failOnceWith(500);
+    const ok500 = await new HybridReportStructurer(
+      () => ok(transient.model),
+      1_000,
+      noWait,
+    ).structure(TEXT);
+    expect(ok500.ok).toBe(true);
+    expect(transient.generateContent).toHaveBeenCalledTimes(2);
+
+    const denied = failOnceWith(403);
+    const result = await new HybridReportStructurer(
+      () => ok(denied.model),
+      1_000,
+      noWait,
+    ).structure(TEXT);
+    expect(result).toMatchObject({ ok: false, error: { kind: 'PermissionDenied' } });
+    expect(denied.generateContent).toHaveBeenCalledTimes(1);
   });
 
   it('never puts report text in an error', async () => {

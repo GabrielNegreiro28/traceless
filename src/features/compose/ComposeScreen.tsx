@@ -1,4 +1,5 @@
-import { useId } from 'react';
+import { useId, useRef } from 'react';
+import { isUnmodifiedSample } from '../../domain/report/sampleReport';
 import { Button } from '../../ui';
 import { DEMO_ORG_NAME, MAX_REPORT_CHARS } from './reportLimits';
 import { SAMPLE_REPORT } from './sampleReport';
@@ -13,7 +14,10 @@ export interface ComposeScreenProps {
 
 const formatCount = (n: number): string => n.toLocaleString('en-US');
 
-/** Presentational composer: the report field, helper copy, sample and "Check" actions. */
+/**
+ * Presentational composer: the report field, helper copy, sample and "Check" actions. The
+ * sample button is hidden while the field already holds the unmodified sample.
+ */
 export function ComposeScreen({
   text,
   onTextChange,
@@ -24,6 +28,12 @@ export function ComposeScreen({
   const helpId = `${fieldId}-help`;
   const counterId = `${fieldId}-count`;
   const atLimit = text.length >= MAX_REPORT_CHARS;
+  const field = useRef<HTMLTextAreaElement>(null);
+  const loadSample = () => {
+    onTextChange(SAMPLE_REPORT);
+    // The button disappears once the sample is loaded: keep focus on the text, not the body.
+    field.current?.focus();
+  };
   return (
     <section className="max-w-3xl">
       <h1 id="screen-heading" tabIndex={-1} className="text-3xl font-bold tracking-tight">
@@ -41,6 +51,7 @@ export function ComposeScreen({
         Your report
       </label>
       <textarea
+        ref={field}
         id={fieldId}
         value={text}
         maxLength={MAX_REPORT_CHARS}
@@ -60,9 +71,11 @@ export function ComposeScreen({
         <Button onClick={onCheck} loading={checking} disabled={text.trim() === ''}>
           Check my report
         </Button>
-        <Button variant="secondary" onClick={() => onTextChange(SAMPLE_REPORT)}>
-          Try a sample report
-        </Button>
+        {!isUnmodifiedSample(text) && (
+          <Button variant="secondary" onClick={loadSample}>
+            Try a sample report
+          </Button>
+        )}
       </div>
     </section>
   );

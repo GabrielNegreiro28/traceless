@@ -4,6 +4,7 @@ import type { AppError } from '../../shared/appError';
 import { ok, type Result } from '../../shared/result';
 import { clusterEdits, planEdits, type EditCluster } from './editPlan';
 import { joinAroundRemoval } from './removalJoin';
+import { appendReplacement, joinAtBoundary } from './replacementJoin';
 import type { ReviewDecision } from './reviewDecision';
 
 export type { ReviewAction, ReviewChoice, ReviewDecision } from './reviewDecision';
@@ -33,21 +34,29 @@ function toPieces(text: string, clusters: readonly EditCluster[]): Piece[] {
   return pieces.reverse();
 }
 
+/** Pieces alternate kept gap, replacement, kept gap…: odd indices are replacements. */
+function isReplacementSlot(index: number): boolean {
+  return index % 2 === 1;
+}
+
 /**
  * Concatenates the pieces; at each removal the surrounding text is joined by
  * `joinAroundRemoval`. Whitespace-only gaps between removals are absorbed, so removing
- * two neighbouring details leaves a single clean join.
+ * two neighbouring details leaves a single clean join. At every other edit boundary a
+ * doubled determiner or a punctuation collision is cleaned up (replacementJoin.ts).
  */
 function joinPieces(pieces: readonly Piece[]): string {
   let out = '';
   let pending = false;
-  for (const piece of pieces) {
+  for (const [index, piece] of pieces.entries()) {
     if (piece === REMOVED) {
       pending = true;
       continue;
     }
     if (pending && HSPACE_ONLY.test(piece)) continue;
-    out = pending ? joinAroundRemoval(out, piece) : out + piece;
+    if (pending) out = joinAroundRemoval(out, joinAtBoundary('', piece));
+    else if (isReplacementSlot(index)) out = appendReplacement(out, piece);
+    else out = joinAtBoundary(out, piece);
     pending = false;
   }
   return pending ? joinAroundRemoval(out, '') : out;

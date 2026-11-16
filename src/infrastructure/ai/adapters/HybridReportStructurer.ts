@@ -10,6 +10,11 @@ import { createAppError, type AppError } from '../../../shared/appError';
 import { err, ok, type Result } from '../../../shared/result';
 import { mapCloudAiError } from '../cloudErrorMapper';
 import { withDeadline } from '../deadline';
+import {
+  DEFAULT_TRANSIENT_RETRY,
+  retryTransient,
+  type TransientRetryOptions,
+} from '../transientRetry';
 
 /** The slice of HybridModel the structurer uses. */
 export interface StructurableModel {
@@ -28,17 +33,24 @@ function sourceOf(inferenceSource: InferenceSource | undefined): InferenceSource
 /**
  * ReportStructurer on the hybrid model (PREFER_ON_DEVICE): one call, zod-validated output,
  * and where it really ran from `response.inferenceSource`. The model is created on first use
- * and reused. `timeoutMs` bounds the on-device path too (the cloud has its own timeout).
+ * and reused. A transient cloud failure (HTTP 5xx) is retried with a short backoff, within
+ * the same deadline. `timeoutMs` bounds the on-device path too (the cloud has its own timeout).
  * Never rejects: every failure, including a safety block raised by `text()`, is an AppError.
  */
 export class HybridReportStructurer implements ReportStructurer {
   private model: StructurableModel | null = null;
   private readonly getModel: () => Result<StructurableModel, AppError>;
   private readonly timeoutMs: number;
+  private readonly retry: TransientRetryOptions;
 
-  constructor(getModel: () => Result<StructurableModel, AppError>, timeoutMs: number) {
+  constructor(
+    getModel: () => Result<StructurableModel, AppError>,
+    timeoutMs: number,
+    retry: TransientRetryOptions = DEFAULT_TRANSIENT_RETRY,
+  ) {
     this.getModel = getModel;
     this.timeoutMs = timeoutMs;
+    this.retry = retry;
   }
 
   structure(text: SanitizedText): Promise<Result<StructureOutcome, AppError>> {
@@ -52,7 +64,8 @@ export class HybridReportStructurer implements ReportStructurer {
         if (!created.ok) return created;
         this.model = created.value;
       }
-      const { response } = await this.model.generateContent(text);
+      const model = this.model;
+      const { response } = await retryTransient(() => model.generateContent(text), this.retry);
       const parsed = parseStructuredReport(response.text());
       if (!parsed.ok) return parsed;
       return ok({ report: parsed.value, source: sourceOf(response.inferenceSource) });

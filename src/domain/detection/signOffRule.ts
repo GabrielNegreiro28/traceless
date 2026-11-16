@@ -1,4 +1,5 @@
 import { SIGN_OFF_RULE } from './detectionRules';
+import { isSelfDescription } from './signOffDescription';
 import { buildFindingId } from './span';
 import type { Finding, TextSpan } from './types';
 
@@ -6,9 +7,12 @@ import type { Finding, TextSpan } from './types';
 type Trigger = 'blank' | 'cue' | 'dash';
 
 const MAX_WORDS = 5;
-/** A closing line on its own: "Regards,", "Best regards,", "Thanks", "Sincerely". */
+/**
+ * A closing line on its own: "Regards,", "Best regards,", "Thanks", "Sincerely", with or
+ * without what the thanks are for ("Thanks for listening,", "Thank you for your time.").
+ */
 const CUE_LINE =
-  /^(?:(?:kind|best|warm)\s+)?(?:regards|best|sincerely|signed|thanks|thank\s+you|respectfully|cheers|yours(?:\s+(?:truly|sincerely))?)\s*[,.!:]?$/i;
+  /^(?:(?:kind|best|warm|many)\s+)?(?:regards|best|sincerely|signed|thanks|thank\s+you|respectfully|cheers|yours(?:\s+(?:truly|sincerely))?)(?:\s+for\s+[a-z'’ ]{1,40}?)?\s*[,.!:]?$/i;
 /** A leading dash; only an em/en dash or "--" is a cue by itself (a single "-" is a bullet). */
 const DASH_PREFIX = /^(?:—|–|-{1,2})[ \t]*/u;
 const DASH_CUE = /^(?:—|–|--)/u;
@@ -83,10 +87,26 @@ function looksSigned(
   return !SENTENCE_END.test(body) && words.slice(1).some((w) => NAME_WORD.test(w));
 }
 
+const DESCRIPTION_REASON =
+  'A description of yourself at the end of a report signs it as clearly as a name.';
+
+/** Why the line is a signature: it names the writer, or (after a cue or dash) describes them. */
+function signatureReason(
+  words: readonly string[],
+  body: string,
+  trigger: Trigger,
+  dashed: boolean,
+): string | null {
+  if (looksSigned(words, body, trigger, dashed)) return SIGN_OFF_RULE.reason;
+  const described = trigger !== 'blank' && isSelfDescription(words, body);
+  return described ? DESCRIPTION_REASON : null;
+}
+
 /**
- * The sign-off finding, if the report's last line (at most 5 words) follows a blank
- * line, a closing cue line or a dash, and holds a name or initials. Hard negatives:
- * "Thank you.", "Please investigate.", "Best regards." on their own.
+ * The sign-off finding, if the report's last line follows a blank line, a closing cue line
+ * or a dash, and holds a name or initials (at most 5 words) or, after a cue or a dash, a
+ * short description of the writer ("the tired trainer on the night shift"). Hard
+ * negatives: "Thank you.", "Please investigate.", "Best regards." on their own.
  */
 export function detectSignOff(text: string): Finding[] {
   const lines = lastLines(text);
@@ -96,9 +116,11 @@ export function detectSignOff(text: string): Finding[] {
   const trigger = triggerOf(dash, lines.previous);
   const body = raw.slice(dash.length);
   const words = body.split(/[ \t]+/).filter((w) => w !== '');
-  if (trigger === null || !looksSigned(words, body, trigger, dash !== '')) return [];
+  if (trigger === null) return [];
+  const reason = signatureReason(words, body, trigger, dash !== '');
+  if (reason === null) return [];
   const span: TextSpan = { start: lines.line.start + dash.length, end: lines.line.end };
-  const { category, reason, suggestion } = SIGN_OFF_RULE;
+  const { category, suggestion } = SIGN_OFF_RULE;
   return [
     {
       id: buildFindingId('RULE', span, category),

@@ -83,6 +83,16 @@ describe('OutboxScreen', () => {
     expect(approveButton()).toBeDisabled();
   });
 
+  it('names the acknowledgement checkbox by an explicitly associated label', () => {
+    renderOutbox(scenario('email kept'));
+    const box = screen.getByRole('checkbox', { name: ACKNOWLEDGEMENT_LABEL });
+    expect(screen.getByRole('checkbox', { name: /I understand this text may still/ })).toBe(box);
+    expect(box).toHaveAccessibleName(ACKNOWLEDGEMENT_LABEL);
+    expect(box.id).not.toBe('');
+    expect(box.closest('label')).toHaveAttribute('for', box.id);
+    expect(screen.getByLabelText(ACKNOWLEDGEMENT_LABEL)).toBe(box);
+  });
+
   it('Back to review returns to the review', async () => {
     const { onBackToReview, onApprove } = renderOutbox(scenario('location left pending'));
     await userEvent.click(screen.getByRole('button', { name: 'Back to review' }));

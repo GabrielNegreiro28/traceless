@@ -65,10 +65,8 @@ describe('mergeFindings: RULE and MODEL findings that collapse', () => {
     expect(mergeFindings([f(10, 25, { suggestion: 'porter' }), r])).toEqual([r]);
   });
 
-  it('keeps both on a partial overlap or across categories (no collapse)', () => {
+  it('keeps both across categories (no collapse)', () => {
     const r = rule(0, 10);
-    const partial = f(5, 15, { suggestion: 'x' });
-    expect(mergeFindings([partial, r])).toEqual([r, partial]);
     const otherCategory = f(0, 25, { category: 'SCHEDULE', suggestion: 'y' });
     expect(mergeFindings([otherCategory, r])).toEqual([r, otherCategory]);
   });
@@ -91,5 +89,67 @@ describe('mergeFindings: RULE and MODEL findings that collapse', () => {
     const a = rule(0, 10, { id: 'rule:a', reason: 'aaaa', suggestion: 'first' });
     const b = rule(0, 10, { id: 'rule:b', reason: 'bbbb', suggestion: 'second' });
     expect(mergeFindings([b, a])).toEqual([a]);
+  });
+});
+
+describe('mergeFindings: same-category partial overlaps (sample walkthrough regression)', () => {
+  const text = 'I work Tuesday to Saturday, from 10 p.m. to 6 a.m., and I sign.';
+  const at = (quote: string) => ({
+    start: text.indexOf(quote),
+    end: text.indexOf(quote) + quote.length,
+  });
+  const ruleQuote = 'work Tuesday';
+  const modelQuote = 'Tuesday to Saturday, from 10 p.m. to 6 a.m';
+  const schedule = { category: 'SCHEDULE' as const };
+  const r = rule(at(ruleQuote).start, at(ruleQuote).end, {
+    ...schedule,
+    quote: ruleQuote,
+    suggestion: 'work some shifts',
+  });
+  const m = f(at(modelQuote).start, at(modelQuote).end, {
+    ...schedule,
+    quote: modelQuote,
+    suggestion: 'some days',
+  });
+
+  it('shows one card over the union, origin RULE, with the rule suggestion', () => {
+    const union = 'work Tuesday to Saturday, from 10 p.m. to 6 a.m';
+    expect(mergeFindings([m, r])).toEqual([
+      {
+        ...r,
+        id: `rule:${at(union).start}-${at(union).end}`,
+        span: at(union),
+        quote: union,
+        suggestion: 'work some shifts',
+      },
+    ]);
+    expect(mergeFindings([r, m])).toEqual(mergeFindings([m, r]));
+  });
+
+  it('chains three overlapping findings into one', () => {
+    const tail = '6 a.m., and';
+    const extra = f(at(tail).start, at(tail).end, { ...schedule, quote: tail, suggestion: 'z' });
+    const [only, ...rest] = mergeFindings([extra, m, r]);
+    expect(rest).toEqual([]);
+    expect(only).toMatchObject({
+      quote: 'work Tuesday to Saturday, from 10 p.m. to 6 a.m., and',
+      origin: 'RULE',
+    });
+  });
+
+  it('takes a MODEL suggestion only when the model finding covers the union', () => {
+    const left = f(0, 6, { ...schedule, id: 'model:a', quote: text.slice(0, 6), suggestion: 'a' });
+    const wide = f(2, 14, {
+      ...schedule,
+      id: 'model:b',
+      quote: text.slice(2, 14),
+      suggestion: 'b',
+    });
+    const [only] = mergeFindings([left, wide]);
+    expect(only).toMatchObject({
+      span: { start: 0, end: 14 },
+      quote: text.slice(0, 14),
+      origin: 'MODEL',
+    });
   });
 });

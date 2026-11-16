@@ -57,6 +57,27 @@ describe('ComposeScreen', () => {
     expect(checkButton()).toBeEnabled();
   });
 
+  it('hides "Try a sample report" while the unmodified sample is loaded, focusing the text', async () => {
+    render(<Harness />);
+    await userEvent.click(screen.getByRole('button', { name: 'Try a sample report' }));
+    expect(screen.queryByRole('button', { name: 'Try a sample report' })).toBeNull();
+    expect(field()).toHaveFocus();
+
+    await userEvent.type(field(), '!');
+    expect(screen.getByRole('button', { name: 'Try a sample report' })).toBeVisible();
+  });
+
+  it('hides "Try a sample report" when the page opens with the sample (/report?sample=1)', () => {
+    render(
+      <ComposeScreen
+        text={SAMPLE_REPORT}
+        onTextChange={() => undefined}
+        onCheck={() => undefined}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Try a sample report' })).toBeNull();
+  });
+
   it.each(['', '   \n\t '])('disables "Check my report" for %j', (text) => {
     render(<Harness />);
     if (text !== '') fireEvent.change(field(), { target: { value: text } });

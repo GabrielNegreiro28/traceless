@@ -11,5 +11,12 @@ import type { IdentityScanResult } from './IdentityScanner';
  * reaches the on-device path by accident.
  */
 export interface ConsentedIdentityScanner {
-  scan(chunk: ConsentedRawText): Promise<Result<IdentityScanResult, AppError>>;
+  /**
+   * `isCancelled`, when given, is polled before any retry of a failed cloud call, so a
+   * cancelled scan makes no further call.
+   */
+  scan(
+    chunk: ConsentedRawText,
+    isCancelled?: () => boolean,
+  ): Promise<Result<IdentityScanResult, AppError>>;
 }

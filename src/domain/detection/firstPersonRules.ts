@@ -61,12 +61,12 @@ function hasAnchorInClause(text: string, span: TextSpan): boolean {
 }
 
 /** The generic span contract every family match must meet. */
-function isValidSpan(text: string, span: TextSpan): boolean {
+function isValidSpan(text: string, span: TextSpan, maxWords: number): boolean {
   const quote = text.slice(span.start, span.end);
   const words = wordCount(quote);
   return (
     words >= MIN_SPAN_WORDS &&
-    words <= MAX_SPAN_WORDS &&
+    words <= maxWords &&
     !crossesSentence(quote) &&
     hasWordBoundaries(text, span) &&
     hasAnchorInClause(text, span)
@@ -101,7 +101,11 @@ function matchPattern(
     if (range === undefined) continue;
     const span: TextSpan = { start: range[0], end: range[1] };
     // The match starts at its first-person anchor ("when/after/since" just before it).
-    if (!isValidSpan(text, span) || isInReportedSpeech(text, m.index)) continue;
+    if (
+      !isValidSpan(text, span, family.maxWords ?? MAX_SPAN_WORDS) ||
+      isInReportedSpeech(text, m.index)
+    )
+      continue;
     const after = text.slice(span.end, span.end + AFTER_CHARS);
     if (pattern.accept?.({ groups: m.groups ?? {}, after }) === false) continue;
     matches.push({ family: family.id, finding: toFinding(text, span, family, pattern) });

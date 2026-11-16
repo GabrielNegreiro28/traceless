@@ -49,6 +49,19 @@ describe('remainingRisk', () => {
     expect(remainingRisk(all, decisions)).toEqual(scoreRisk([dock]));
   });
 
+  it('is NONE once every overlapping finding is accepted or covered by an accepted one', () => {
+    const lead = findingOf(text, 'only night shift lead at Dock B', { category: 'LOCATION' });
+    const overlapping = [role, shift, dock, date, lead];
+    // `shift` and `dock` are never decided: each sits inside an accepted span.
+    expect(remainingRisk(overlapping, [accept(role), accept(lead), accept(date)]).level).toBe(
+      'NONE',
+    );
+    // A pending finding that only partly overlaps an accepted one still counts.
+    expect(remainingRisk(overlapping, [accept(lead), accept(date)]).categories).toEqual([
+      'ROLE_UNIQUE',
+    ]);
+  });
+
   it('goes down as findings are resolved', () => {
     const before = remainingRisk(all, []).score;
     const after = remainingRisk(all, [accept(role)]).score;

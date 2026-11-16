@@ -14,15 +14,22 @@ export interface OutboxScreenProps {
   readonly onBackToReview: () => void;
 }
 
+/** The input is named by its label both ways (wrapped and `htmlFor`), for every AT and test. */
 function Acknowledgement(props: {
   readonly label: string;
   readonly checked: boolean;
   readonly onChange: (checked: boolean) => void;
 }) {
+  const inputId = useId();
   return (
-    <label className="flex max-w-prose cursor-pointer items-start gap-3 rounded-md border border-border bg-surface p-4">
+    <label
+      htmlFor={inputId}
+      className="flex max-w-prose cursor-pointer items-start gap-3 rounded-md border border-border bg-surface p-4"
+    >
       <input
+        id={inputId}
         type="checkbox"
+        name="acknowledge-remaining-risk"
         checked={props.checked}
         onChange={(event) => props.onChange(event.target.checked)}
         className="mt-1 size-5 shrink-0 accent-accent"

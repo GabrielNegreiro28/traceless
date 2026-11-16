@@ -23,7 +23,8 @@ export interface GroupRunOutput {
 }
 
 export interface GroupRunner<I> {
-  run(input: I): Promise<Result<GroupRunOutput, AppError>>;
+  /** `isCancelled` is polled before a retry of a transient failure (runners that retry). */
+  run(input: I, isCancelled?: () => boolean): Promise<Result<GroupRunOutput, AppError>>;
 }
 
 export interface GroupPass<I> {
@@ -47,13 +48,14 @@ async function scanGroup<I>(
   pass: GroupPass<I>,
   parse: ScanParse,
   input: I,
+  isCancelled: (() => boolean) | undefined,
   attempt = 0,
 ): Promise<Result<GroupScan, AppError>> {
-  const output = await pass.runner.run(input);
+  const output = await pass.runner.run(input, isCancelled);
   if (!output.ok) return err(output.error);
   const parsed = parse(output.value.text, pass.group);
   if (parsed.ok) return ok({ ...parsed.value, retries: attempt, source: output.value.source });
-  return attempt < MAX_RETRIES ? scanGroup(pass, parse, input, attempt + 1) : parsed;
+  return attempt < MAX_RETRIES ? scanGroup(pass, parse, input, isCancelled, attempt + 1) : parsed;
 }
 
 /** Union across groups: the same quote with the same category is kept once. */
@@ -74,13 +76,14 @@ export async function scanAllGroups<I>(
   passes: readonly GroupPass<I>[],
   parse: ScanParse,
   input: I,
+  isCancelled?: () => boolean,
 ): Promise<Result<IdentityScanResult, AppError>> {
   const findings: ModelFinding[] = [];
   const protectedQuotes = new Set<string>();
   let retries = 0;
   let source: InferenceSourceKind = 'ON_DEVICE';
   for (const pass of passes) {
-    const scanned = await scanGroup(pass, parse, input);
+    const scanned = await scanGroup(pass, parse, input, isCancelled);
     if (!scanned.ok) return err(scanned.error);
     findings.push(...scanned.value.findings);
     for (const quote of scanned.value.protectedQuotes) protectedQuotes.add(quote);

@@ -91,7 +91,16 @@ describe('mergeFindings', () => {
     expect(mergeFindings([b, a])).toEqual([a, b]);
   });
 
-  it('keeps both on partial overlap with the same category', () => {
+  it('merges a partial overlap with the same category into the union', () => {
+    const text = 'abcdefghijklmnopqrstuvwxyz';
+    const a = f(0, 10, { quote: text.slice(0, 10) });
+    const b = f(5, 15, { quote: text.slice(5, 15) });
+    expect(mergeFindings([b, a])).toEqual([
+      { ...a, id: 'model:0-15:LOCATION', span: { start: 0, end: 15 }, quote: text.slice(0, 15) },
+    ]);
+  });
+
+  it('leaves a same-category overlap alone when a quote is not its span text', () => {
     const a = f(0, 10);
     const b = f(5, 15);
     expect(mergeFindings([b, a])).toEqual([a, b]);

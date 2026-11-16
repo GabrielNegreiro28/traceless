@@ -33,6 +33,9 @@ export async function scanReportConsented(
 ): Promise<Result<ScanReportResult, AppError>> {
   const { scanner } = deps;
   const scanChunk: ChunkScanFn = (chunk) =>
-    scanner.scan(sliceConsentedText(text, chunk.offset, chunk.offset + chunk.text.length));
+    scanner.scan(
+      sliceConsentedText(text, chunk.offset, chunk.offset + chunk.text.length),
+      options.isCancelled,
+    );
   return runScanPipeline(toRawText(text), scanChunk, { ...deps, allowCloud: true }, options);
 }

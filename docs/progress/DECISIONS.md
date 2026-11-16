@@ -114,3 +114,11 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 - **Faltam 5 tarefas, nesta ordem:** (1) commitar o modo nuvem com consentimento (rodada de correção em andamento); (2) congelar a detecção: o produto passa a usar `v2-single2-rules`, o Second look fica obrigatório e a UI nunca sugere que a lista está completa; (3) Fase 4: enviar o texto limpo ao Firestore com a chave do caso, mais o `structureReport` na nuvem sobre SanitizedText (a demonstração do híbrido); (4) deploy e um passe de polimento; (5) README, diagrama, texto do Devpost e roteiro do vídeo, com a auditoria do Fable.
 - **Cortado (vira roadmap):** rights advisor e grounding, UI de quem investiga, triageCase e respostas ao denunciante.
 - **Revisões:** opus só na tarefa 3 (caminho de dados para a nuvem e regras do Firestore); nas outras, o manager confere o CI e o diff. Fable apenas na auditoria final.
+
+## 2026-11-16 · Correções pós-portão a partir do teste no navegador (a detecção mudou depois da medição)
+- O teste real no Chrome (relato de exemplo, modo nuvem e modo demo) achou: texto reescrito quebrado ("at the a …", ".,"), intervalo de turno partido em dois cartões, assinatura de autodescrição não marcada, nenhuma nova tentativa depois de um HTTP 500 da nuvem e uma caixa de confirmação sem rótulo explícito.
+- **Decisão (manager):** corrigir, porque são defeitos de produto visíveis na demonstração. Três mudanças alteram o que foi medido no portão:
+  1. regra de assinatura (pacote `core`): frases de agradecimento com "for …" e linhas de autodescrição;
+  2. família de turno (`core+firstPerson`): o intervalo inteiro vira um único achado;
+  3. `mergeFindings`: achados da mesma categoria que se sobrepõem em parte viram um só.
+- **Transparência:** os números do portão (recall 0,604 etc.) valem para o commit `b065f9c`. O README dirá isso, e que a avaliação não foi refeita depois dessas correções (o split de teste só pode rodar uma vez).

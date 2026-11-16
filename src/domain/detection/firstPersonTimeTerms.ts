@@ -68,3 +68,16 @@ export const ROSTER_WORD = alt(wordList('rostered scheduled booked'));
 
 /** Words allowed between "on" (or a roster word) and the time term. */
 export const ON_FILLER = alt(wordList('the a an every other alternate'));
+
+/** What joins two time terms into one range: "to", "through", "until", "and" or a dash. */
+const RANGE_LINK = String.raw`(?:[ \t]*[-–—][ \t]*|${SP}(?:to|through|thru|until|till|and)${SP})`;
+
+/**
+ * A time term, or a range of them ("Tuesday to Saturday", "Monday–Friday", "10pm until
+ * 6am"), optionally followed by a second one after a comma or "from" ("Tuesday to Saturday,
+ * from 10 p.m. to 6 a.m.", "nights, from 9pm to 5am"), so one schedule is one finding.
+ */
+export function timeRange(term: string): string {
+  const range = `${term}(?:${RANGE_LINK}${term})?`;
+  return `${range}(?:,?${SP}(?:from${SP})?${range})?`;
+}

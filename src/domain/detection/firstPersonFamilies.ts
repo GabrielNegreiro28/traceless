@@ -27,6 +27,7 @@ import {
   SCHEDULE_FILLER,
   TIME_END,
   TIME_TERM,
+  timeRange,
 } from './firstPersonTimeTerms';
 import { ADVERB, NOUN_PHRASE_WORD as NP } from './firstPersonWords';
 import type { FindingCategory } from './types';
@@ -34,7 +35,8 @@ import type { FindingCategory } from './types';
 /**
  * The six frozen families of the first-person rule pack (docs/design/fase2-gate-iteration.md
  * §G.3). Each pattern holds its first-person anchor (I, I'm, I've, we, my, our) before or inside
- * the named group `span`, which becomes the finding: 2–8 whole words, never across a sentence.
+ * the named group `span`, which becomes the finding: 2–8 whole words (a schedule range up to
+ * SCHEDULE_MAX_SPAN_WORDS), never across a sentence.
  * The span leaves the anchor out where a generic suggestion must replace it cleanly ("I'm [the
  * only night porter]" → "I'm a member of the team").
  */
@@ -62,6 +64,8 @@ export interface FamilyPattern {
 
 export interface FirstPersonFamily {
   readonly id: FirstPersonFamilyId;
+  /** Longest span in words, when a family needs more than the generic MAX_SPAN_WORDS. */
+  readonly maxWords?: number;
   readonly category: FindingCategory;
   readonly reason: string;
   readonly patterns: readonly FamilyPattern[];
@@ -127,28 +131,32 @@ const tenure: FirstPersonFamily = {
   ],
 };
 
+/** A whole schedule range ("work Tuesday to Saturday, from 10 p.m. to 6 a.m.") is one span. */
+export const SCHEDULE_MAX_SPAN_WORDS = 14;
+
 const shift: FirstPersonFamily = {
   id: 'shift',
+  maxWords: SCHEDULE_MAX_SPAN_WORDS,
   category: 'SCHEDULE',
   reason: 'Your shifts or hours narrow down who was at work.',
   patterns: [
     {
-      source: `${PRESENT_WORK_SUBJECT}${SP}(?<span>${PRESENT_WORK_VERB}(?:${SP}${SCHEDULE_FILLER}){0,3}?${SP}${TIME_TERM})${TIME_END}`,
+      source: `${PRESENT_WORK_SUBJECT}${SP}(?<span>${PRESENT_WORK_VERB}(?:${SP}${SCHEDULE_FILLER}){0,3}?${SP}${timeRange(TIME_TERM)})${TIME_END}`,
       flags: 'gi',
       suggestion: 'work some shifts',
     },
     {
-      source: `${ANY_WORK_SUBJECT}${SP}(?<span>${PAST_WORK_VERB}(?:${SP}${SCHEDULE_FILLER}){0,3}?${SP}${REGULAR_TIME_TERM})${TIME_END}`,
+      source: `${ANY_WORK_SUBJECT}${SP}(?<span>${PAST_WORK_VERB}(?:${SP}${SCHEDULE_FILLER}){0,3}?${SP}${timeRange(REGULAR_TIME_TERM)})${TIME_END}`,
       flags: 'gi',
       suggestion: 'worked some shifts',
     },
     {
-      source: `${BE_PRESENT_SUBJECT}${MAYBE_ADVERB}${SP}(?<span>${ROSTER_LEAD}${SP}${TIME_TERM})${TIME_END}`,
+      source: `${BE_PRESENT_SUBJECT}${MAYBE_ADVERB}${SP}(?<span>${ROSTER_LEAD}${SP}${timeRange(TIME_TERM)})${TIME_END}`,
       flags: 'gi',
       suggestion: 'on some shifts',
     },
     {
-      source: `${BE_PAST_SUBJECT}${MAYBE_ADVERB}${SP}(?<span>${ROSTER_LEAD}${SP}${REGULAR_TIME_TERM})${TIME_END}`,
+      source: `${BE_PAST_SUBJECT}${MAYBE_ADVERB}${SP}(?<span>${ROSTER_LEAD}${SP}${timeRange(REGULAR_TIME_TERM)})${TIME_END}`,
       flags: 'gi',
       suggestion: 'on some shifts',
     },

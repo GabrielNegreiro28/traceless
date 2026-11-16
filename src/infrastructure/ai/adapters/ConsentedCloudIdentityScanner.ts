@@ -31,7 +31,10 @@ export class ConsentedCloudIdentityScanner implements ConsentedIdentityScanner {
     this.passes = groups.map((group) => ({ group, runner: runnerFor(group) }));
   }
 
-  scan(chunk: ConsentedRawText): Promise<Result<IdentityScanResult, AppError>> {
-    return scanAllGroups(this.passes, this.parse, chunk);
+  scan(
+    chunk: ConsentedRawText,
+    isCancelled?: () => boolean,
+  ): Promise<Result<IdentityScanResult, AppError>> {
+    return scanAllGroups(this.passes, this.parse, chunk, isCancelled);
   }
 }

@@ -44,12 +44,12 @@ describe('first-person span contract', () => {
     detectFirstPersonMatches(p.text, FIRST_PERSON_FAMILY_IDS).map((m) => ({ ...m, text: p.text })),
   );
 
-  it('every finding of every family is 2-8 whole words, inside one sentence', () => {
+  it('every finding is 2-8 whole words (a schedule range: its own limit), in one sentence', () => {
     expect(findings.length).toBeGreaterThanOrEqual(ALL_POSITIVES.length);
-    for (const { finding, text } of findings) {
+    for (const { finding, text, family } of findings) {
       const words = finding.quote.trim().split(/\s+/).length;
       expect(words).toBeGreaterThanOrEqual(MIN_SPAN_WORDS);
-      expect(words).toBeLessThanOrEqual(MAX_SPAN_WORDS);
+      expect(words).toBeLessThanOrEqual(FIRST_PERSON_FAMILIES[family].maxWords ?? MAX_SPAN_WORDS);
       expect(text.slice(finding.span.start, finding.span.end)).toBe(finding.quote);
       expect(finding.quote).toBe(finding.quote.trim());
       expect(finding.quote.replace(/\b([ap])\.m\./gi, '$1m')).not.toMatch(/[!?;\n]|\.(?:\s|$)/);
