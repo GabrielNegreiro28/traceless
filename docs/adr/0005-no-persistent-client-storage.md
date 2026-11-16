@@ -35,3 +35,11 @@ could be queued offline and sent later, even after a restart.
   content, the case key or the reporter's identity.
 - Public copy must say "no report content, case key or identity is stored on this
   device", never "nothing is stored".
+
+## Update 2026-11-16
+
+There is no queued offline submit. Sending is a single-attempt transaction: if the device is
+offline, the send fails with a clear message and the reporter retries from the same tab. This
+supersedes the "Keep this tab open" banner line above for pending offline writes (the banner
+now only appears while a send is actively in progress, together with the `beforeunload`
+warning). The report text still never leaves the tab's memory except in that one send.

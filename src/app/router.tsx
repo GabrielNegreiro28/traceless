@@ -7,9 +7,13 @@ import { ReportPage } from './ReportPage';
 
 /** Public screens, rendered inside the shared AppShell. */
 const shellRoutes: RouteObject[] = [
-  { index: true, element: <App /> },
-  { path: 'report', element: <ReportPage /> },
-  { path: 'case', element: <CaseLookupPage /> },
+  { index: true, element: <App />, handle: { title: 'Traceless' } },
+  { path: 'report', element: <ReportPage />, handle: { title: 'Write your report | Traceless' } },
+  {
+    path: 'case',
+    element: <CaseLookupPage />,
+    handle: { title: 'Follow up on your case | Traceless' },
+  },
 ];
 
 /** The public route table plus any developer-only routes (empty in production). */

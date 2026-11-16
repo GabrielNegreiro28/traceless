@@ -59,6 +59,7 @@ describe('useReportFlow: approve', () => {
       findings: FINDINGS,
       decisions: expect.any(Array) as unknown,
       acknowledgedRemainingRisk: true,
+      previewedText: expect.any(String) as unknown,
     });
   });
 

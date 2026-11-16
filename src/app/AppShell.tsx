@@ -1,11 +1,23 @@
-import { Link, Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Link, Outlet, useMatches } from 'react-router';
 import { Wordmark } from '../ui/Wordmark';
 
 export const DISCLAIMER =
   'Traceless reduces the risk of being identified; it cannot guarantee anonymity.';
 
+/** Sets the document title from the deepest matched route's `handle.title`. */
+function useRouteTitle(): void {
+  const matches = useMatches();
+  const handle = matches[matches.length - 1]?.handle as { title?: string } | undefined;
+  const title = handle?.title;
+  useEffect(() => {
+    if (title !== undefined) document.title = title;
+  }, [title]);
+}
+
 /** Page frame shared by every public route: skip link, header, main landmark and footer. */
 export function AppShell() {
+  useRouteTitle();
   return (
     <div className="flex min-h-screen flex-col bg-bg text-text">
       <a

@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router';
+import { SAMPLE_REPORT } from '../features/compose/sampleReport';
 import { ComposeScreen } from '../features/compose/ComposeScreen';
 import { CheckOptions } from '../features/onboarding/CheckOptions';
 import { PrepareScreen } from '../features/onboarding/PrepareScreen';
@@ -169,10 +171,21 @@ const LEDGER_STATUSES: ReadonlySet<FlowState['status']> = new Set([
   'submitted',
 ]);
 
+/** `/report?sample=1` (the landing's "Try a sample report") starts with the demo report. */
+function usePrefillSample(flow: ReportFlow): void {
+  const [params] = useSearchParams();
+  const wanted = params.get('sample') === '1';
+  const { setText } = flow;
+  useEffect(() => {
+    if (wanted) setText(SAMPLE_REPORT);
+  }, [wanted, setText]);
+}
+
 /** /report route: the reporter's flow, one screen per state of the reducer. */
 export function ReportPage() {
   const flow = useReportFlow();
   const { demoAi } = useServices();
+  usePrefillSample(flow);
   useFocusHeadingOnTransition(flow.state.status);
   useNavigationLock(flow.state.status === 'submitting');
   return (

@@ -93,6 +93,28 @@ describe('withApprovalLedger', () => {
     ]);
   });
 
+  it('records nothing when the approved text differs from the previewed text', () => {
+    const ledger = createInMemoryPrivacyLedger();
+    const result = withApprovalLedger(
+      createFakeServices().approveReport,
+      ledger,
+    )({ ...input, previewedText: 'Something else.' });
+    expect(result.ok).toBe(true);
+    expect(ledger.entries()).toEqual([]);
+  });
+
+  it('records an approval that equals the previewed text', () => {
+    const ledger = createInMemoryPrivacyLedger();
+    withApprovalLedger(
+      createFakeServices().approveReport,
+      ledger,
+    )({
+      ...input,
+      previewedText: 'Short report.',
+    });
+    expect(ledger.entries()).toHaveLength(1);
+  });
+
   it('records nothing for a refused approval', () => {
     const ledger = createInMemoryPrivacyLedger();
     const refuse = () => err(createAppError('EmptyReport', { message: 'x' }));

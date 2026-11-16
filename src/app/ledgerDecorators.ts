@@ -107,14 +107,19 @@ export function withCloudScanLedger(
   };
 }
 
-/** Records one SANITIZED approve entry per successful approval (plain code on this device). */
+function isPreviewed(previewed: string | undefined, approved: string): boolean {
+  return previewed === undefined || previewed === approved;
+}
+
+/** Records one SANITIZED approve entry per successful, previewed approval (plain code here). */
 export function withApprovalLedger(
   approve: Services['approveReport'],
   ledger: PrivacyLedger,
 ): Services['approveReport'] {
   return (input) => {
     const result = approve(input);
-    if (result.ok) {
+    // A mismatching approval is discarded by the flow, so it must not be recorded.
+    if (result.ok && isPreviewed(input.previewedText, result.value.text)) {
       ledger.record({
         task: 'approve',
         source: 'local',

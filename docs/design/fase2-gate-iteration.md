@@ -125,6 +125,8 @@ Measured on the shipping pipeline with no user input; raw-model numbers are repo
 
 **G.1 Product default now:** `v2-single2` (dominates v1 on precision and ACCUSED at equal recall within noise). Recorded as a default by dominance, not a gate pass; the final default is whichever variant goes to the test split.
 
+> **Note 2026-11-16:** the shipped default is now `v2-single2-rules` (`v2-single2` plus the deterministic first-person rule pack). The gate outcome was ship-with-disclosed-miss; see DECISIONS 2026-11-16.
+
 **G.2 Stuck recovery first** (one stall currently poisons every later scan, and reload destroys the in-memory draft):
 
 - One AbortController per memoized on-device model; its signal goes in `createOptions.signal`. `OnDeviceModel.abandon()` aborts and drops the cache entry; the next call builds a fresh model through the same factory (fail-closed layers intact).

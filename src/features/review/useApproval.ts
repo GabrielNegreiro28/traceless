@@ -20,6 +20,7 @@ function runApproval(
       findings: state.findings,
       decisions: state.decisions,
       acknowledgedRemainingRisk: acknowledged,
+      previewedText: state.preview,
     });
   } catch {
     return err(CRASHED);

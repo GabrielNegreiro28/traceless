@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { SAMPLE_REPORT } from '../features/compose/sampleReport';
 import { createAppRoutes } from './router';
 import { createFakeServices } from './services/renderWithServices';
 import { ServicesProvider } from './services/ServicesProvider';
@@ -54,7 +55,9 @@ describe('navigation', () => {
 
   it('renders the landing page inside the shell at /', () => {
     open('/');
-    expect(heading('Report wrongdoing without leaving a trace.')).toBeInTheDocument();
+    expect(
+      heading('Report wrongdoing without your own words giving you away.'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
@@ -68,8 +71,24 @@ describe('navigation', () => {
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
+  it.each([
+    ['/', 'Traceless'],
+    ['/report', 'Write your report | Traceless'],
+    ['/case', 'Follow up on your case | Traceless'],
+  ])('sets the document title for %s', (path, title) => {
+    open(path);
+    expect(document.title).toBe(title);
+  });
+
+  it('prefills the sample report from /report?sample=1', () => {
+    open('/report?sample=1');
+    expect(screen.getByLabelText<HTMLTextAreaElement>('Your report').value).toBe(SAMPLE_REPORT);
+  });
+
   it.each(['/nope', '/eval'])('redirects unknown path %s to the landing page', (path) => {
     open(path);
-    expect(heading('Report wrongdoing without leaving a trace.')).toBeInTheDocument();
+    expect(
+      heading('Report wrongdoing without your own words giving you away.'),
+    ).toBeInTheDocument();
   });
 });

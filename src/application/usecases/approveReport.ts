@@ -17,6 +17,11 @@ export interface ApproveReportInput {
   readonly decisions: readonly ReviewDecision[];
   /** The reporter confirmed they accept the identification risk that remains. */
   readonly acknowledgedRemainingRisk: boolean;
+  /**
+   * The text the reporter previewed. Not used to compute the approval: the privacy ledger
+   * records an approval only when the approved text equals it (the flow discards a mismatch).
+   */
+  readonly previewedText?: string;
 }
 
 export interface ApproveReportDeps {
