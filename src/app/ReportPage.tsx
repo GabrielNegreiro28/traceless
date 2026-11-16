@@ -16,7 +16,9 @@ import { isCloudMode } from '../features/review/scanSource';
 import { StallPanel } from '../features/review/StallPanel';
 import { useReportFlow, type ReportFlow } from '../features/review/useReportFlow';
 import { ScanningScreen } from '../features/scanning/ScanningScreen';
-import { Button } from '../ui';
+import { CaseKeyScreen } from '../features/submit/CaseKeyScreen';
+import { SubmitErrorPanel } from '../features/submit/SubmitErrorPanel';
+import { useNavigationLock } from '../features/submit/useNavigationLock';
 import { useServices } from './services/useServices';
 
 /** Moves focus to the new screen's heading whenever the flow changes screen. */
@@ -29,24 +31,17 @@ function useFocusHeadingOnTransition(status: FlowState['status']): void {
   }, [status]);
 }
 
-/** Sending (Fase 4) exists in the reducer but has no screen yet. */
-function NotReady({ onReset }: { readonly onReset: () => void }) {
-  return (
-    <section className="max-w-xl">
-      <h1 id="screen-heading" tabIndex={-1} className="text-3xl font-bold tracking-tight">
-        This step isn&apos;t ready yet
-      </h1>
-      <div className="mt-6">
-        <Button variant="secondary" onClick={onReset}>
-          Start over
-        </Button>
-      </div>
-    </section>
-  );
-}
-
-/** An approval error, a stalled on-device scan (§G.2), or any other error. */
+/** An approval error, a failed send, a stalled on-device scan (§G.2), or any other error. */
 function errorScreenFor(flow: ReportFlow, state: ErrorState) {
+  if (state.previous.status === 'approved') {
+    return (
+      <SubmitErrorPanel
+        error={state.error}
+        onRetry={flow.submission.submit}
+        onBack={flow.backToEdit}
+      />
+    );
+  }
   const afterCloud = 'checks' in state.previous && state.previous.checks === 'cloud';
   if (state.previous.status === 'outbox') {
     return (
@@ -141,12 +136,26 @@ function screenFor(flow: ReportFlow, demo: boolean) {
         <OutboxScreen state={state} onApprove={flow.approve} onBackToReview={flow.backToEdit} />
       );
     case 'approved':
-      return <ApprovedScreen state={state} onBack={flow.backToEdit} demo={demo} />;
+    case 'submitting':
+      return (
+        <ApprovedScreen
+          state={state}
+          onBack={flow.backToEdit}
+          onSend={flow.submission.submit}
+          demo={demo}
+        />
+      );
     case 'error':
       return errorScreenFor(flow, state);
-    case 'submitting':
     case 'submitted':
-      return <NotReady onReset={flow.reset} />;
+      return (
+        <CaseKeyScreen
+          caseKey={flow.submission.caseKey}
+          onFinish={flow.submission.finish}
+          copyText={copyToClipboard}
+          demo={demo}
+        />
+      );
   }
 }
 
@@ -155,6 +164,8 @@ const LEDGER_STATUSES: ReadonlySet<FlowState['status']> = new Set([
   'reviewing',
   'outbox',
   'approved',
+  'submitting',
+  'submitted',
 ]);
 
 /** /report route: the reporter's flow, one screen per state of the reducer. */
@@ -162,6 +173,7 @@ export function ReportPage() {
   const flow = useReportFlow();
   const { demoAi } = useServices();
   useFocusHeadingOnTransition(flow.state.status);
+  useNavigationLock(flow.state.status === 'submitting');
   return (
     <>
       {isCloudMode(flow.state) && <CloudModeChip demo={demoAi} />}

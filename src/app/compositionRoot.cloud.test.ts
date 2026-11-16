@@ -1,3 +1,4 @@
+import { DEFAULT_APP_CONFIG } from '../application/ports/ConfigService';
 import { describe, expect, it } from 'vitest';
 import type { CloudScanConsent } from '../application/usecases/consentToCloudScan';
 import { SAMPLE_REPORT } from '../domain/report/sampleReport';
@@ -57,8 +58,6 @@ describe('createServices: consented cloud scan (fake AI mode)', () => {
   });
 
   it('exposes the default config service (cloud scan enabled) in fake mode', async () => {
-    await expect(createServices(FAKE_TEST_ENV).config.load()).resolves.toEqual({
-      cloudScanEnabled: true,
-    });
+    await expect(createServices(FAKE_TEST_ENV).config.load()).resolves.toEqual(DEFAULT_APP_CONFIG);
   });
 });

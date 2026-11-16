@@ -2,6 +2,7 @@ import type { FirebaseApp } from 'firebase/app';
 import {
   fetchAndActivate,
   getBoolean,
+  getNumber,
   isSupported,
   type RemoteConfig,
 } from 'firebase/remote-config';
@@ -29,9 +30,25 @@ export const REMOTE_CONFIG_OPTIONS: RemoteConfigServiceOptions = {
 };
 
 const CLOUD_SCAN_ENABLED: RemoteConfigKey = 'cloud_scan_enabled';
+const ACK_DEADLINE_DAYS: RemoteConfigKey = 'ack_deadline_days';
+const FEEDBACK_DEADLINE_DAYS: RemoteConfigKey = 'feedback_deadline_days';
+
+/** A deadline must be a whole number of days from 1 to 365; anything else uses the default. */
+function readDays(remoteConfig: RemoteConfig, key: RemoteConfigKey, fallback: number): number {
+  const days = getNumber(remoteConfig, key);
+  return Number.isInteger(days) && days >= 1 && days <= 365 ? days : fallback;
+}
 
 function readAppConfig(remoteConfig: RemoteConfig): AppConfig {
-  return { cloudScanEnabled: getBoolean(remoteConfig, CLOUD_SCAN_ENABLED) };
+  return {
+    cloudScanEnabled: getBoolean(remoteConfig, CLOUD_SCAN_ENABLED),
+    ackDeadlineDays: readDays(remoteConfig, ACK_DEADLINE_DAYS, DEFAULT_APP_CONFIG.ackDeadlineDays),
+    feedbackDeadlineDays: readDays(
+      remoteConfig,
+      FEEDBACK_DEADLINE_DAYS,
+      DEFAULT_APP_CONFIG.feedbackDeadlineDays,
+    ),
+  };
 }
 
 /** The Remote Config instance with defaults and settings, or null where it cannot run. */

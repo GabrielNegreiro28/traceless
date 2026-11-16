@@ -13,6 +13,7 @@ const sdk = vi.hoisted(() => ({
   getRemoteConfig: vi.fn(),
   fetchAndActivate: vi.fn(),
   getBoolean: vi.fn(),
+  getNumber: vi.fn(),
   isSupported: vi.fn(),
 }));
 
@@ -20,6 +21,7 @@ vi.mock('firebase/remote-config', () => ({
   getRemoteConfig: sdk.getRemoteConfig,
   fetchAndActivate: sdk.fetchAndActivate,
   getBoolean: sdk.getBoolean,
+  getNumber: sdk.getNumber,
   isSupported: sdk.isSupported,
 }));
 
@@ -32,13 +34,22 @@ describe('createRemoteConfigService', () => {
     sdk.isSupported.mockResolvedValue(true);
     sdk.fetchAndActivate.mockResolvedValue(true);
     sdk.getBoolean.mockReturnValue(true);
+    sdk.getNumber.mockImplementation((_rc: unknown, key: string) =>
+      key === 'ack_deadline_days' ? 7 : 90,
+    );
   });
 
   it('applies the defaults and settings, fetches once and reads the kill switch', async () => {
     const service = createRemoteConfigService(() => APP, OPTIONS);
     sdk.getBoolean.mockReturnValue(false);
-    await expect(service.load()).resolves.toEqual({ cloudScanEnabled: false });
-    await expect(service.load()).resolves.toEqual({ cloudScanEnabled: false });
+    await expect(service.load()).resolves.toEqual({
+      ...DEFAULT_APP_CONFIG,
+      cloudScanEnabled: false,
+    });
+    await expect(service.load()).resolves.toEqual({
+      ...DEFAULT_APP_CONFIG,
+      cloudScanEnabled: false,
+    });
     expect(sdk.fetchAndActivate).toHaveBeenCalledOnce();
     expect(sdk.getBoolean).toHaveBeenCalledWith(sdk.instance, 'cloud_scan_enabled');
     expect(sdk.instance.defaultConfig).toEqual(REMOTE_CONFIG_DEFAULTS);
@@ -48,16 +59,28 @@ describe('createRemoteConfigService', () => {
     });
   });
 
+  it('reads the follow-up deadlines and ignores values that are not whole days', async () => {
+    sdk.getNumber.mockImplementation((_rc: unknown, key: string) =>
+      key === 'ack_deadline_days' ? 5 : 0,
+    );
+    const service = createRemoteConfigService(() => APP, OPTIONS);
+    await expect(service.load()).resolves.toEqual({
+      cloudScanEnabled: true,
+      ackDeadlineDays: 5,
+      feedbackDeadlineDays: 90,
+    });
+  });
+
   it('falls back to the activated defaults when the fetch fails', async () => {
     sdk.fetchAndActivate.mockRejectedValue(new Error('offline'));
     const service = createRemoteConfigService(() => APP, OPTIONS);
-    await expect(service.load()).resolves.toEqual({ cloudScanEnabled: true });
+    await expect(service.load()).resolves.toEqual(DEFAULT_APP_CONFIG);
   });
 
   it('does not wait past the deadline for a hanging fetch', async () => {
     sdk.fetchAndActivate.mockReturnValue(new Promise(() => undefined));
     const service = createRemoteConfigService(() => APP, OPTIONS);
-    await expect(service.load()).resolves.toEqual({ cloudScanEnabled: true });
+    await expect(service.load()).resolves.toEqual(DEFAULT_APP_CONFIG);
   });
 
   it('uses the in-code defaults where Remote Config cannot run, without touching Firebase', async () => {
@@ -78,6 +101,10 @@ describe('createRemoteConfigService', () => {
 
   it('agrees with the template defaults and the policy', () => {
     expect(DEFAULT_APP_CONFIG.cloudScanEnabled).toBe(REMOTE_CONFIG_DEFAULTS.cloud_scan_enabled);
+    expect(DEFAULT_APP_CONFIG.ackDeadlineDays).toBe(REMOTE_CONFIG_DEFAULTS.ack_deadline_days);
+    expect(DEFAULT_APP_CONFIG.feedbackDeadlineDays).toBe(
+      REMOTE_CONFIG_DEFAULTS.feedback_deadline_days,
+    );
     expect(REMOTE_CONFIG_DEFAULTS.cloud_model_name).toBe(CLOUD_MODEL_NAME);
   });
 });

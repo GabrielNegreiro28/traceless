@@ -2,11 +2,14 @@ import type { ConfigService } from '../application/ports/ConfigService';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import type { PrivacyLedgerView } from '../application/ports/PrivacyLedger';
+import type { CaseRecord } from '../application/ports/ReportRepository';
 import type { ApprovedReport, ApproveReportInput } from '../application/usecases/approveReport';
 import type { CloudScanConsent } from '../application/usecases/consentToCloudScan';
 import type { ScanReportResult } from '../application/usecases/scanReport';
 import type { RulesOnlyScanResult } from '../application/usecases/scanReportRulesOnly';
-import type { RawText } from '../domain/text/brandedText';
+import type { SubmittedReport } from '../application/usecases/submitReport';
+import type { CaseKey } from '../domain/case/caseKey';
+import type { RawText, SanitizedText } from '../domain/text/brandedText';
 import type { AppError } from '../shared/appError';
 import type { Result } from '../shared/result';
 
@@ -44,6 +47,20 @@ export interface Services {
   readonly scanRulesOnly: (text: RawText) => RulesOnlyScanResult;
   /** The only way features create SanitizedText (the reporter's explicit approval). */
   readonly approveReport: (input: ApproveReportInput) => Result<ApprovedReport, AppError>;
+  /** A fresh 128-bit case key from the CSPRNG (ADR 0003); kept in memory only by the caller. */
+  readonly issueCaseKey: () => CaseKey;
+  /**
+   * Sends the approved report to the organization (Fase 4) under `caseKey`. Accepts only
+   * SanitizedText; signs in anonymously at this moment; fails at once when offline (no queued
+   * submit). Idempotent for the same text and key, so a retry after an unconfirmed send never
+   * creates a second case. Recorded in the privacy ledger.
+   */
+  readonly submitReport: (
+    text: SanitizedText,
+    caseKey: CaseKey,
+  ) => Promise<Result<SubmittedReport, AppError>>;
+  /** The read-only follow-up: one case by the key the reporter typed (NotFound otherwise). */
+  readonly lookUpCase: (input: string) => Promise<Result<CaseRecord, AppError>>;
   /** Session-only record of what happened to the text (read-only; the root records). */
   readonly privacyLedger: PrivacyLedgerView;
   /** Remote Config (the `cloud_scan_enabled` kill switch); `load()` never rejects. */

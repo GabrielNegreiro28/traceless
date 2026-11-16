@@ -87,7 +87,7 @@ describe('/report outbox and approval on fake services', () => {
     await waitFor(() => expect(approvedHeading).toHaveFocus());
     const approved = screen.getByRole('figure', { name: 'Approved text' });
     expect(approved.querySelector('p')?.textContent).toBe(previewText);
-    expect(screen.getByRole('button', { name: 'Send report' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send to organization' })).toBeEnabled();
 
     await userEvent.click(screen.getByText('What happened to your text'));
     expect(ledgerLines()).toEqual([

@@ -14,6 +14,13 @@ import { FakeConsentedIdentityScanner } from '../infrastructure/fakes/FakeConsen
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
 import { FakeIdentityScanner } from '../infrastructure/fakes/FakeIdentityScanner';
 import { createInMemoryPrivacyLedger } from '../infrastructure/ledger/inMemoryPrivacyLedger';
+import {
+  bindCaseServices,
+  createFakeCaseBackend,
+  createRealCaseBackend,
+  type CaseBackend,
+  type CaseServices,
+} from './caseServices';
 import { bindCloudScan, createConfigService, createConsentedCloudScanner } from './cloudAi';
 import type { AppEnv } from './env';
 import {
@@ -53,6 +60,8 @@ export interface ServiceFakes {
   readonly fakeConsentedScanner?: ConsentedIdentityScanner;
   /** Replaces the config service in any mode (tests of the kill switch). */
   readonly config?: ConfigService;
+  /** Replaces the auth + report repository in any mode (tests of sending and follow-up). */
+  readonly caseBackend?: CaseBackend;
 }
 
 export interface ServiceOptions extends ServiceFakes {
@@ -90,6 +99,8 @@ interface AppContext {
   readonly ledger: PrivacyLedger;
   readonly kind: ScannerKind;
   readonly config: ConfigService;
+  /** Sending and follow-up: one backend per app, shared by every variant. */
+  readonly cases: CaseServices;
 }
 
 interface VariantAi extends AiServices {
@@ -97,7 +108,7 @@ interface VariantAi extends AiServices {
 }
 
 function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppContext): Services {
-  const { ledger, kind, config } = context;
+  const { ledger, kind, config, cases } = context;
   const { consentedScanner, ...onDevice } = ai;
   const scan = bindScanReport(ai.identityScanner, variant);
   const cloudScan = bindCloudScan(consentedScanner, config, variant);
@@ -109,6 +120,7 @@ function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppCont
     scanWithCloudConsent: withCloudScanLedger(cloudScan, ledger, systemClock, kind),
     scanRulesOnly: withRulesOnlyLedger(scanReportRulesOnly, ledger, systemClock),
     approveReport: withApprovalLedger(approve, ledger),
+    ...cases,
     privacyLedger: ledgerView(ledger),
     config,
     demoAi: kind === 'demo',
@@ -121,10 +133,15 @@ function variantKey(v: ScanVariantSpec): string {
 
 function appContext(env: AppEnv, demo: boolean, fakes: ServiceFakes): AppContext {
   const fallback = demo ? new FakeConfigService() : createConfigService(env);
+  const backend =
+    fakes.caseBackend ?? (demo ? createFakeCaseBackend() : createRealCaseBackend(env));
+  const ledger = createInMemoryPrivacyLedger();
+  const kind: ScannerKind = demo ? 'demo' : 'onDevice';
   return {
-    ledger: createInMemoryPrivacyLedger(),
-    kind: demo ? 'demo' : 'onDevice',
+    ledger,
+    kind,
     config: fakes.config ?? fallback,
+    cases: bindCaseServices(backend, ledger, { now: () => Date.now() }, kind),
   };
 }
 

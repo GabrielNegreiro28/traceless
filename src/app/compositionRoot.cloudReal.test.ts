@@ -28,6 +28,7 @@ vi.mock('firebase/remote-config', () => ({
   getRemoteConfig: () => ({ defaultConfig: {}, settings: {} }),
   fetchAndActivate: () => Promise.resolve(true),
   getBoolean: sdk.getBoolean,
+  getNumber: () => 7,
   isSupported: () => Promise.resolve(true),
 }));
 vi.mock('./firebaseBootstrap', () => ({ bootstrapFirebase: sdk.bootstrapFirebase }));
@@ -99,7 +100,7 @@ describe('createServices: consented cloud scan (real AI mode, SDK mocked)', () =
   it('refuses before any model exists when Remote Config switches the cloud scan off', async () => {
     sdk.getBoolean.mockReturnValue(false);
     const services = createServices(REAL_ENV);
-    await expect(services.config.load()).resolves.toEqual({ cloudScanEnabled: false });
+    await expect(services.config.load()).resolves.toMatchObject({ cloudScanEnabled: false });
     const result = await services.scanWithCloudConsent(SAMPLE, { kind: 'sample' });
     expect(result).toMatchObject({ ok: false, error: { kind: 'CloudScanDisabled' } });
     expect(sdk.getGenerativeModel).not.toHaveBeenCalled();
