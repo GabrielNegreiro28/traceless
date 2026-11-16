@@ -34,6 +34,7 @@ export interface ReportFlow extends StallActions, CheckOptionActions {
   readonly decide: (findingId: string, choice: ReviewChoice) => void;
   readonly undoDecision: (findingId: string) => void;
   /** Review: "Continue" (the outbox is where approveReport gates what is sent). */
+  readonly confirmSecondLook: (confirmed: boolean) => void;
   readonly openOutbox: () => void;
   /** Outbox: approves the previewed text; `acknowledged` is the residual-risk checkbox. */
   readonly approve: (acknowledged: boolean) => void;
@@ -168,6 +169,9 @@ export function useReportFlow(): ReportFlow {
   const undoDecision = useCallback((findingId: string) => {
     dispatch({ type: 'UNDO_DECISION', findingId });
   }, []);
+  const confirmSecondLook = useCallback((confirmed: boolean) => {
+    dispatch({ type: 'CONFIRM_SECOND_LOOK', confirmed });
+  }, []);
   const openOutbox = useCallback(() => dispatch({ type: 'OPEN_OUTBOX' }), []);
   const backToEdit = useCallback(() => {
     abandonPrepare();
@@ -188,6 +192,7 @@ export function useReportFlow(): ReportFlow {
     cancelScan,
     decide,
     undoDecision,
+    confirmSecondLook,
     openOutbox,
     approve,
     backToEdit,

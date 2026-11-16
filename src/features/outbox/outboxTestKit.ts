@@ -31,6 +31,7 @@ export function outboxOf(choices: readonly (readonly [Finding, ReviewChoice])[])
   for (const [finding, choice] of choices) {
     state = reportFlowReducer(state, { type: 'DECIDE', findingId: finding.id, choice });
   }
+  state = reportFlowReducer(state, { type: 'CONFIRM_SECOND_LOOK', confirmed: true });
   state = reportFlowReducer(state, { type: 'OPEN_OUTBOX' });
   if (state.status !== 'outbox') throw new Error('fixture did not reach the outbox');
   return state;

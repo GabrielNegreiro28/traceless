@@ -64,7 +64,10 @@ describe('useReportFlow after an on-device stall', () => {
     if (state.status !== 'reviewing') throw new Error('expected the review');
     expect(state.checks).toBe('basic');
     expect(state.text).toBe(TEXT);
-    expect(state.findings.map((f) => [f.quote, f.origin])).toEqual([['nurse@example.com', 'RULE']]);
+    expect(state.findings.map((f) => [f.quote, f.origin])).toContainEqual([
+      'nurse@example.com',
+      'RULE',
+    ]);
     expect(hook.services.privacyLedger.entries()).toMatchObject([
       { task: 'identityScan', source: 'rules', dataClass: 'RAW', demo: false },
     ]);

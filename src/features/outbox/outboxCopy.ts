@@ -1,5 +1,6 @@
 import type { RiskLevel } from '../../domain/risk/riskScorer';
 import type { AppErrorKind } from '../../shared/appError';
+import { NO_DETAILS_FLAGGED } from '../review/reviewModel';
 import {
   reporterErrorMessage,
   reporterErrorMessageAfterCloud,
@@ -11,7 +12,7 @@ export const ACKNOWLEDGEMENT_LABEL =
   'I understand this text may still allow someone to recognize me.';
 
 const RISK_EXPLANATIONS: Readonly<Record<RiskLevel, string>> = {
-  NONE: 'We did not find identifying details left in this text. Traceless can still miss things, so you are the final check.',
+  NONE: NO_DETAILS_FLAGGED,
   LOW: 'A few small details remain. On their own they are unlikely to point to you.',
   MEDIUM: 'Some details you kept could help someone who knows you guess who wrote this.',
   HIGH: 'The details you kept could make it easy for someone who knows you to recognize you.',

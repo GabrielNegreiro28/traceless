@@ -54,6 +54,8 @@ export interface ReviewingState {
   readonly decisions: readonly ReviewDecision[];
   /** Live risk of the findings that remain after the decisions so far. */
   readonly risk: RiskAssessment;
+  /** The reporter confirmed the Second look; OPEN_OUTBOX is refused until then. */
+  readonly secondLookConfirmed?: boolean;
 }
 
 /**
@@ -166,6 +168,8 @@ export type FlowEvent =
   /** Also applied to findings with the identical quote (see propagateDecision). */
   | { readonly type: 'DECIDE'; readonly findingId: string; readonly choice: ReviewChoice }
   | { readonly type: 'UNDO_DECISION'; readonly findingId: string }
+  /** Only accepted while reviewing; OPEN_OUTBOX needs it to be true. */
+  | { readonly type: 'CONFIRM_SECOND_LOOK'; readonly confirmed: boolean }
   | { readonly type: 'APPROVE_OK'; readonly report: ApprovedReport }
   | { readonly type: 'APPROVE_FAILED'; readonly error: AppError }
   | { readonly type: 'BACK_TO_EDIT' }

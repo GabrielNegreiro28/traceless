@@ -86,6 +86,10 @@ describe('reportFlowReducer: reviewing decisions', () => {
   });
 });
 
+function confirmed<T extends FlowState>(state: T): T {
+  return reportFlowReducer(state, { type: 'CONFIRM_SECOND_LOOK', confirmed: true }) as T;
+}
+
 describe('reportFlowReducer: leaving review', () => {
   it('EDIT_TEXT with new text invalidates the findings (back to composing)', () => {
     const text = toRawText('A different report.');
@@ -113,14 +117,33 @@ describe('reportFlowReducer: leaving review', () => {
     expect(next).not.toHaveProperty('decisions');
   });
   it('keeps the protected spans through the outbox and back', () => {
-    const withSpans = { ...reviewing, protectedSpans: [{ start: 1, end: 3 }] };
+    const withSpans = { ...confirmed(reviewing), protectedSpans: [{ start: 1, end: 3 }] };
     const opened = reportFlowReducer(withSpans, { type: 'OPEN_OUTBOX' });
     expect(opened).toMatchObject({ status: 'outbox', protectedSpans: withSpans.protectedSpans });
     expect(reportFlowReducer(opened, { type: 'BACK_TO_EDIT' })).toEqual(withSpans);
   });
 
+  it('OPEN_OUTBOX is refused until the Second look is confirmed', () => {
+    expect(reportFlowReducer(reviewing, { type: 'OPEN_OUTBOX' })).toBe(reviewing);
+    const unticked = reportFlowReducer(confirmed(reviewing), {
+      type: 'CONFIRM_SECOND_LOOK',
+      confirmed: false,
+    });
+    expect(reportFlowReducer(unticked, { type: 'OPEN_OUTBOX' })).toBe(unticked);
+  });
+
+  it('CONFIRM_SECOND_LOOK is kept through the outbox and back, and ignored elsewhere', () => {
+    const ticked = reportFlowReducer(reviewing, { type: 'CONFIRM_SECOND_LOOK', confirmed: true });
+    expect(ticked).toEqual({ ...reviewing, secondLookConfirmed: true });
+    const opened = reportFlowReducer(ticked, { type: 'OPEN_OUTBOX' });
+    expect(reportFlowReducer(opened, { type: 'BACK_TO_EDIT' })).toEqual(ticked);
+    expect(reportFlowReducer(outbox, { type: 'CONFIRM_SECOND_LOOK', confirmed: true })).toBe(
+      outbox,
+    );
+  });
+
   it('OPEN_OUTBOX previews the rewritten text, keeping the review', () => {
-    const decided = decide(reviewing, DOCK.id, 'ACCEPTED');
+    const decided = confirmed(decide(reviewing, DOCK.id, 'ACCEPTED'));
     expect(reportFlowReducer(decided, { type: 'OPEN_OUTBOX' })).toEqual({
       ...decided,
       status: 'outbox',
@@ -130,7 +153,7 @@ describe('reportFlowReducer: leaving review', () => {
 
   it('OPEN_OUTBOX with a stale review shows the error and returns to the review', () => {
     const stale: ReviewingState = {
-      ...reviewing,
+      ...confirmed(reviewing),
       decisions: [{ findingId: 'ghost', action: 'ACCEPTED' }],
     };
     const next = reportFlowReducer(stale, { type: 'OPEN_OUTBOX' });
@@ -174,7 +197,7 @@ describe('reportFlowReducer: outbox, approval and submission', () => {
 
   it('error from elsewhere ignores BACK_TO_REVIEW', () => {
     const errored = reportFlowReducer(
-      { ...reviewing, decisions: [{ findingId: 'ghost', action: 'ACCEPTED' }] },
+      { ...confirmed(reviewing), decisions: [{ findingId: 'ghost', action: 'ACCEPTED' }] },
       { type: 'OPEN_OUTBOX' },
     );
     expect(errored.status).toBe('error');

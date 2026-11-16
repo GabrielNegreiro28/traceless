@@ -36,13 +36,11 @@ export function v2Pipeline(
 }
 
 /**
- * The pipeline the product ships: exactly the `v2-single2` eval variant (both are built by
- * `v2Pipeline('single2')`, core rules only).
+ * The pipeline the product ships: exactly the `v2-single2-rules` eval variant (both are built
+ * by `v2Pipeline('single2', 'core+firstPerson')`).
  *
- * docs/design/fase2-gate-iteration.md §G.1: this is a default BY DOMINANCE, NOT a gate pass.
- * On the dev matrix v2-single2 beat v1-single on precision and ACCUSED violations at equal
- * recall within noise, and no variant reached the recall gate. The final default (including
- * whether it runs the first-person rule pack, §G.3) is whichever variant goes to the test
- * split (§G.4).
+ * This is the variant measured on the test split (docs/progress/DECISIONS.md, 2026-11-16:
+ * strict recall 0.60 against a 0.70 target, shipped with the miss disclosed), so the UI must
+ * never present the check as complete.
  */
-export const SHIPPED_SCAN_PIPELINE: ScanPipelineSpec = v2Pipeline('single2');
+export const SHIPPED_SCAN_PIPELINE: ScanPipelineSpec = v2Pipeline('single2', 'core+firstPerson');

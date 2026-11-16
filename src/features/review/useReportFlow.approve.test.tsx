@@ -30,6 +30,7 @@ async function reachOutbox(hook: Hook): Promise<void> {
   for (const finding of FINDINGS) {
     act(() => hook.result.current.decide(finding.id, { action: 'ACCEPTED' }));
   }
+  act(() => hook.result.current.confirmSecondLook(true));
   act(() => hook.result.current.openOutbox());
   expect(hook.result.current.state.status).toBe('outbox');
 }

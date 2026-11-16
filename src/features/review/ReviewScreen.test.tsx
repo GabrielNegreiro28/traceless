@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { scoreRisk } from '../../domain/risk/riskScorer';
 import { TEXT, reviewing } from './reportFlowTestKit';
-import { cardOf, click, renderReview, spies } from './reviewScreenTestKit';
+import { cardOf, click, renderReview, secondLookBox, spies } from './reviewScreenTestKit';
 
 describe('ReviewScreen second look, protected mentions and empty state', () => {
   it('lists all eight categories with the final-check copy', () => {
@@ -48,12 +48,37 @@ describe('ReviewScreen second look, protected mentions and empty state', () => {
 
   it('shows the empty state with an open second look and Continue', async () => {
     renderReview({ ...reviewing, findings: [], risk: scoreRisk([]) });
-    expect(screen.getByText("We didn't spot identifying details.")).toBeVisible();
+    expect(screen.getByText('No details flagged.')).toBeVisible();
     expect(screen.getByText('Second look').closest('details')).toHaveAttribute('open');
     expect(screen.queryByRole('article')).toBeNull();
     expect(screen.queryByText(/still undecided/)).toBeNull();
+    await userEvent.click(secondLookBox());
     await click('Continue');
     expect(spies.onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['full', 'cloud', 'basic'] as const)(
+    'blocks Continue until the Second look is confirmed (%s checks)',
+    async (checks) => {
+      renderReview({ ...reviewing, checks });
+      const next = screen.getByRole('button', { name: 'Continue' });
+      expect(next).toBeDisabled();
+      expect(next).toHaveAccessibleDescription('Confirm the Second look to continue.');
+      expect(secondLookBox()).not.toBeChecked();
+      await userEvent.click(secondLookBox());
+      expect(next).toBeEnabled();
+      expect(screen.queryByText('Confirm the Second look to continue.')).toBeNull();
+      await userEvent.click(secondLookBox());
+      expect(next).toBeDisabled();
+    },
+  );
+
+  it('confirms with the keyboard (Tab to the box, Space)', async () => {
+    renderReview();
+    secondLookBox().focus();
+    await userEvent.keyboard(' ');
+    expect(secondLookBox()).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
   });
 });
 

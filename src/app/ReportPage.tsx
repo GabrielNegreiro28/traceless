@@ -132,6 +132,7 @@ function screenFor(flow: ReportFlow, demo: boolean) {
           onUndo={flow.undoDecision}
           onBackToEdit={flow.backToEdit}
           onContinue={flow.openOutbox}
+          onConfirmSecondLook={flow.confirmSecondLook}
           demo={demo}
         />
       );

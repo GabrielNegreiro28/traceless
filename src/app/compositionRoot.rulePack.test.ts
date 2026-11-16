@@ -22,8 +22,11 @@ async function ruleQuotes(services: ReturnType<typeof createServices>): Promise<
 }
 
 describe('composition root: rule packs (§G.3)', () => {
-  it('ships the core rules only: no first-person findings by default', async () => {
-    expect(await ruleQuotes(createServices(FAKE_TEST_ENV))).toEqual([]);
+  it('ships core+firstPerson: first-person findings by default', async () => {
+    expect(await ruleQuotes(createServices(FAKE_TEST_ENV))).toEqual([
+      'the only glassblower',
+      'work nights',
+    ]);
   });
 
   it('a core+firstPerson variant runs the first-person pack as a separate cached service', async () => {
@@ -36,8 +39,9 @@ describe('composition root: rule packs (§G.3)', () => {
     expect(await ruleQuotes(firstPerson)).toEqual(['the only glassblower', 'work nights']);
   });
 
-  it('"Continue with basic checks" stays on the core rules', () => {
-    const services = createVariantServices(FAKE_TEST_ENV)(WITH_FIRST_PERSON);
-    expect(services.scanRulesOnly(REPORT).findings).toEqual([]);
+  it('"Continue with basic checks" also runs the first-person pack', () => {
+    const services = createVariantServices(FAKE_TEST_ENV)(CORE);
+    const quotes = services.scanRulesOnly(REPORT).findings.map((f) => f.quote);
+    expect(quotes).toEqual(['the only glassblower', 'work nights']);
   });
 });

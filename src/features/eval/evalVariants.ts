@@ -20,8 +20,8 @@ function v2(id: string, strategy: StrategyName, rulePack: RulePack = 'core'): Ev
 /**
  * Registered variants, in the order the Dev matrix runs them: M0–M3 of
  * docs/design/fase2-gate-iteration.md §E, then the §G.4 round-2 pair (v2 prompt, v2-single2
- * post-filters, core + first-person rules). Ids are file-name safe. `v2-single2` is built
- * exactly like the shipped pipeline (SHIPPED_SCAN_PIPELINE, §G.1).
+ * post-filters, core + first-person rules). Ids are file-name safe. `v2-single2-rules` is the
+ * shipped pipeline (SHIPPED_SCAN_PIPELINE, §G.5).
  */
 export const EVAL_VARIANTS: readonly EvalVariant[] = [
   {

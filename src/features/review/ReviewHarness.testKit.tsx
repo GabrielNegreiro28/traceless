@@ -19,7 +19,11 @@ export function ReviewHarness(props: { readonly initial: ReviewingState }) {
         dispatch({ type: 'UNDO_DECISION', findingId });
       }}
       onBackToEdit={spies.onBackToEdit}
-      onContinue={spies.onContinue}
+      onContinue={() => {
+        spies.onContinue();
+        dispatch({ type: 'OPEN_OUTBOX' });
+      }}
+      onConfirmSecondLook={(confirmed) => dispatch({ type: 'CONFIRM_SECOND_LOOK', confirmed })}
     />
   );
 }

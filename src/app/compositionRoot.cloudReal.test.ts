@@ -50,7 +50,7 @@ const SAMPLE = toRawText(SAMPLE_REPORT);
 const MODEL_JSON = JSON.stringify({
   findings: [
     {
-      quote: 'only night-shift forklift trainer',
+      quote: 'the only night-shift forklift trainer',
       category: 'ROLE_UNIQUE',
       reason: 'Unique role.',
       suggestion: 'a forklift trainer',
@@ -82,7 +82,7 @@ describe('createServices: consented cloud scan (real AI mode, SDK mocked)', () =
     if (!result.ok) throw new Error(result.error.kind);
     expect(result.value.source).toBe('IN_CLOUD');
     expect(result.value.findings.map((f) => f.quote)).toContain(
-      'only night-shift forklift trainer',
+      'the only night-shift forklift trainer',
     );
     const created = sdk.getGenerativeModel.mock.calls.map((_, i) => paramsOf(i));
     expect(created.length).toBeGreaterThan(0);

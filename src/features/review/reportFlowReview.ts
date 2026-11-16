@@ -40,8 +40,17 @@ function undo(state: ReviewingState, findingId: string): ReviewingState {
 }
 
 export function toReviewing(state: OutboxState): ReviewingState {
-  const { text, checks, findings, protectedSpans, decisions, risk } = state;
-  return { status: 'reviewing', text, checks, findings, protectedSpans, decisions, risk };
+  const { text, checks, findings, protectedSpans, decisions, risk, secondLookConfirmed } = state;
+  return {
+    status: 'reviewing',
+    text,
+    checks,
+    findings,
+    protectedSpans,
+    decisions,
+    risk,
+    ...(secondLookConfirmed === true && { secondLookConfirmed }),
+  };
 }
 
 function toOutbox(state: ApprovedState | SubmittingState): OutboxState {
@@ -51,6 +60,7 @@ function toOutbox(state: ApprovedState | SubmittingState): OutboxState {
 
 /** Previews the decisions applied to the text; a failed rewrite stays on the review. */
 function openOutbox(state: ReviewingState): FlowState {
+  if (state.secondLookConfirmed !== true) return state;
   const preview = applyDecisions(state.text, state.findings, state.decisions);
   if (!preview.ok) return toError(preview.error, state);
   return { ...state, status: 'outbox', preview: preview.value };
@@ -65,6 +75,8 @@ export function onReviewing(state: ReviewingState, event: FlowEvent): FlowState 
       return decide(state, event.findingId, event.choice);
     case 'UNDO_DECISION':
       return undo(state, event.findingId);
+    case 'CONFIRM_SECOND_LOOK':
+      return { ...state, secondLookConfirmed: event.confirmed };
     case 'OPEN_OUTBOX':
       return openOutbox(state);
     case 'BACK_TO_EDIT':

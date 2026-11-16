@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import type { ReviewChoice } from '../../domain/rewrite/reviewDecision';
 import { BasicChecksNotice } from './BasicChecksNotice';
 import { CheckedBadge } from './CheckedBadge';
@@ -18,9 +19,12 @@ export interface ReviewScreenProps {
   readonly onUndo: (findingId: string) => void;
   readonly onBackToEdit: () => void;
   readonly onContinue: () => void;
+  readonly onConfirmSecondLook: (confirmed: boolean) => void;
   /** True when the demo scanner stood in for the AI (never labelled as AI). */
   readonly demo?: boolean;
 }
+
+type SecondLookProps = Pick<ComponentProps<typeof SecondLook>, 'confirmed' | 'onConfirmedChange'>;
 
 const SHORTCUTS = 'When a card is focused: A accept, E edit, K keep, N not about me';
 
@@ -29,14 +33,14 @@ const EMPTY_FULL =
 const EMPTY_BASIC =
   "The basic check found no emails, phone numbers, IDs, dates or sign-offs. It can't see indirect details, so read your text once more with the questions below.";
 
-function EmptyState(props: { readonly basic: boolean }) {
+function EmptyState(props: { readonly basic: boolean; readonly secondLook: SecondLookProps }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-md border border-border bg-surface p-4">
-        <h2 className="text-lg font-semibold">We didn&apos;t spot identifying details.</h2>
+        <h2 className="text-lg font-semibold">No details flagged.</h2>
         <p className="mt-2 text-muted">{props.basic ? EMPTY_BASIC : EMPTY_FULL}</p>
       </div>
-      <SecondLook defaultOpen />
+      <SecondLook defaultOpen {...props.secondLook} />
     </div>
   );
 }
@@ -69,6 +73,8 @@ export function ReviewScreen(props: ReviewScreenProps) {
   const empty = state.findings.length === 0;
   const basic = state.checks === 'basic';
   const demo = props.demo ?? false;
+  const confirmed = state.secondLookConfirmed === true;
+  const secondLook: SecondLookProps = { confirmed, onConfirmedChange: props.onConfirmSecondLook };
   return (
     <section>
       <h1 id="screen-heading" tabIndex={-1} className="text-3xl font-bold tracking-tight">
@@ -99,7 +105,7 @@ export function ReviewScreen(props: ReviewScreenProps) {
             <RiskPanel risk={state.risk} basic={basic} />
           </div>
           {empty ? (
-            <EmptyState basic={basic} />
+            <EmptyState basic={basic} secondLook={secondLook} />
           ) : (
             <>
               <h2 className="text-lg font-semibold">Details to review</h2>
@@ -108,7 +114,7 @@ export function ReviewScreen(props: ReviewScreenProps) {
                 session={session}
                 modelBadge={modelFindingBadge(state.checks, demo)}
               />
-              <SecondLook defaultOpen={basic} />
+              <SecondLook defaultOpen={basic} {...secondLook} />
             </>
           )}
           <ProtectedMentions quotes={protectedQuotes(state.text, state.protectedSpans)} />
@@ -118,6 +124,7 @@ export function ReviewScreen(props: ReviewScreenProps) {
         undecided={snapshot.pending.length}
         onBackToEdit={props.onBackToEdit}
         onContinue={props.onContinue}
+        secondLookConfirmed={confirmed}
       />
     </section>
   );

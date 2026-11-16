@@ -61,8 +61,9 @@ describe('stall states (§G.2)', () => {
     expect(scanned).toMatchObject({ status: 'reviewing', checks: 'full' });
 
     const basic = reportFlowReducer(terminal, { type: 'BASIC_CHECKS_DONE', findings: [] });
-    const outbox = reportFlowReducer(basic, { type: 'OPEN_OUTBOX' });
+    const ticked = reportFlowReducer(basic, { type: 'CONFIRM_SECOND_LOOK', confirmed: true });
+    const outbox = reportFlowReducer(ticked, { type: 'OPEN_OUTBOX' });
     expect(outbox).toMatchObject({ status: 'outbox', checks: 'basic' });
-    expect(reportFlowReducer(outbox, { type: 'BACK_TO_EDIT' })).toEqual(basic);
+    expect(reportFlowReducer(outbox, { type: 'BACK_TO_EDIT' })).toEqual(ticked);
   });
 });

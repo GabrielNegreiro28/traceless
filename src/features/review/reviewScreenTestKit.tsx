@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReviewingState } from './reportFlowMachine';
+import { SECOND_LOOK_CONFIRM_LABEL } from './SecondLook';
 import { reviewing } from './reportFlowTestKit';
 import { ReviewHarness } from './ReviewHarness.testKit';
 import { spies } from './reviewSpies.testKit';
@@ -21,6 +22,10 @@ export function cardOf(quote: string, index = 0): HTMLElement {
   if (card === undefined) throw new Error(`no card for ${quote}`);
   return card;
 }
+
+/** The Second look confirmation checkbox. */
+export const secondLookBox = (): HTMLElement =>
+  screen.getByRole('checkbox', { name: SECOND_LOOK_CONFIRM_LABEL });
 
 export const liveMessage = (): string => screen.getByRole('status').textContent ?? '';
 

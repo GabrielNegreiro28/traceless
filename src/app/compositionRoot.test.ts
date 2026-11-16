@@ -46,6 +46,7 @@ describe('createServices (fake AI mode)', () => {
     expect(result.value.source).toBe('ON_DEVICE');
     expect(result.value.stats.chunks).toBe(1);
     expect(result.value.findings).toEqual([
+      expect.objectContaining({ quote: 'the only night nurse', category: 'ROLE_UNIQUE' }),
       expect.objectContaining({
         quote: 'night.nurse@example.com',
         category: 'DIRECT_IDENTIFIER',

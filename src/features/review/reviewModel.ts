@@ -53,9 +53,13 @@ export function identicalCount(decisions: readonly ReviewDecision[], findingId: 
   return decisions.filter((d) => d.propagatedFrom === findingId).length;
 }
 
+/** Shown whenever no finding is left; never worded as "no risk" (the check can miss things). */
+export const NO_DETAILS_FLAGGED =
+  'No details flagged — the check can miss things; read it once more.';
+
 /** "Biggest contributors: unique role, location." from the live risk drivers. */
 export function driversSentence(risk: RiskAssessment): string {
-  if (risk.drivers.length === 0) return 'No identifying details are left in your text.';
+  if (risk.drivers.length === 0) return NO_DETAILS_FLAGGED;
   const top = [...risk.drivers]
     .sort((a, b) => b.weight - a.weight)
     .slice(0, 2)

@@ -2,8 +2,16 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { scoreRisk } from '../../domain/risk/riskScorer';
+import { NO_DETAILS_FLAGGED } from './reviewModel';
 import { reviewing } from './reportFlowTestKit';
-import { cardOf, click, liveMessage, renderReview, spies } from './reviewScreenTestKit';
+import {
+  cardOf,
+  click,
+  liveMessage,
+  renderReview,
+  secondLookBox,
+  spies,
+} from './reviewScreenTestKit';
 
 describe('ReviewScreen decisions', () => {
   it('Accept dispatches ACCEPTED and shows the replacement in the text', async () => {
@@ -119,15 +127,16 @@ describe('ReviewScreen focus, announcements and the footer', () => {
     expect(screen.getByRole('meter')).toHaveAttribute('aria-valuetext', 'Risk: none');
     expect(liveMessage()).toBe('Marked as not about you. Risk: none. None left.');
     expect(screen.queryByText(/still undecided/)).toBeNull();
-    expect(screen.getByText('No identifying details are left in your text.')).toBeVisible();
+    expect(screen.getByText(NO_DETAILS_FLAGGED)).toBeVisible();
   });
 
-  it('Continue is always enabled and shows what is still undecided', async () => {
+  it('Continue needs the Second look and shows what is still undecided', async () => {
     renderReview();
     expect(screen.getByText('4 details still undecided')).toBeVisible();
     await click(/^Dock B\s*\[Location/);
     await click('Accept', cardOf('Dock B'));
     expect(screen.getByText('3 details still undecided')).toBeVisible();
+    await userEvent.click(secondLookBox());
     await click('Continue');
     expect(spies.onContinue).toHaveBeenCalledTimes(1);
   });

@@ -15,5 +15,5 @@ export interface RulesOnlyScanResult {
  * takes no scanner and calls no model. The review must say that the AI checks did not run.
  */
 export function scanReportRulesOnly(text: RawText): RulesOnlyScanResult {
-  return { findings: mergeFindings(detectByRules(text)) };
+  return { findings: mergeFindings(detectByRules(text, 'core+firstPerson')) };
 }

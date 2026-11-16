@@ -1,3 +1,4 @@
+import { SECOND_LOOK_CONFIRM_LABEL } from '../features/review/SecondLook';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
@@ -98,6 +99,7 @@ describe('/report review on fake services', () => {
     }
     await waitFor(() => expect(screen.queryByText(/still undecided/)).toBeNull());
 
+    await userEvent.click(screen.getByRole('checkbox', { name: SECOND_LOOK_CONFIRM_LABEL }));
     await click('Continue');
     await heading('Only this text will leave your device');
   });

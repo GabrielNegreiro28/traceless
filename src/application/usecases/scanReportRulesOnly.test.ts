@@ -19,7 +19,7 @@ describe('scanReportRulesOnly', () => {
 
   it('is exactly the rule detector merged (deterministic)', () => {
     expect(scanReportRulesOnly(TEXT).findings.map((f) => f.id)).toEqual(
-      detectByRules(TEXT).map((f) => f.id),
+      detectByRules(TEXT, 'core+firstPerson').map((f) => f.id),
     );
     expect(scanReportRulesOnly(TEXT)).toEqual(scanReportRulesOnly(TEXT));
   });

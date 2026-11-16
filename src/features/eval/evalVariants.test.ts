@@ -59,9 +59,9 @@ describe('EVAL_VARIANTS', () => {
     }
   });
 
-  it('v2-single2 is exactly the shipped pipeline (§G.1)', () => {
-    const { id, ...spec } = findVariant('v2-single2') ?? { id: 'missing' };
-    expect(id).toBe('v2-single2');
+  it('v2-single2-rules is exactly the shipped pipeline (§G.5)', () => {
+    const { id, ...spec } = findVariant('v2-single2-rules') ?? { id: 'missing' };
+    expect(id).toBe('v2-single2-rules');
     expect(spec).toEqual(SHIPPED_SCAN_PIPELINE);
   });
 });

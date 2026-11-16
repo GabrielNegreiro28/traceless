@@ -179,6 +179,7 @@ describe('useReportFlow', () => {
     });
     act(() => hook.result.current.undoDecision(id));
     expect(hook.result.current.state).toMatchObject({ decisions: [] });
+    act(() => hook.result.current.confirmSecondLook(true));
     act(() => hook.result.current.openOutbox());
     expect(hook.result.current.state.status).toBe('outbox');
   });

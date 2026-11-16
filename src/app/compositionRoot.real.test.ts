@@ -114,7 +114,7 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       if (!result.ok) throw new Error(result.error.kind);
       expect(result.value.source).toBe('ON_DEVICE');
       expect(result.value.findings.map((f) => [f.quote, f.origin])).toEqual([
-        ['only night nurse', 'MODEL'],
+        ['the only night nurse', 'RULE'],
       ]);
       expect(sdk.getGenerativeModel).toHaveBeenCalledTimes(1);
       const [, params, requestOptions] = sdk.getGenerativeModel.mock.lastCall as [

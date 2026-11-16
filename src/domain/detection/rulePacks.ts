@@ -7,7 +7,7 @@ export const RULE_PACKS = ['core', 'core+firstPerson'] as const;
 
 export type RulePack = (typeof RULE_PACKS)[number];
 
-/** The product default and the "basic checks" path until the test split decides (§G.4). */
+/** The default of the detector itself; the shipped pipeline and basic checks pass `core+firstPerson`. */
 export const DEFAULT_RULE_PACK: RulePack = 'core';
 
 /** Result files saved before §G.3 carry no rule pack: they ran the core rules. */
