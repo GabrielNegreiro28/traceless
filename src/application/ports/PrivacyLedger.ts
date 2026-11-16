@@ -14,8 +14,11 @@ export type LedgerTask = 'identityScan' | 'approve';
  */
 export type LedgerSource = 'onDevice' | 'cloud' | 'rules' | 'local';
 
-/** Privacy class of the text the task read (PLANO §3.3). */
-export type LedgerDataClass = 'RAW' | 'SANITIZED';
+/**
+ * Privacy class of the text the task read (PLANO §3.3). CONSENTED_RAW marks the consented
+ * cloud scan, so it never reads like an on-device scan of RAW text.
+ */
+export type LedgerDataClass = 'RAW' | 'CONSENTED_RAW' | 'SANITIZED';
 
 export interface LedgerEntry {
   readonly task: LedgerTask;

@@ -42,6 +42,13 @@
       },
       "valueType": "STRING",
       "description": "Version of the on-device identity scan prompt."
+    },
+    "cloud_scan_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Kill switch for the consented cloud scan (raw text sent only with the reporter's explicit consent)."
     }
   }
 }

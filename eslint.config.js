@@ -40,6 +40,17 @@ const FORBID_SANITIZED_FACTORY = {
 };
 
 /**
+ * Privacy-by-types (design plan §2b): ConsentedRawText (raw text the reporter explicitly
+ * agreed to send to the cloud) may only be created by the consentToCloudScan use case.
+ */
+const FORBID_CONSENTED_FACTORY = {
+  regex: '(^|/)brandedText(\\.[cm]?[jt]sx?)?$',
+  importNames: ['unsafeCreateConsentedRawText'],
+  message: 'Only src/application/usecases/consentToCloudScan.ts may create ConsentedRawText.',
+};
+const BRAND_FACTORIES = [FORBID_SANITIZED_FACTORY, FORBID_CONSENTED_FACTORY];
+
+/**
  * Features approve only through `useServices().approveReport` (the composition root binds the
  * clock and records the privacy ledger); they may import the use case's types, never its value.
  */
@@ -48,6 +59,17 @@ const FORBID_APPROVE_USE_CASE = {
   importNames: ['approveReport'],
   allowTypeImports: true,
   message: 'Features call approveReport via useServices(), never the use case directly.',
+};
+
+/**
+ * Features start a cloud scan only through `useServices().scanWithCloudConsent` (the
+ * composition root reads the kill switch and records the privacy ledger); types are fine.
+ */
+const FORBID_CONSENT_USE_CASES = {
+  regex: '(^|/)usecases/(consentToCloudScan|scanReportConsented|scanWithCloudConsent)$',
+  importNames: ['consentToCloudScan', 'scanReportConsented', 'scanWithCloudConsent'],
+  allowTypeImports: true,
+  message: 'Features start a cloud scan via useServices(), never a consent use case directly.',
 };
 
 const brandAssertion = (/** @type {string} */ kind) => ({
@@ -146,26 +168,39 @@ export default defineConfig([
       // Raw report text must never reach the console; use src/shared/logger.ts.
       'no-console': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
-      ...restrict(FORBID_SANITIZED_FACTORY),
+      ...restrict(...BRAND_FACTORIES),
     },
   },
 
-  { files: ['src/domain/**/*.{ts,tsx}'], rules: restrict(...DOMAIN, FORBID_SANITIZED_FACTORY) },
+  { files: ['src/domain/**/*.{ts,tsx}'], rules: restrict(...DOMAIN, ...BRAND_FACTORIES) },
   {
     files: ['src/application/**/*.{ts,tsx}'],
-    rules: restrict(...APPLICATION, FORBID_SANITIZED_FACTORY),
+    rules: restrict(...APPLICATION, ...BRAND_FACTORIES),
   },
   {
     files: ['src/application/**/*.test.{ts,tsx}'],
-    rules: restrict(...APPLICATION_TESTS, FORBID_SANITIZED_FACTORY),
+    rules: restrict(...APPLICATION_TESTS, ...BRAND_FACTORIES),
   },
   {
     files: ['src/features/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}'],
-    rules: restrict(...PRESENTATION, FORBID_SANITIZED_FACTORY, FORBID_APPROVE_USE_CASE),
+    rules: restrict(
+      ...PRESENTATION,
+      ...BRAND_FACTORIES,
+      FORBID_APPROVE_USE_CASE,
+      FORBID_CONSENT_USE_CASES,
+    ),
   },
-  { files: ['src/ai/**/*.{ts,tsx}'], rules: restrict(...AI, FORBID_SANITIZED_FACTORY) },
+  { files: ['src/ai/**/*.{ts,tsx}'], rules: restrict(...AI, ...BRAND_FACTORIES) },
   // The single place allowed to create SanitizedText (keeps the application rules).
-  { files: ['src/application/usecases/approveReport.ts'], rules: restrict(...APPLICATION) },
+  {
+    files: ['src/application/usecases/approveReport.ts'],
+    rules: restrict(...APPLICATION, FORBID_CONSENTED_FACTORY),
+  },
+  // The single place allowed to create ConsentedRawText (keeps the application rules).
+  {
+    files: ['src/application/usecases/consentToCloudScan.ts'],
+    rules: restrict(...APPLICATION, FORBID_SANITIZED_FACTORY),
+  },
 
   // no-restricted-syntax: a later block replaces the whole selector list, so each
   // block below states the complete set for the files it matches.

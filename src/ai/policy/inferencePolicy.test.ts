@@ -2,12 +2,14 @@ import type { InferenceMode } from 'firebase/ai';
 import { describe, expect, it } from 'vitest';
 import {
   AI_TASKS,
+  CLOUD_MODEL_NAME,
   INFERENCE_MODES,
   INFERENCE_POLICY,
   policyFor,
   type AllowedModes,
   type InferenceModeName,
   type PolicyRow,
+  type TaskOfDataClass,
 } from './inferencePolicy';
 
 type Equals<A, B> =
@@ -100,5 +102,27 @@ describe('INFERENCE_POLICY', () => {
       rationale: 'never valid',
     };
     expect([consentedPrefer, badRow.mode]).toHaveLength(2);
+  });
+
+  it('has exactly one CONSENTED_RAW task, cloud only, and keeps RAW tasks on the device', () => {
+    expect(
+      assertType<Equals<TaskOfDataClass<'CONSENTED_RAW'>, 'identityScanConsented'>>(true),
+    ).toBe(true);
+    expect(
+      assertType<Equals<TaskOfDataClass<'RAW'>, 'identityScan' | 'styleNeutralize'>>(true),
+    ).toBe(true);
+    expect(
+      assertType<
+        Equals<(typeof INFERENCE_POLICY)['identityScanConsented']['mode'], 'only_in_cloud'>
+      >(true),
+    ).toBe(true);
+    // @ts-expect-error a RAW task is never a consented-raw task (the cloud factory's task type).
+    const rawAsConsented: TaskOfDataClass<'CONSENTED_RAW'> = 'identityScan';
+    expect(rawAsConsented).toBe('identityScan');
+  });
+
+  it('pins the cloud model to a Gemini 3.x flash-lite model, never 2.5', () => {
+    expect(CLOUD_MODEL_NAME).toBe('gemini-3.5-flash-lite');
+    expect(CLOUD_MODEL_NAME).not.toMatch(/2\.5/);
   });
 });

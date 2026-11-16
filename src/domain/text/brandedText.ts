@@ -30,3 +30,25 @@ export function toRawText(value: string): RawText {
 export function unsafeCreateSanitizedText(value: string): SanitizedText {
   return value as SanitizedText;
 }
+
+/**
+ * INTERNAL FACTORY. Only `src/application/usecases/consentToCloudScan.ts` may call this
+ * (enforced by an ESLint `no-restricted-imports` rule). Creating ConsentedRawText anywhere
+ * else would send raw text to the cloud without the reporter's explicit, per-scan consent.
+ */
+export function unsafeCreateConsentedRawText(value: string): ConsentedRawText {
+  return value as ConsentedRawText;
+}
+
+/**
+ * A part of consented text is still consented text (the cloud scan sends the report in
+ * chunks). It accepts only ConsentedRawText, so it can narrow an existing consent to a
+ * substring but never create one from RawText or a plain string.
+ */
+export function sliceConsentedText(
+  text: ConsentedRawText,
+  start: number,
+  end: number,
+): ConsentedRawText {
+  return text.slice(start, end) as ConsentedRawText;
+}

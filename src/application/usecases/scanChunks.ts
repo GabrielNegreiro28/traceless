@@ -4,7 +4,13 @@ import type { Finding } from '../../domain/detection/types';
 import { toRawText } from '../../domain/text/brandedText';
 import { createAppError, type AppError } from '../../shared/appError';
 import { err, ok, type Result } from '../../shared/result';
-import type { IdentityScanner, InferenceSourceKind } from '../ports/IdentityScanner';
+import type { IdentityScanResult, InferenceSourceKind } from '../ports/IdentityScanner';
+
+/**
+ * Scans one chunk with whichever scanner the caller bound: the on-device scanner over RawText,
+ * or the consented cloud scanner over a ConsentedRawText slice. Locating stays here, shared.
+ */
+export type ChunkScanFn = (chunk: TextChunk) => Promise<Result<IdentityScanResult, AppError>>;
 
 /** The model's contribution for some chunks: located findings plus protected quotes. */
 export interface ModelPass {
@@ -19,7 +25,7 @@ export interface ModelPass {
 }
 
 export interface ChunkScanContext {
-  readonly scanner: IdentityScanner;
+  readonly scanChunk: ChunkScanFn;
   readonly allowCloud: boolean;
   readonly onProgress: (done: number, total: number) => void;
   /** Polled before every chunk; once true the pass stops with a Cancelled error. */
@@ -34,12 +40,12 @@ const OFF_DEVICE_CHUNK = createAppError('PrivacyViolation', {
 const CANCELLED = createAppError('Cancelled', { message: 'The scan was cancelled.' });
 
 async function scanChunk(
-  scanner: IdentityScanner,
+  scan: ChunkScanFn,
   chunk: TextChunk,
 ): Promise<Result<ModelPass, AppError>> {
-  const rawChunk = toRawText(chunk.text);
-  const scanned = await scanner.scan(rawChunk);
+  const scanned = await scan(chunk);
   if (!scanned.ok) return scanned;
+  const rawChunk = toRawText(chunk.text);
   const { findings, protectedQuotes, source, retries } = scanned.value;
   const found = locateModelFindingsWithStats(rawChunk, findings);
   return ok({
@@ -76,7 +82,7 @@ export async function scanChunksSequentially(
   context.onProgress(0, chunks.length);
   for (const [index, chunk] of chunks.entries()) {
     if (context.isCancelled()) return err(CANCELLED);
-    const pass = await scanChunk(context.scanner, chunk);
+    const pass = await scanChunk(context.scanChunk, chunk);
     if (!pass.ok) return err(pass.error);
     if (!context.allowCloud && pass.value.source !== 'ON_DEVICE') return err(OFF_DEVICE_CHUNK);
     passes.push(pass.value);

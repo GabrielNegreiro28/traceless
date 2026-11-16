@@ -28,19 +28,14 @@ function respond(chunk: string): FakeScanStep {
   return { findings: [mf('desk 14', 'LOCATION'), mf('in the basement', 'LOCATION')] };
 }
 
-function setup(
-  options: ConstructorParameters<typeof FakeIdentityScanner>[0] = { respond },
-  allowCloud?: boolean,
-) {
+function setup(options: ConstructorParameters<typeof FakeIdentityScanner>[0] = { respond }) {
   const scanner = new FakeIdentityScanner(options);
   const clock = new FakeClock(1000, 25);
   const progress: [number, number][] = [];
   const run = (text = TEXT, chunkChars = CHUNK_CHARS) =>
     scanReport(
       text,
-      allowCloud === undefined
-        ? { scanner, clock, chunkChars }
-        : { scanner, clock, chunkChars, allowCloud },
+      { scanner, clock, chunkChars },
       { onProgress: (done, total) => progress.push([done, total]) },
     );
   return { scanner, progress, run };
@@ -160,50 +155,27 @@ describe('scanReport', () => {
     expect(scanner.chunks).toHaveLength(0);
   });
 
-  it('with allowCloud, reports IN_CLOUD when any chunk ran in the cloud and sums retries', async () => {
-    const { run } = setup(
-      {
-        steps: [
-          { findings: [], retries: 1 },
-          { findings: [], source: 'IN_CLOUD' },
-          { findings: [], retries: 1 },
-        ],
-      },
-      true,
-    );
+  it('stops after the first cloud chunk and discards all findings, always (fail-closed)', async () => {
+    const { scanner, progress, run } = setup({
+      steps: [
+        respond(PARAGRAPHS[0]!),
+        { findings: [mf('jane.doe@example.com', 'DIRECT_IDENTIFIER')], source: 'IN_CLOUD' },
+      ],
+      respond,
+    });
     const result = await run();
-    if (!result.ok) throw new Error(result.error.kind);
-    expect(result.value.source).toBe('IN_CLOUD');
-    expect(result.value.stats.retries).toBe(2);
+    if (result.ok) throw new Error('expected a PrivacyViolation');
+    expect(result.error.kind).toBe('PrivacyViolation');
+    expect(Object.keys(result.error).sort()).toEqual(['kind', 'message']);
+    for (const paragraph of PARAGRAPHS) expect(result.error.message).not.toContain(paragraph);
+    expect(result.error.message).not.toContain('jane.doe');
+    // The third chunk is never sent, and the cloud chunk never counts as done.
+    expect(scanner.chunks).toHaveLength(2);
+    expect(progress).toEqual([
+      [0, 3],
+      [1, 3],
+    ]);
   });
-
-  it.each([undefined, false])(
-    'stops after the first cloud chunk and discards all findings (allowCloud: %s)',
-    async (allowCloud) => {
-      const { scanner, progress, run } = setup(
-        {
-          steps: [
-            respond(PARAGRAPHS[0]!),
-            { findings: [mf('jane.doe@example.com', 'DIRECT_IDENTIFIER')], source: 'IN_CLOUD' },
-          ],
-          respond,
-        },
-        allowCloud,
-      );
-      const result = await run();
-      if (result.ok) throw new Error('expected a PrivacyViolation');
-      expect(result.error.kind).toBe('PrivacyViolation');
-      expect(Object.keys(result.error).sort()).toEqual(['kind', 'message']);
-      for (const paragraph of PARAGRAPHS) expect(result.error.message).not.toContain(paragraph);
-      expect(result.error.message).not.toContain('jane.doe');
-      // The third chunk is never sent, and the cloud chunk never counts as done.
-      expect(scanner.chunks).toHaveLength(2);
-      expect(progress).toEqual([
-        [0, 3],
-        [1, 3],
-      ]);
-    },
-  );
 
   it('still returns rule findings when the model finds nothing', async () => {
     const { run } = setup({});

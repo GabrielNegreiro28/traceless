@@ -118,11 +118,26 @@ export const INFERENCE_POLICY = {
     mode: 'only_in_cloud',
     tools: [],
     multiTurn: false,
-    rationale: 'Only after explicit, per-session consent when this device cannot run on-device AI.',
+    rationale: 'Only with explicit consent for one scan, when this device cannot run on-device AI.',
   },
 } as const satisfies Readonly<Record<AiTask, PolicyRow>>;
 
 export type InferencePolicy = typeof INFERENCE_POLICY;
+
+/**
+ * The tasks whose rows read data of class `D`. Adapters type their task by this, so a cloud
+ * factory for consented text can only ever be configured with a CONSENTED_RAW task.
+ */
+export type TaskOfDataClass<D extends DataClass> = {
+  [K in AiTask]: InferencePolicy[K]['dataClass'] extends D ? K : never;
+}[AiTask];
+
+/**
+ * The cloud model for every request that may run in the cloud (design plan §3: a Gemini 3.x
+ * model, never 2.5). Pinned here rather than read from Remote Config, so a remote switch can
+ * never change which model receives consented raw text.
+ */
+export const CLOUD_MODEL_NAME = 'gemini-3.5-flash-lite';
 
 /** The routing rule for a task. */
 export function policyFor<T extends AiTask>(task: T): InferencePolicy[T] {

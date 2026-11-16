@@ -73,6 +73,9 @@ describe('APP_ERROR_KINDS', () => {
       EmptyReport: true,
       ApprovalMismatch: true,
       Cancelled: true,
+      ContentBlocked: true,
+      CloudScanDisabled: true,
+      ConsentRequired: true,
       Unknown: true,
     };
     expect([...APP_ERROR_KINDS].sort()).toEqual(Object.keys(everyKind).sort());

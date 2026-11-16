@@ -42,6 +42,12 @@ export type AppError =
   | BaseError<'ApprovalMismatch'>
   /** The caller stopped the work (for example the reporter cancelled a scan). Not a failure. */
   | BaseError<'Cancelled'>
+  /** The cloud model's safety filters refused the text; nothing was kept. */
+  | BaseError<'ContentBlocked'>
+  /** The consented cloud scan is switched off (Remote Config kill switch `cloud_scan_enabled`). */
+  | BaseError<'CloudScanDisabled'>
+  /** A cloud scan was asked for without a valid, explicit consent for this exact text. */
+  | BaseError<'ConsentRequired'>
   | BaseError<'Unknown'>;
 
 export type AppErrorKind = AppError['kind'];
@@ -63,6 +69,9 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'EmptyReport',
   'ApprovalMismatch',
   'Cancelled',
+  'ContentBlocked',
+  'CloudScanDisabled',
+  'ConsentRequired',
   'Unknown',
 ];
 
