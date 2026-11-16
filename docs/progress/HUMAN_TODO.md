@@ -4,6 +4,14 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
+- [ ] **Publicar a versão corrigida e testar o modo LOCAL (no seu Chrome com o Gemini Nano), ~10 min.**
+  1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
+  2. No seu Chrome **normal** (não anônimo; é nele que a flag do Gemini Nano está ligada), abra https://traceless-92f85.web.app
+  3. **Try a sample report** → **Check my report**. Se aparecer "Prepare private AI", clique e espere. A análise deve rodar **no seu computador** (selo "Checked on your device"), em cerca de 10–40 s.
+  4. Aceite os cartões, marque a releitura, **Continue**, aprove. No quadro "What the organization will receive", o selo deve dizer **"Organized on your device"**.
+  5. Envie e confira a chave em **Follow up on your case**.
+  6. Me conte o que apareceu (principalmente os dois selos) e qualquer erro.
+
 - [x] **(Concluído 16/11: regras, config e hosting publicados; teste manual OK, a chave abriu o caso) Firebase + colocar o site no ar (~10 min, hoje ou amanhã).**
   1. Abra https://console.firebase.google.com → projeto **traceless-92f85**.
   2. Menu **Security → App Check** → aba **APIs** → linha **Cloud Firestore** → **Enforce** → confirme. Deve aparecer "Enforced".
@@ -38,6 +46,8 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 
 ## Arquivos a remover (o manager não apaga nada)
+
+- `src/scratch.repro.test.ts` e `src/features/review/scratch.ui.test.tsx` (rascunhos de teste)
 
 - `src/app/PlaceholderPage.tsx` (não é mais usado)
 - `src/features/review/ConsentPlaceholder.tsx` (não é mais usado)
