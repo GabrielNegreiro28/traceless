@@ -100,3 +100,12 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 - **Resultados (pooled, dev ×3):** `v2-single2-rules` strictRecallAll 0,533 · ACCUSED 0,017 · INCIDENT_FACT 0,086 · softPrecision 0,698 · p50 12,5 s / máx 35,2 s. `v2-single3-rules` 0,590 · ACCUSED 0,067 · INCIDENT_FACT 0,065 · softPrecision 0,661 · p50 15,9 s / máx **62,4 s**.
 - **Regra pré-registrada:** single3 só se ganhar ≥ 0,05 de recall **e** máx ≤ 50 s **e** ACCUSED ≤ 0,10. Ganhou +0,057, mas o máximo (62,4 s) estoura 50 s → **escolhida `v2-single2-rules`**. Guardas: softPrecision 0,698 ≥ 0,60 ✓; ACCUSED 0,017 não piora o single2 sem regras (0,083) ✓. Nenhuma família de regras removida.
 - **Próximo:** split de teste ×3 com `v2-single2-rules`, **uma única vez** (passo do participante, worktree congelada em `bb60625`); depois portão com o Fable (§G.5). O padrão do produto passa a usar o pacote `core+firstPerson` só depois do portão.
+
+## 2026-11-16 · Kill switch do scan na nuvem: padrão `true` (revisão opus, achado minor)
+- `cloud_scan_enabled` vale `true` quando o Remote Config não responde na primeira visita (um `false` em cache persiste).
+- **Decisão (manager):** manter. O interruptor serve para desligar a funcionalidade num incidente, não para proteger a privacidade: quem protege é o consentimento explícito a cada scan, conferido em tempo de execução. Falhar fechado tiraria o caminho principal dos jurados sem Nano por causa de uma falha de rede.
+
+## 2026-11-16 · Portão da Fase 2, rodada final (teste ×3, uma vez): SHIP WITH DISCLOSED MISS
+- **`v2-single2-rules`, teste 16×3, pooled:** strictRecallAll **0,604** (meta 0,70; pior execução 0,566) · ACCUSED **0,046** (passa; pior execução 0,069 → instável) · INCIDENT_FACT 0,030 · OTHER_PERSON 0,033 · softPrecision 0,656 · gigantes 0,05 · falhas 0 · inválidas 0 · p50 10,2 s / máx 36,7 s · 0 travamentos.
+- **Resultado pelo §G.5 pré-registrado:** recall entre 0,55 e 0,70, demais critérios OK → **"Ship with disclosed miss"**: portão registrado como NÃO ATINGIDO; README e Devpost mostram meta e números medidos; a UI nunca sugere que a lista está completa; o Second look passa a ser etapa obrigatória antes do Outbox; **detecção congelada**.
+- **Sem consulta ao Fable:** a regra foi pré-registrada e o resultado cai numa única linha da tabela, sem ambiguidade. O participante pediu economia (16/11). O Fable revisa isso na auditoria da Fase 8.
