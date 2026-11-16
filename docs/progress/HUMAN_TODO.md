@@ -4,13 +4,16 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Firebase: proteger o banco e publicar regras e configuração (~5 min, hoje ou amanhã).**
+- [ ] **Firebase + colocar o site no ar (~10 min, hoje ou amanhã).**
   1. Abra https://console.firebase.google.com → projeto **traceless-92f85**.
-  2. Menu **Security → App Check** → aba **APIs** → linha **Cloud Firestore** → clique em **Enforce** e confirme. Deve aparecer "Enforced", como já aparece no Firebase AI Logic.
-  3. No Claude Code, digite: `! npm run deploy:rules`. Deve aparecer **"Deploy complete!"**. Isso publica as regras de segurança do banco.
-  4. Digite também: `! npm run deploy:config`. Deve aparecer **"Deploy complete!"**.
-  5. Avise no chat: "fiz o firebase".
-  - O login anônimo já está ativado (conferido em 12/11). Não precisa mexer.
+  2. Menu **Security → App Check** → aba **APIs** → linha **Cloud Firestore** → **Enforce** → confirme. Deve aparecer "Enforced".
+  3. No Claude Code, digite um de cada vez (cada um deve terminar com **"Deploy complete!"**):
+     - `! npm run deploy:rules`
+     - `! npm run deploy:config`
+     - `! npm run deploy:hosting`
+  4. Teste rápido: abra https://traceless-92f85.web.app numa **janela anônima** do Chrome → **Try a sample report** → siga até o fim (analisar, revisar, marcar a releitura, aprovar, **Send**). Deve aparecer uma **chave do caso**. Copie a chave, abra "Follow up on your case" e cole: o caso deve aparecer.
+  5. Avise no chat: "fiz o firebase" e diga se algo deu errado (copie a mensagem da tela).
+  - O login anônimo já está ativado (conferido em 12/11).
 
 
 - [x] **(Concluído 16/11) Avaliação final no Chrome (16/11, ~30–45 min, pode deixar rodando sozinho). Só pode ser feita UMA vez.**
@@ -38,6 +41,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 - `src/app/PlaceholderPage.tsx` (não é mais usado)
 - `src/features/review/ConsentPlaceholder.tsx` (não é mais usado)
+- `src/features/review/ReviewPlaceholder.tsx` (não é mais usado; apagar junto o caso de teste dele em `flowPanels.test.tsx`)
 - `src/features/review/ReviewScreen.layout.snip` e `ReviewScreen.layout.tmp` (sobras)
 
 ## Concluídos
