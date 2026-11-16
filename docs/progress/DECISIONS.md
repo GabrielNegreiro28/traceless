@@ -95,3 +95,8 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
   - Menores incorporados: verbos no passado sozinhos não disparam (do-family removido; o roster "I was/we were on" exige termo regular); target/victim/witness/survivor/complainant excluídos de onlyOne/oneOfN; o preset "Dev matrix" ficou fixo nas 4 variantes originais.
 - **Decisão (manager):** todas as mudanças só restringem e foram motivadas por frases inventadas, não pelo dataset. A lista `TENURE_ROLE_NOUNS` é vocabulário novo, mas só estreita o caminho `been`: aceita sob o §G.3. Guarda de dev inalterado (onlyOne 3/1,00, oneOfN 1/1,00, tenure 1/1,00; recall só-regras 0,257; 0 ACCUSED/INCIDENT/OTHER).
 - Sem segunda revisão (PROTOCOL §2b, uma rodada): o manager conferiu o diff de `directIdentifiers.ts` e o CI (1663 testes).
+
+## 2026-11-16 · Round 2 (dev ×3) → variante final pelo §G.4
+- **Resultados (pooled, dev ×3):** `v2-single2-rules` strictRecallAll 0,533 · ACCUSED 0,017 · INCIDENT_FACT 0,086 · softPrecision 0,698 · p50 12,5 s / máx 35,2 s. `v2-single3-rules` 0,590 · ACCUSED 0,067 · INCIDENT_FACT 0,065 · softPrecision 0,661 · p50 15,9 s / máx **62,4 s**.
+- **Regra pré-registrada:** single3 só se ganhar ≥ 0,05 de recall **e** máx ≤ 50 s **e** ACCUSED ≤ 0,10. Ganhou +0,057, mas o máximo (62,4 s) estoura 50 s → **escolhida `v2-single2-rules`**. Guardas: softPrecision 0,698 ≥ 0,60 ✓; ACCUSED 0,017 não piora o single2 sem regras (0,083) ✓. Nenhuma família de regras removida.
+- **Próximo:** split de teste ×3 com `v2-single2-rules`, **uma única vez** (passo do participante, worktree congelada em `bb60625`); depois portão com o Fable (§G.5). O padrão do produto passa a usar o pacote `core+firstPerson` só depois do portão.

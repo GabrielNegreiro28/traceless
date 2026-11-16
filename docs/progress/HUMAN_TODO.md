@@ -4,7 +4,17 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Rodada "Round 2" no Chrome (14/11, ~40–60 min, pode deixar rodando sozinho).** Serve para escolher a versão final da detecção.
+- [ ] **Avaliação final no Chrome (16/11, ~30–45 min, pode deixar rodando sozinho). Só pode ser feita UMA vez.**
+  1. Deixe o Claude Code aberto (o servidor local já está ligado). Se a página não abrir, avise no chat.
+  2. No **Chrome**, abra: `http://localhost:5173/eval`
+  3. No seletor **Variant**, escolha **`v2-single2-rules`** (confira duas vezes: é essa exatamente).
+  4. Clique no botão **"6. Full evaluation (test split, 3 runs)"**.
+  5. **Não feche nem minimize a aba** até terminar (não deixe o computador dormir). **Não olhe/compartilhe números parciais.**
+  6. Se travar por causa do computador (OnDeviceStuck, aba congelada > 5 min): recarregue e rode o passo 3–4 **de novo do começo, uma única vez**.
+  7. Avise no chat: "rodei a avaliação final".
+
+
+- [x] **(Concluído 14/11) Rodada "Round 2" no Chrome (14/11, ~40–60 min, pode deixar rodando sozinho).** Serve para escolher a versão final da detecção.
   1. Deixe o Claude Code aberto (o servidor local roda nele, numa cópia congelada do código, para as mudanças em andamento não atrapalharem). Se a página não abrir, avise no chat em vez de rodar comandos: o manager religa o servidor.
   2. No **Chrome** (não use o Edge), abra: `http://localhost:5173/eval`
   3. No seletor de preset, escolha **"5. Round 2: dev x 3 runs, 2 variants only"**.
@@ -14,15 +24,6 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
   7. Avise no chat: "rodei o round 2".
   - **Não rode o preset 6 (Full evaluation / test split).** Ele só pode ser rodado uma única vez, e o manager vai pedir na hora certa.
 
-
-## Arquivos a remover
-_(os agentes não apagam arquivos; listam aqui o que poderia ser removido)_
-
-- **No projeto, opcional:** `C:\Users\Gabriel\hackathon\src\app\ReportPage.review.snip` e `C:\Users\Gabriel\hackathon\src\app\ReportPage.review.test.tmp` (arquivos vazios criados por engano por um agente em 13/11; já estão ignorados pelo git). Pode apagar pelo Explorador de Arquivos.
-
-- **Fora do projeto, opcional:** `C:\Users\Gabriel\filelist.tmp` (6 KB, só uma lista de nomes de arquivos do projeto, sem segredos), criado por engano por um agente revisor em 13/11. Pode apagar pelo Explorador de Arquivos.
-
-- **Fora do projeto, opcional:** `C:\Users\Gabriel\node_modules`, `C:\Users\Gabriel\package.json` e `C:\Users\Gabriel\package-lock.json`, criados em 12/11 às 22:20 por um `npm install firebase` rodado por engano na pasta de usuário. Não atrapalham o projeto; apague pelo Explorador de Arquivos se quiser.
 
 ## Concluídos
 
