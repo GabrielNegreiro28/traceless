@@ -2,10 +2,18 @@
 
 _Atualizado pelo manager a cada iteração._
 
-- **Data da última atualização:** 2026-11-14
-- **Fase atual:** Fase 2 (detecção + avaliação) em andamento — tarefa 2 de 7. Fase 1 concluída (App Check enforced no AI Logic, verificado em 13/11).
-- **Prazo:** **2026-11-30 às 19:00 GMT-3** (horário de Brasília). Rascunho completo até 28/11; congelamento de funcionalidades em 25/11; submeter com folga, nunca na última hora.
+- **Data da última atualização:** 2026-11-16
+- **Plano ENXUTO (escolhido pelo participante em 16/11; ver DECISIONS.md):** faltam 5 tarefas:
+  1. ✅ Modo nuvem com consentimento + checagem básica + passos para ativar o modo local (commits `79a14bd`…`8b2eadc`, 1876 testes, revisão opus + 1 rodada).
+  2. ⏳ Congelar a detecção (`v2-single2-rules` no produto, Second look obrigatório, textos honestos), implementer sonnet em andamento.
+  3. Fase 4: envio do texto limpo ao Firestore com chave do caso + `structureReport` na nuvem sobre SanitizedText (revisão opus).
+  4. Deploy + um passe de polimento.
+  5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable.
+  - Cortado (roadmap): rights advisor, UI de quem investiga, triageCase, respostas ao denunciante.
+- **Portão da Fase 2 (16/11): SHIP WITH DISCLOSED MISS.** Teste ×3 `v2-single2-rules`: recall estrito 0,604 (meta 0,70), ACCUSED 0,046, INCIDENT 0,030, precisão 0,656, p50 10,2 s / máx 36,7 s. Detecção congelada.
+- **Prazo:** **2026-11-30 às 19:00 GMT-3**. Rascunho até 28/11; congelamento em 25/11.
 
+## Histórico (detalhes)
 ## Concluído
 - **Fase 2, tarefa 1 (13/11):** commit `c32b9f9` (325 testes, revisado) — política de inferência (RAW ⇒ only_on_device garantido em compilação), prompt `identityScan.v1` + few-shot, schema JSON + zod com salvamento, port `IdentityScanner`, caso de uso `scanReport`, fakes. Desenho da Fase 2 em `docs/design/fase2-ai-layer.md`.
 - **riskScorer + endurecimento das regras (12/11):** commit `70e8efd` (revisão opus pegou regressão de privacidade — telefones após "from/to" e datas antes de "the" — corrigida com testes).

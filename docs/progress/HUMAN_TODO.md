@@ -4,7 +4,12 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Avaliação final no Chrome (16/11, ~30–45 min, pode deixar rodando sozinho). Só pode ser feita UMA vez.**
+- [ ] **Publicar a configuração remota (2 min, quando puder).** O sistema não me deixou publicar sozinho.
+  1. No Claude Code, digite: `! npx firebase deploy --only remoteconfig --project traceless-92f85`
+  2. Deve aparecer "Deploy complete!". Não é urgente: o app funciona sem isso, porque o modo nuvem já vem ligado por padrão.
+
+
+- [x] **(Concluído 16/11) Avaliação final no Chrome (16/11, ~30–45 min, pode deixar rodando sozinho). Só pode ser feita UMA vez.**
   1. Deixe o Claude Code aberto (o servidor local já está ligado). Se a página não abrir, avise no chat.
   2. No **Chrome**, abra: `http://localhost:5173/eval`
   3. No seletor **Variant**, escolha **`v2-single2-rules`** (confira duas vezes: é essa exatamente).
