@@ -26,6 +26,8 @@
     "vitest.config.ts",
     "vitest.rules.config.ts",
     "scripts/*.ts",
-    "tests/rules/*.ts"
+    "tests/rules/*.ts",
+    "tests/e2e/*.ts",
+    "playwright.config.ts"
   ]
 }

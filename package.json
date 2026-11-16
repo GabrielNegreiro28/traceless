@@ -31,7 +31,9 @@
     "deploy:config": "firebase deploy --only remoteconfig --project traceless-92f85",
     "deploy": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes,remoteconfig --project traceless-92f85",
     "ci": "npm run format:check && npm run lint && npm test && npm run build && npm run verify:no-debug-token && npm run verify:no-eval",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "firebase": "13.3.0",
@@ -46,6 +48,7 @@
     "@commitlint/config-conventional": "21.2.4",
     "@eslint/js": "10.0.1",
     "@firebase/rules-unit-testing": "6.0.0",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/vite": "4.3.5",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
