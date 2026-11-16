@@ -1,5 +1,6 @@
 import { useId } from 'react';
-import { Button, SourceBadge } from '../../ui';
+import { Button } from '../../ui';
+import { CheckedBadge } from '../review/CheckedBadge';
 import type { ApprovedState } from '../review/reportFlowTypes';
 import { ReportText } from './ReportText';
 
@@ -7,13 +8,16 @@ export interface ApprovedScreenProps {
   readonly state: ApprovedState;
   /** Discards the approval and returns to the outbox. */
   readonly onBack: () => void;
+  /** True when the demo scanner stood in for the AI (never labelled as AI). */
+  readonly demo?: boolean;
 }
 
 /**
- * The approved (sanitized) text, exactly as the organization would receive it. Sending is
- * the next phase: the button is shown disabled with a note and never dispatches SUBMIT.
+ * The approved (sanitized) text, exactly as the organization would receive it, with a badge
+ * saying how it was checked (derived from the scan, never hardcoded). Sending is the next
+ * phase: the button is shown disabled with a note and never dispatches SUBMIT.
  */
-export function ApprovedScreen({ state, onBack }: ApprovedScreenProps) {
+export function ApprovedScreen({ state, onBack, demo = false }: ApprovedScreenProps) {
   const noteId = useId();
   return (
     <section>
@@ -21,7 +25,7 @@ export function ApprovedScreen({ state, onBack }: ApprovedScreenProps) {
         Approved. This is what the organization will receive.
       </h1>
       <div className="mt-3">
-        <SourceBadge variant="onDevice" label="Checked on your device" />
+        <CheckedBadge checks={state.checks} demo={demo} />
       </div>
       <div className="mt-6">
         <ReportText text={state.report.text} label="Approved text" />

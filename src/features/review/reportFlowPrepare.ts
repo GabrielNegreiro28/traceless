@@ -8,7 +8,10 @@ function isFraction(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && value <= 1;
 }
 
-/** START_SCAN here means the download finished and the scan can begin. */
+/**
+ * START_SCAN here means the download finished and the scan can begin; SHOW_OPTIONS leaves the
+ * download for the other ways to check (cloud with consent, basic private check).
+ */
 export function onNeedsPrepare(state: NeedsPrepareState, event: FlowEvent): FlowState {
   switch (event.type) {
     case 'PREPARE_PROGRESS':
@@ -17,6 +20,8 @@ export function onNeedsPrepare(state: NeedsPrepareState, event: FlowEvent): Flow
       return toError(event.error, { ...state, progress: null });
     case 'START_SCAN':
       return hasScanId(event.scanId) ? startScan(state.text, event.scanId) : state;
+    case 'SHOW_OPTIONS':
+      return { status: 'needsConsent', text: state.text };
     case 'BACK_TO_EDIT':
       return composing(state.text);
     default:

@@ -5,10 +5,13 @@ import { Badge, Button, CategoryChip, SourceBadge } from '../../ui';
 import { cx } from '../../ui/cx';
 import { FindingActions } from './FindingActions';
 import { replacementLabel, STATE_LABELS, type FindingState } from './reviewModel';
+import type { SourceLabel } from './scanSource';
 import { SuggestionEditor } from './SuggestionEditor';
 
 export interface FindingCardProps {
   readonly finding: Finding;
+  /** How a MODEL finding's origin reads, from the scan that found it (see scanSource.ts). */
+  readonly modelBadge: SourceLabel;
   readonly decision: ReviewDecision | undefined;
   /** Includes `covered`: the finding disappears inside a wider change. */
   readonly state: FindingState;
@@ -54,9 +57,10 @@ function outcomeText(props: FindingCardProps): string {
   }
 }
 
-function Origin({ origin }: { readonly origin: Finding['origin'] }) {
+function Origin(props: { readonly origin: Finding['origin']; readonly modelBadge: SourceLabel }) {
+  const { origin, modelBadge } = props;
   return origin === 'MODEL' ? (
-    <SourceBadge variant="onDevice" label="On-device AI" />
+    <SourceBadge variant={modelBadge.variant} label={modelBadge.label} />
   ) : (
     <SourceBadge variant="rules" />
   );
@@ -132,7 +136,7 @@ export function FindingCard(props: FindingCardProps) {
     >
       <div className="flex flex-wrap items-center gap-2">
         <CategoryChip category={finding.category} />
-        <Origin origin={finding.origin} />
+        <Origin origin={finding.origin} modelBadge={props.modelBadge} />
         {state !== 'pending' && <Badge tone="accent">{STATE_LABELS[state]}</Badge>}
       </div>
       <blockquote

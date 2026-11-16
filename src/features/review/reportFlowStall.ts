@@ -1,5 +1,5 @@
-import { remainingRisk } from '../../domain/review/reviewState';
 import type { Finding } from '../../domain/detection/types';
+import { basicReview } from './reportFlowOptions';
 import type { ComposingState, ErrorState, FlowState, ReviewingState } from './reportFlowTypes';
 
 /**
@@ -33,13 +33,5 @@ export function isTerminalStall(state: FlowState): state is StallState {
 
 /** The review after "Continue with basic checks": rule findings only, flagged as basic. */
 export function basicChecksReview(state: StallState, findings: readonly Finding[]): ReviewingState {
-  return {
-    status: 'reviewing',
-    text: state.previous.text,
-    checks: 'basic',
-    findings,
-    protectedSpans: [],
-    decisions: [],
-    risk: remainingRisk(findings, []),
-  };
+  return basicReview(state.previous.text, findings);
 }

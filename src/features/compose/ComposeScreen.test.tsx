@@ -28,7 +28,9 @@ describe('ComposeScreen', () => {
     expect(field()).toHaveAccessibleDescription(/English only for now/);
     expect(screen.getByText('Demo organization: Halvern Freight (fictional)')).toBeVisible();
     expect(
-      screen.getByText('Your text stays in this tab until you approve what is sent.'),
+      screen.getByText(
+        'On supported Chrome, your text is checked on your device. Elsewhere, nothing is sent unless you explicitly agree.',
+      ),
     ).toBeVisible();
   });
 

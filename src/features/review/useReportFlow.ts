@@ -16,10 +16,12 @@ import {
   type FlowState,
 } from './reportFlowMachine';
 import { useApproval } from './useApproval';
+import { useCheckOptions, type CheckOptionActions } from './useCheckOptions';
+import { useConsentedCloudScan } from './useConsentedCloudScan';
 import { useOnDeviceScan } from './useOnDeviceScan';
 import { useStallRecovery, type StallActions } from './useStallRecovery';
 
-export interface ReportFlow extends StallActions {
+export interface ReportFlow extends StallActions, CheckOptionActions {
   readonly state: FlowState;
   /** True while the device is checked just after "Check my report" (before scanning). */
   readonly checking: boolean;
@@ -63,12 +65,12 @@ async function prepareDevice(
 }
 
 /**
- * Wraps the pure reducer for the reporter's flow. The scan side effect lives in
- * useOnDeviceScan; this hook routes by device availability and runs the model download.
- * Raw text only ever lives in this state.
+ * Wraps the pure reducer for the reporter's flow. The scan side effects live in
+ * useOnDeviceScan and useConsentedCloudScan (one per mode); this hook routes by device
+ * availability and runs the model download. Raw text only ever lives in this state.
  */
 export function useReportFlow(): ReportFlow {
-  const { scanReport, deviceCapability } = useServices();
+  const { scanReport, scanWithCloudConsent, deviceCapability } = useServices();
   const [state, dispatch] = useReducer(reportFlowReducer, INITIAL_FLOW_STATE);
   const [checking, setChecking] = useState(false);
   const latest = useRef(state);
@@ -89,6 +91,7 @@ export function useReportFlow(): ReportFlow {
   }, []);
 
   useOnDeviceScan(state, dispatch, scanReport);
+  useConsentedCloudScan(state, dispatch, scanWithCloudConsent);
   const approve = useApproval(state, dispatch);
 
   const nextScanId = useCallback((): string => {
@@ -131,6 +134,7 @@ export function useReportFlow(): ReportFlow {
     prepareToken.current += 1;
     preparing.current = false;
   }, []);
+  const options = useCheckOptions(latest, dispatch, nextScanId, abandonPrepare);
 
   const prepare = useCallback(() => {
     if (preparing.current || latest.current.status !== 'needsPrepare') return;
@@ -190,5 +194,6 @@ export function useReportFlow(): ReportFlow {
     backToReview,
     reset,
     ...stall,
+    ...options,
   };
 }

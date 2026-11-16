@@ -35,6 +35,12 @@ export function friendlyKindMessage(kind: AppErrorKind): string {
       return 'The approved text did not match the preview.';
     case 'Cancelled':
       return 'The run was cancelled.';
+    case 'ContentBlocked':
+      return 'The cloud model refused this report (safety filters).';
+    case 'CloudScanDisabled':
+      return 'The consented cloud scan is switched off (cloud_scan_enabled).';
+    case 'ConsentRequired':
+      return 'A cloud scan was requested without a valid consent.';
     case 'Unknown':
       return 'Something went wrong. Reload the page and try again.';
   }

@@ -36,4 +36,17 @@ describe('ScanningScreen', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
+
+  it('says the cloud check runs as agreed in cloud mode', () => {
+    render(<ScanningScreen progress={null} onCancel={() => undefined} mode="consentedCloud" />);
+    expect(screen.getByText(/Checking in the cloud, as you agreed/)).toBeVisible();
+  });
+
+  it('never claims a cloud check in demo mode: nothing leaves the device', () => {
+    render(
+      <ScanningScreen progress={null} onCancel={() => undefined} mode="consentedCloud" demo />,
+    );
+    expect(screen.getByText(/Demo mode: .*Nothing leaves this device\./)).toBeVisible();
+    expect(screen.queryByText(/as you agreed/)).not.toBeInTheDocument();
+  });
 });

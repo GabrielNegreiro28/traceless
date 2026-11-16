@@ -4,14 +4,14 @@ import type {
   ErrorState,
   FlowEvent,
   FlowState,
-  NeedsConsentState,
+  RecoverableState,
   ScanningState,
 } from './reportFlowTypes';
 import { toReviewing } from './reportFlowReview';
 import { basicChecksReview, isTerminalStall } from './reportFlowStall';
 import { composing, toError } from './reportFlowTypes';
 
-/** Transitions before review: writing, scanning, consent and error recovery (pure). */
+/** Transitions before review: writing, scanning and error recovery (pure). */
 
 export function startScan(text: ComposingState['text'], scanId: string): ScanningState {
   return { status: 'scanning', text, mode: 'onDevice', scanId, progress: null };
@@ -54,6 +54,13 @@ export function onComposing(state: ComposingState, event: FlowEvent): FlowState 
   }
 }
 
+/** A failed cloud scan returns to the options (basic check, consent again); on-device to the text. */
+function afterFailedScan(state: ScanningState): RecoverableState {
+  return state.mode === 'consentedCloud'
+    ? { status: 'needsConsent', text: state.text }
+    : composing(state.text);
+}
+
 /** Only composing can ask for consent or preparation (the device is checked before a scan). */
 export function onScanning(state: ScanningState, event: FlowEvent): FlowState {
   if (isStale(state, event)) return state;
@@ -67,7 +74,7 @@ export function onScanning(state: ScanningState, event: FlowEvent): FlowState {
       return {
         status: 'reviewing',
         text: state.text,
-        checks: 'full',
+        checks: state.mode === 'consentedCloud' ? 'cloud' : 'full',
         findings,
         protectedSpans,
         decisions: [],
@@ -75,20 +82,8 @@ export function onScanning(state: ScanningState, event: FlowEvent): FlowState {
       };
     }
     case 'SCAN_FAILED':
-      return toError(event.error, composing(state.text));
+      return toError(event.error, afterFailedScan(state));
     case 'CANCEL_SCAN':
-      return composing(state.text);
-    default:
-      return state;
-  }
-}
-
-/** START_SCAN here means the reporter chose a scan path (consented cloud or rules only). */
-export function onNeedsConsent(state: NeedsConsentState, event: FlowEvent): FlowState {
-  switch (event.type) {
-    case 'START_SCAN':
-      return hasScanId(event.scanId) ? startScan(state.text, event.scanId) : state;
-    case 'BACK_TO_EDIT':
       return composing(state.text);
     default:
       return state;

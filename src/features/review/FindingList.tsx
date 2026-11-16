@@ -3,6 +3,7 @@ import { FindingCard } from './FindingCard';
 import { ACCEPT, editChoice, KEEP, NOT_ABOUT_ME } from './reviewChoices';
 import { identicalCount } from './reviewModel';
 import type { ReviewingState } from './reportFlowTypes';
+import type { SourceLabel } from './scanSource';
 import type { ReviewSession } from './useReviewSession';
 import { useReviewShortcuts } from './useReviewShortcuts';
 
@@ -13,8 +14,10 @@ import { useReviewShortcuts } from './useReviewShortcuts';
 export function FindingList(props: {
   readonly state: ReviewingState;
   readonly session: ReviewSession;
+  /** How model findings read (on-device AI, cloud AI or the demo scanner). */
+  readonly modelBadge: SourceLabel;
 }) {
-  const { state, session } = props;
+  const { state, session, modelBadge } = props;
   const { decide, startEdit, cancelEdit, undo, select, snapshot } = session;
   const onKeyDown = useReviewShortcuts(session);
   return (
@@ -23,6 +26,7 @@ export function FindingList(props: {
         <li key={finding.id}>
           <FindingCard
             finding={finding}
+            modelBadge={modelBadge}
             decision={snapshot.decisionMap.get(finding.id)}
             state={snapshot.states.get(finding.id) ?? 'pending'}
             replacement={clusterContaining(snapshot.preview, finding)?.replacement}

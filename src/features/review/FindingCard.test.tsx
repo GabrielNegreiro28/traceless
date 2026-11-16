@@ -10,6 +10,7 @@ const DOCK = findingOf(TEXT, 'Dock B');
 function renderCard(state: FindingState, identical: number) {
   const props: FindingCardProps = {
     finding: DOCK,
+    modelBadge: { variant: 'onDevice', label: 'On-device AI' },
     decision: { findingId: DOCK.id, action: 'ACCEPTED' },
     state,
     replacement: '[place]',

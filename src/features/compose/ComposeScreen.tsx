@@ -32,7 +32,10 @@ export function ComposeScreen({
       <ul id={helpId} className="mt-3 space-y-1 text-muted">
         <li>Demo organization: {DEMO_ORG_NAME} (fictional)</li>
         <li>English only for now</li>
-        <li>Your text stays in this tab until you approve what is sent.</li>
+        <li>
+          On supported Chrome, your text is checked on your device. Elsewhere, nothing is sent
+          unless you explicitly agree.
+        </li>
       </ul>
       <label htmlFor={fieldId} className="mt-6 block text-lg font-semibold">
         Your report

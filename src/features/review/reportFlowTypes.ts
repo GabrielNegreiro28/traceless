@@ -1,4 +1,5 @@
 import type { ApprovedReport } from '../../application/usecases/approveReport';
+import type { CloudScanConsent } from '../../application/usecases/consentToCloudScan';
 import type { Finding, TextSpan } from '../../domain/detection/types';
 import type { ReviewChoice, ReviewDecision } from '../../domain/rewrite/rewriteApplier';
 import type { RiskAssessment } from '../../domain/risk/riskScorer';
@@ -16,7 +17,7 @@ export interface ScanProgress {
   readonly total: number;
 }
 
-/** Where a scan runs. Only 'onDevice' exists today; the consented cloud scan adds its own. */
+/** Where a scan runs: the on-device AI, or the cloud after the reporter's explicit consent. */
 export type ScanMode = 'onDevice' | 'consentedCloud';
 
 export interface ScanningState {
@@ -28,14 +29,20 @@ export interface ScanningState {
   readonly scanId: string;
   /** Null until the scanner reports the number of chunks. */
   readonly progress: ScanProgress | null;
+  /**
+   * Only for a consented cloud scan: what the reporter agreed to, for this exact text and
+   * this scan only. Never stored anywhere else; a cloud scan without it never runs.
+   */
+  readonly consent?: CloudScanConsent;
 }
 
 /**
- * Which checks produced the findings: `full` = the scan (on-device AI + pattern rules);
- * `basic` = pattern rules only, after the on-device AI stalled for good (§G.2). The review
- * must then say that the AI checks did not run.
+ * Which checks produced the findings: `full` = on-device AI + pattern rules; `cloud` = the
+ * consented cloud AI + pattern rules; `basic` = pattern rules only (chosen when on-device AI
+ * is unavailable, or after it stalled for good, §G.2). A basic review must say that no AI
+ * checked the text. Badges and finding labels are derived from this, never hardcoded.
  */
-export type ScanChecks = 'full' | 'basic';
+export type ScanChecks = 'full' | 'cloud' | 'basic';
 
 export interface ReviewingState {
   readonly status: 'reviewing';
@@ -93,9 +100,17 @@ export interface NeedsPrepareState {
   readonly progress: number | null;
 }
 
-/** The states an error can return to. */
+/**
+ * The states an error can return to. A failed cloud scan returns to `needsConsent`, so the
+ * reporter sees the other options (and the copy can say the cloud check failed).
+ */
 export type RecoverableState =
-  ComposingState | NeedsPrepareState | ReviewingState | OutboxState | ApprovedState;
+  | ComposingState
+  | NeedsConsentState
+  | NeedsPrepareState
+  | ReviewingState
+  | OutboxState
+  | ApprovedState;
 
 export interface ErrorState {
   readonly status: 'error';
@@ -135,10 +150,19 @@ export type FlowEvent =
     }
   | { readonly type: 'SCAN_FAILED'; readonly scanId: string; readonly error: AppError }
   /**
-   * Only accepted from a terminal OnDeviceStuck error over the composer: the pattern-rule
-   * findings of "Continue with basic checks" open the review with `checks: 'basic'`.
+   * Only accepted from a terminal OnDeviceStuck error over the composer, or from needsConsent
+   * (the reporter chose the basic private check): the pattern-rule findings open the review
+   * with `checks: 'basic'`.
    */
   | { readonly type: 'BASIC_CHECKS_DONE'; readonly findings: readonly Finding[] }
+  /** Only accepted from needsConsent: the reporter consented to a cloud scan of this text. */
+  | {
+      readonly type: 'START_CLOUD_SCAN';
+      readonly scanId: string;
+      readonly consent: CloudScanConsent;
+    }
+  /** Only accepted from needsPrepare: the reporter wants the other ways to check. */
+  | { readonly type: 'SHOW_OPTIONS' }
   /** Also applied to findings with the identical quote (see propagateDecision). */
   | { readonly type: 'DECIDE'; readonly findingId: string; readonly choice: ReviewChoice }
   | { readonly type: 'UNDO_DECISION'; readonly findingId: string }

@@ -1,6 +1,9 @@
 import type { RiskLevel } from '../../domain/risk/riskScorer';
 import type { AppErrorKind } from '../../shared/appError';
-import { reporterErrorMessage } from '../review/reporterErrorMessages';
+import {
+  reporterErrorMessage,
+  reporterErrorMessageAfterCloud,
+} from '../review/reporterErrorMessages';
 
 /** Calm copy for the approval step. Never includes report text; never promises anonymity. */
 
@@ -46,7 +49,19 @@ const APPROVAL_ERRORS: Partial<Record<AppErrorKind, ApprovalErrorCopy>> = {
   },
 };
 
-/** Approval refusals have their own copy; anything else uses the general message and review. */
-export function approvalErrorCopy(kind: AppErrorKind): ApprovalErrorCopy {
-  return APPROVAL_ERRORS[kind] ?? { message: reporterErrorMessage(kind), target: 'review' };
+/**
+ * Approval refusals have their own copy; anything else uses the general message and review.
+ * `cloud`: the text was checked in the cloud (with consent), so the fallback never claims
+ * that nothing left this device.
+ */
+export function approvalErrorCopy(kind: AppErrorKind, cloud = false): ApprovalErrorCopy {
+  const message = cloud ? reporterErrorMessageAfterCloud(kind) : reporterErrorMessage(kind);
+  return APPROVAL_ERRORS[kind] ?? { message, target: 'review' };
+}
+
+/** The reassurance under a refused approval; true in both modes. */
+export function approvalNotSentNote(cloud: boolean): string {
+  return cloud
+    ? 'Nothing has been sent to the organization.'
+    : 'Nothing has been sent. Your text is still only in this tab.';
 }

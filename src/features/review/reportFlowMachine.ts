@@ -1,4 +1,5 @@
-import { onComposing, onError, onNeedsConsent, onScanning } from './reportFlowCompose';
+import { onComposing, onError, onScanning } from './reportFlowCompose';
+import { onNeedsConsent } from './reportFlowOptions';
 import { onNeedsPrepare } from './reportFlowPrepare';
 import { onApproved, onOutbox, onReviewing, onSubmitting } from './reportFlowReview';
 import { INITIAL_FLOW_STATE, type FlowEvent, type FlowState } from './reportFlowTypes';

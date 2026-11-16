@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_KINDS, createAppError } from '../../shared/appError';
-import { ConsentPlaceholder } from './ConsentPlaceholder';
+import { cloudScanErrorMessage } from './cloudScanErrorMessages';
 import { FlowErrorPanel } from './FlowErrorPanel';
 import { ReviewPlaceholder } from './ReviewPlaceholder';
 
@@ -28,17 +28,31 @@ describe('FlowErrorPanel', () => {
   });
 });
 
-describe('ConsentPlaceholder', () => {
-  it('explains that cloud scanning needs consent and goes back', async () => {
-    const onBack = vi.fn();
-    render(<ConsentPlaceholder onBack={onBack} />);
-    expect(
-      screen.getByText(
-        "On-device AI isn't available in this browser. Cloud scanning with your consent is coming next.",
-      ),
-    ).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(onBack).toHaveBeenCalledOnce();
+describe('FlowErrorPanel after a consented cloud scan', () => {
+  it('never claims nothing was sent, and leads back to the options', async () => {
+    const onTryAgain = vi.fn();
+    render(
+      <FlowErrorPanel
+        error={createAppError('Unknown', { message: 'x' })}
+        onTryAgain={onTryAgain}
+        cloud
+      />,
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Traceless kept nothing');
+    expect(alert).not.toHaveTextContent(/Nothing was sent/i);
+    await userEvent.click(screen.getByRole('button', { name: 'Back to the options' }));
+    expect(onTryAgain).toHaveBeenCalledOnce();
+  });
+
+  it.each(APP_ERROR_KINDS)('has cloud copy for %s that never claims nothing left', (kind) => {
+    const message = cloudScanErrorMessage(kind);
+    expect(message.length).toBeGreaterThan(20);
+    expect(message).not.toMatch(/guarantee/i);
+    expect(message).not.toContain(kind);
+    if (!['CloudScanDisabled', 'ConsentRequired'].includes(kind)) {
+      expect(message).not.toMatch(/nothing was sent anywhere/i);
+    }
   });
 });
 
@@ -53,5 +67,23 @@ describe('ReviewPlaceholder', () => {
     expect(screen.getByText(text)).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Back to edit' }));
     expect(onBackToEdit).toHaveBeenCalledOnce();
+  });
+});
+
+describe('FlowErrorPanel later in a flow checked in the cloud', () => {
+  it('says nothing reached the organization, never that nothing was sent anywhere', async () => {
+    const onTryAgain = vi.fn();
+    render(
+      <FlowErrorPanel
+        error={createAppError('Unknown', { message: 'x' })}
+        onTryAgain={onTryAgain}
+        afterCloud
+      />,
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Nothing has been sent to the organization.');
+    expect(alert).not.toHaveTextContent(/anywhere/);
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onTryAgain).toHaveBeenCalledOnce();
   });
 });
