@@ -9,8 +9,18 @@ _Atualizado pelo manager a cada iteração._
   3. ⏳ Fase 4: ✅ envio + chave do caso + /case + regras com testes no emulador (`9ec25f3`…`6071748`, 2008 testes + 31 de regras; revisão opus + 1 rodada). ⏳ `structureReport` híbrido (implementer opus em andamento).
   4. ✅ Polimento (`c04c61d`) + deploy (16/11: regras, Remote Config e hosting publicados pelo participante; envio real → chave → /case verificado à mão no site). ⏳ Bugs do teste no navegador (texto reescrito quebrado, assinatura, cartões duplicados, risco que não cai, retry de 5xx), implementer opus em andamento. Depois: commit + `deploy:hosting` de novo.
   - Teste E2E: Playwright 1.65.1 instalado (devDependency; o roteiro de teste está em `node_modules/.walk.mjs`, não versionado). No headless, o App Check com reCAPTCHA dá 403 (esperado com robôs).
-  5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable. **Adiado pelo participante (16/11): foco no MVP primeiro.**
+  5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable. **Adiado pelo participante (16/11): foco no MVP primeiro.** Teste E2E com Playwright pronto (`610fb56`, 6/6, job no CI verde).
   - Cortado (roadmap): rights advisor, UI de quem investiga, triageCase, respostas ao denunciante.
+- **PRÓXIMO PASSO (pedido do participante em 16/11, para 17/11): melhorar a detecção até recall estrito ≥ 0,70.** Hoje: 0,604 no split de teste (b065f9c). Plano a seguir:
+  1. **Integridade antes de tudo (consultar o Fable primeiro):** o split de teste já foi usado na rodada final. Medir de novo nele seria reaproveitar dados vistos. Proposta: criar `reports.v2` com um **novo split de teste** inventado (≥ 16 relatos, gold escrito antes de rodar), usar o dev antigo + o teste antigo como dev, pré-registrar os limiares em DECISIONS e rodar o novo teste **uma vez**. O README mostra as duas medições.
+  2. **Onde está a perda** (recall por categoria no teste final, em `eval/results/v2-single2-rules-test-*.json`): datas pessoais ~0,43, local ~0,58, função única ~0,56, turno ~0,71. Começar com `npm run eval:inspect` (ou a página /eval) sobre o dev para listar os erros por família.
+  3. **Alavancas, da mais barata para a mais cara**, sempre on-device (o texto bruto nunca vai para a nuvem sem consentimento):
+     - regras determinísticas novas para datas pessoais ("my birthday", "the day after my surgery", "when I came back from leave…"), lugares de 1ª pessoa ("my desk/station/bay…", "the [X] floor") e funções ("the only/one of two [role]");
+     - medir de novo o efeito das correções pós-portão (`1a43719`: intervalo de turno, assinatura, junção de sobreposições) só no dev;
+     - passada extra focada nas categorias fracas (estilo single3 só para DATE/LOCATION/ROLE), com latência máx ≤ 50 s no aparelho Medium;
+     - few-shots novos só com exemplos do dev.
+  4. **Guardas que não podem piorar:** ACCUSED ≤ 0,05, INCIDENT_FACT ≤ 0,10, precisão ≥ 0,35 (hoje 0,656), p50 ≤ 20 s, máx ≤ 60 s.
+  5. **Custo:** implementer opus nas regras e no prompt, reviewer opus; o participante roda o dev ×3 e depois o novo teste ×3 uma única vez no Chrome.
 - **MVP verificado (16/11):** bugs do teste no navegador corrigidos (`1a43719`, 2135 testes), hosting publicado de novo; o participante testou no Chrome com Nano: análise no aparelho → organizar → enviar → chave → /case, "tudo certo".
 - **Portão da Fase 2 (16/11): SHIP WITH DISCLOSED MISS.** Teste ×3 `v2-single2-rules`: recall estrito 0,604 (meta 0,70), ACCUSED 0,046, INCIDENT 0,030, precisão 0,656, p50 10,2 s / máx 36,7 s. Detecção congelada.
 - **Prazo:** **2026-11-30 às 19:00 GMT-3**. Rascunho até 28/11; congelamento em 25/11.
