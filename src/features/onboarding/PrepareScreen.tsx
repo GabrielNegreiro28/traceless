@@ -6,10 +6,12 @@ export interface PrepareScreenProps {
   /** Must start the download straight from this click (Chrome needs user activation). */
   readonly onPrepare: () => void;
   readonly onBack: () => void;
+  /** Leaves the download for the other ways to check (cloud with consent, basic check). */
+  readonly onShowOptions?: () => void;
 }
 
 /** One-time setup of the on-device model, started by the reporter's own click. */
-export function PrepareScreen({ progress, onPrepare, onBack }: PrepareScreenProps) {
+export function PrepareScreen({ progress, onPrepare, onBack, onShowOptions }: PrepareScreenProps) {
   const preparing = progress !== null;
   return (
     <section className="max-w-xl">
@@ -36,6 +38,11 @@ export function PrepareScreen({ progress, onPrepare, onBack }: PrepareScreenProp
         <Button onClick={onPrepare} loading={preparing}>
           Prepare private AI
         </Button>
+        {onShowOptions !== undefined && (
+          <Button variant="secondary" onClick={onShowOptions}>
+            Other ways to check
+          </Button>
+        )}
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
