@@ -32,6 +32,20 @@ export interface FakeIdentityScannerOptions {
 
 const DEFAULT_YIELDS = 3;
 
+/** The scan result a step stands for (shared with FakeConsentedIdentityScanner). */
+export function toResult(
+  step: FakeScanStep,
+  defaultSource: InferenceSourceKind,
+): Result<IdentityScanResult, AppError> {
+  if ('error' in step) return err(step.error);
+  return ok({
+    findings: [...step.findings],
+    protectedQuotes: [...(step.protectedQuotes ?? [])],
+    source: step.source ?? defaultSource,
+    retries: step.retries ?? 0,
+  });
+}
+
 /**
  * Deterministic IdentityScanner for tests, E2E and demo mode. Records every chunk it
  * receives and a start/end event log (to prove calls never overlap). No Firebase, no
@@ -62,22 +76,12 @@ export class FakeIdentityScanner implements IdentityScanner {
     for (let i = 0; i < (this.options.yields ?? DEFAULT_YIELDS); i++) await Promise.resolve();
     this.active -= 1;
     this.events.push(`end:${callIndex}`);
-    return this.toResult(this.stepFor(chunk, callIndex));
+    return toResult(this.stepFor(chunk, callIndex), this.options.source ?? 'ON_DEVICE');
   }
 
   private stepFor(chunk: RawText, callIndex: number): FakeScanStep {
     const step = this.options.steps?.[callIndex];
     if (step !== undefined) return step;
     return this.options.respond?.(chunk, callIndex) ?? { findings: [] };
-  }
-
-  private toResult(step: FakeScanStep): Result<IdentityScanResult, AppError> {
-    if ('error' in step) return err(step.error);
-    return ok({
-      findings: [...step.findings],
-      protectedQuotes: [...(step.protectedQuotes ?? [])],
-      source: step.source ?? this.options.source ?? 'ON_DEVICE',
-      retries: step.retries ?? 0,
-    });
   }
 }

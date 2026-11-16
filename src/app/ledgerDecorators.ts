@@ -73,6 +73,40 @@ export function withRulesOnlyLedger(
   };
 }
 
+/**
+ * Where a successful consented scan ran: `cloud` from the real result source (IN_CLOUD), or
+ * `local` for the demo scanner, which never sends anything.
+ */
+function consentedSource(result: ScanReportResult, kind: ScannerKind): LedgerSource {
+  if (kind === 'demo') return 'local';
+  return result.source === 'IN_CLOUD' ? 'cloud' : 'onDevice';
+}
+
+/**
+ * Records one CONSENTED_RAW identityScan entry per successful consented cloud scan; a refused
+ * consent, the kill switch or a failed scan record nothing (nothing was scanned).
+ */
+export function withCloudScanLedger(
+  scan: Services['scanWithCloudConsent'],
+  ledger: PrivacyLedger,
+  clock: Clock,
+  kind: ScannerKind,
+): Services['scanWithCloudConsent'] {
+  return async (text, consent, onProgress, isCancelled) => {
+    const result = await scan(text, consent, onProgress, isCancelled);
+    if (result.ok) {
+      ledger.record({
+        task: 'identityScan',
+        source: consentedSource(result.value, kind),
+        dataClass: 'CONSENTED_RAW',
+        demo: kind === 'demo',
+        at: clock.now(),
+      });
+    }
+    return result;
+  };
+}
+
 /** Records one SANITIZED approve entry per successful approval (plain code on this device). */
 export function withApprovalLedger(
   approve: Services['approveReport'],

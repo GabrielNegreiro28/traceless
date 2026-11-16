@@ -19,6 +19,7 @@ export const REMOTE_CONFIG_DEFAULTS = {
   cloud_model_name: 'gemini-3.5-flash-lite',
   rights_advice_enabled: true,
   identity_prompt_version: 'v1',
+  cloud_scan_enabled: true,
 } as const satisfies Readonly<Record<string, string | number | boolean>>;
 
 export type RemoteConfigKey = keyof typeof REMOTE_CONFIG_DEFAULTS;

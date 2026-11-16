@@ -1,63 +1,39 @@
 import { getPromptModule } from '../ai/prompts/promptRegistry';
 import { SHIPPED_SCAN_PIPELINE, type ScanPipelineSpec } from '../ai/prompts/scanPipelines';
 import { STRATEGIES } from '../ai/prompts/strategies';
-import type { DeviceCapability } from '../application/ports/DeviceCapability';
+import type { ConfigService } from '../application/ports/ConfigService';
+import type { ConsentedIdentityScanner } from '../application/ports/ConsentedIdentityScanner';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
-import type { PrivacyLedger, PrivacyLedgerView } from '../application/ports/PrivacyLedger';
-import {
-  approveReport,
-  type ApprovedReport,
-  type ApproveReportInput,
-} from '../application/usecases/approveReport';
-import { scanReport, type ScanReportResult } from '../application/usecases/scanReport';
-import {
-  scanReportRulesOnly,
-  type RulesOnlyScanResult,
-} from '../application/usecases/scanReportRulesOnly';
-import type { RawText } from '../domain/text/brandedText';
+import type { PrivacyLedger } from '../application/ports/PrivacyLedger';
+import { approveReport } from '../application/usecases/approveReport';
+import { scanReport } from '../application/usecases/scanReport';
+import { scanReportRulesOnly } from '../application/usecases/scanReportRulesOnly';
 import { systemClock } from '../infrastructure/clock/systemClock';
+import { FakeConfigService } from '../infrastructure/fakes/FakeConfigService';
+import { FakeConsentedIdentityScanner } from '../infrastructure/fakes/FakeConsentedIdentityScanner';
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
 import { FakeIdentityScanner } from '../infrastructure/fakes/FakeIdentityScanner';
 import { createInMemoryPrivacyLedger } from '../infrastructure/ledger/inMemoryPrivacyLedger';
-import type { AppError } from '../shared/appError';
-import type { Result } from '../shared/result';
+import { bindCloudScan, createConfigService, createConsentedCloudScanner } from './cloudAi';
 import type { AppEnv } from './env';
 import {
   ledgerView,
   withApprovalLedger,
+  withCloudScanLedger,
   withRulesOnlyLedger,
   withScanLedger,
   type ScannerKind,
 } from './ledgerDecorators';
 import { createOnDeviceInfra, createRealAi, type AiServices, type ScanGroups } from './onDeviceAi';
+import type { Services } from './servicesContract';
+
+export type { ProgressCallback, Services } from './servicesContract';
 
 /**
  * Composition root (PLANO §1, rule 1): the only place that picks concrete adapters.
  * The app builds these services once in src/app/bootstrap.ts and hands them to features
  * through the ServicesProvider (features read them with useServices()).
  */
-
-export type ProgressCallback = (done: number, total: number) => void;
-
-export interface Services {
-  readonly identityScanner: IdentityScanner;
-  readonly deviceCapability: DeviceCapability;
-  readonly scanReport: (
-    text: RawText,
-    onProgress?: ProgressCallback,
-    /** Polled before each chunk; when true the scan stops with a Cancelled error. */
-    isCancelled?: () => boolean,
-  ) => Promise<Result<ScanReportResult, AppError>>;
-  /**
-   * "Continue with basic checks" after a terminal on-device stall (§G.2): pattern rules only,
-   * never a model; recorded in the privacy ledger with source `rules`.
-   */
-  readonly scanRulesOnly: (text: RawText) => RulesOnlyScanResult;
-  /** The only way features create SanitizedText (the reporter's explicit approval). */
-  readonly approveReport: (input: ApproveReportInput) => Result<ApprovedReport, AppError>;
-  /** Session-only record of what happened to the text (read-only; the root records). */
-  readonly privacyLedger: PrivacyLedgerView;
-}
 
 /** What defines a scanner pipeline; the eval variant registry satisfies it structurally. */
 export type ScanVariantSpec = ScanPipelineSpec;
@@ -71,7 +47,15 @@ export type ScanVariantSpec = ScanPipelineSpec;
  */
 const DEFAULT_VARIANT: ScanVariantSpec = SHIPPED_SCAN_PIPELINE;
 
-export interface ServiceOptions {
+/** Test doubles for fake AI mode (ignored with real AI, except `config`). */
+export interface ServiceFakes {
+  /** The consented cloud demo scanner (default: answers no findings, IN_CLOUD). */
+  readonly fakeConsentedScanner?: ConsentedIdentityScanner;
+  /** Replaces the config service in any mode (tests of the kill switch). */
+  readonly config?: ConfigService;
+}
+
+export interface ServiceOptions extends ServiceFakes {
   /** Scan variant; only the developer evaluation page overrides the default. */
   readonly variant?: ScanVariantSpec;
   /** Fake AI mode only: the demo scanner to use (tests); ignored with real AI. */
@@ -101,28 +85,47 @@ function bindScanReport(
     );
 }
 
-/** Shared by every variant: one ledger per app, and whether the scanner is the demo fake. */
-interface LedgerContext {
+/** Shared by every variant: one ledger and one config per app, and whether AI is the demo. */
+interface AppContext {
   readonly ledger: PrivacyLedger;
   readonly kind: ScannerKind;
+  readonly config: ConfigService;
 }
 
-function buildServices(ai: AiServices, variant: ScanVariantSpec, context: LedgerContext): Services {
-  const { ledger, kind } = context;
+interface VariantAi extends AiServices {
+  readonly consentedScanner: ConsentedIdentityScanner;
+}
+
+function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppContext): Services {
+  const { ledger, kind, config } = context;
+  const { consentedScanner, ...onDevice } = ai;
   const scan = bindScanReport(ai.identityScanner, variant);
+  const cloudScan = bindCloudScan(consentedScanner, config, variant);
   const approve: Services['approveReport'] = (input) =>
     approveReport(input, { clock: systemClock });
   return {
-    ...ai,
+    ...onDevice,
     scanReport: withScanLedger(scan, ledger, systemClock, kind),
+    scanWithCloudConsent: withCloudScanLedger(cloudScan, ledger, systemClock, kind),
     scanRulesOnly: withRulesOnlyLedger(scanReportRulesOnly, ledger, systemClock),
     approveReport: withApprovalLedger(approve, ledger),
     privacyLedger: ledgerView(ledger),
+    config,
+    demoAi: kind === 'demo',
   };
 }
 
 function variantKey(v: ScanVariantSpec): string {
   return `${v.promptVersion}|${v.strategy}|${v.chunkChars}|${v.postFilters.join(',')}|${v.rulePack}`;
+}
+
+function appContext(env: AppEnv, demo: boolean, fakes: ServiceFakes): AppContext {
+  const fallback = demo ? new FakeConfigService() : createConfigService(env);
+  return {
+    ledger: createInMemoryPrivacyLedger(),
+    kind: demo ? 'demo' : 'onDevice',
+    config: fakes.config ?? fallback,
+  };
 }
 
 /**
@@ -133,12 +136,10 @@ function variantKey(v: ScanVariantSpec): string {
 export function createVariantServices(
   env: AppEnv,
   fakeScanner?: IdentityScanner,
+  fakes: ServiceFakes = {},
 ): (variant: ScanVariantSpec) => Services {
   const infra = env.aiMode === 'fake' ? null : createOnDeviceInfra();
-  const context: LedgerContext = {
-    ledger: createInMemoryPrivacyLedger(),
-    kind: infra === null ? 'demo' : 'onDevice',
-  };
+  const context = appContext(env, infra === null, fakes);
   const cache = new Map<string, Services>();
   return (variant) => {
     const key = variantKey(variant);
@@ -147,8 +148,16 @@ export function createVariantServices(
     const prompt = getPromptModule(variant.promptVersion);
     if (prompt === undefined) throw new Error(`Unknown prompt version: ${variant.promptVersion}`);
     const groups: ScanGroups = STRATEGIES[variant.strategy];
-    const ai =
-      infra === null ? createFakeAi(fakeScanner) : createRealAi(env, groups, prompt, infra);
+    const ai: VariantAi =
+      infra === null
+        ? {
+            ...createFakeAi(fakeScanner),
+            consentedScanner: fakes.fakeConsentedScanner ?? new FakeConsentedIdentityScanner(),
+          }
+        : {
+            ...createRealAi(env, groups, prompt, infra),
+            consentedScanner: createConsentedCloudScanner(env, groups, prompt),
+          };
     const services = buildServices(ai, variant, context);
     cache.set(key, services);
     return services;
@@ -157,5 +166,9 @@ export function createVariantServices(
 
 /** Builds the app services: deterministic fakes for `fake` AI mode, Chrome + Firebase otherwise. */
 export function createServices(env: AppEnv, options: ServiceOptions = {}): Services {
-  return createVariantServices(env, options.fakeScanner)(options.variant ?? DEFAULT_VARIANT);
+  return createVariantServices(
+    env,
+    options.fakeScanner,
+    options,
+  )(options.variant ?? DEFAULT_VARIANT);
 }

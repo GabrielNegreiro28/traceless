@@ -84,17 +84,19 @@ describe('/report flow on fake services', () => {
     await heading('Review your report');
   });
 
-  it('explains that consent is needed when on-device AI is unavailable', async () => {
+  it('offers the other ways to check, without scanning, when on-device AI is unavailable', async () => {
     const deviceCapability = new FakeDeviceCapability({ availability: 'unavailable' });
     const scan = controllableScan();
     openReport({ deviceCapability, scanReport: scan.scanReport });
     await click('Try a sample report');
     await click('Check my report');
 
-    await heading("We can't check privately here");
-    expect(screen.getByText(/Cloud scanning with your consent is coming next/)).toBeVisible();
+    await heading('Choose how to check your report');
+    expect(
+      screen.getByText(/Nothing leaves this device unless you choose the cloud check/),
+    ).toBeVisible();
     expect(scan.calls).toHaveLength(0);
-    await click('Back');
+    await click('Back to edit');
     await heading('Write your report');
   });
 });

@@ -1,20 +1,23 @@
 import { useEffect, useRef } from 'react';
 import { ComposeScreen } from '../features/compose/ComposeScreen';
+import { CheckOptions } from '../features/onboarding/CheckOptions';
 import { PrepareScreen } from '../features/onboarding/PrepareScreen';
 import { ApprovalErrorPanel } from '../features/outbox/ApprovalErrorPanel';
 import { ApprovedScreen } from '../features/outbox/ApprovedScreen';
 import { OutboxScreen } from '../features/outbox/OutboxScreen';
 import { PrivacyLedgerPanel } from '../features/privacy/PrivacyLedgerPanel';
-import { ConsentPlaceholder } from '../features/review/ConsentPlaceholder';
+import { CloudModeChip } from '../features/review/CloudModeChip';
 import { FlowErrorPanel } from '../features/review/FlowErrorPanel';
 import { copyToClipboard, reloadPage } from '../features/review/pageActions';
 import type { ErrorState, FlowState } from '../features/review/reportFlowMachine';
 import { isStall } from '../features/review/reportFlowStall';
 import { ReviewScreen } from '../features/review/ReviewScreen';
+import { isCloudMode } from '../features/review/scanSource';
 import { StallPanel } from '../features/review/StallPanel';
 import { useReportFlow, type ReportFlow } from '../features/review/useReportFlow';
 import { ScanningScreen } from '../features/scanning/ScanningScreen';
 import { Button } from '../ui';
+import { useServices } from './services/useServices';
 
 /** Moves focus to the new screen's heading whenever the flow changes screen. */
 function useFocusHeadingOnTransition(status: FlowState['status']): void {
@@ -44,9 +47,11 @@ function NotReady({ onReset }: { readonly onReset: () => void }) {
 
 /** An approval error, a stalled on-device scan (§G.2), or any other error. */
 function errorScreenFor(flow: ReportFlow, state: ErrorState) {
+  const afterCloud = 'checks' in state.previous && state.previous.checks === 'cloud';
   if (state.previous.status === 'outbox') {
     return (
       <ApprovalErrorPanel
+        cloud={afterCloud}
         error={state.error}
         onBackToReview={flow.backToReview}
         onBackToOutbox={flow.backToEdit}
@@ -66,10 +71,20 @@ function errorScreenFor(flow: ReportFlow, state: ErrorState) {
       />
     );
   }
-  return <FlowErrorPanel error={state.error} onTryAgain={flow.backToEdit} />;
+  // A failed consented cloud scan returns to the options screen.
+  const cloud = state.previous.status === 'needsConsent';
+  return (
+    <FlowErrorPanel
+      error={state.error}
+      onTryAgain={flow.backToEdit}
+      cloud={cloud}
+      afterCloud={afterCloud}
+    />
+  );
 }
 
-function screenFor(flow: ReportFlow) {
+/** `demo`: the demo scanner stands in for the AI, so no screen may call its results AI. */
+function screenFor(flow: ReportFlow, demo: boolean) {
   const { state } = flow;
   switch (state.status) {
     case 'composing':
@@ -82,15 +97,31 @@ function screenFor(flow: ReportFlow) {
         />
       );
     case 'scanning':
-      return <ScanningScreen progress={state.progress} onCancel={flow.cancelScan} />;
+      return (
+        <ScanningScreen
+          progress={state.progress}
+          onCancel={flow.cancelScan}
+          mode={state.mode}
+          demo={demo}
+        />
+      );
     case 'needsConsent':
-      return <ConsentPlaceholder onBack={flow.backToEdit} />;
+      return (
+        <CheckOptions
+          text={state.text}
+          onCloudScan={flow.startCloudScan}
+          onBasicCheck={flow.runBasicCheck}
+          onBack={flow.backToEdit}
+          copyText={copyToClipboard}
+        />
+      );
     case 'needsPrepare':
       return (
         <PrepareScreen
           progress={state.progress}
           onPrepare={flow.prepare}
           onBack={flow.backToEdit}
+          onShowOptions={flow.showOptions}
         />
       );
     case 'reviewing':
@@ -101,6 +132,7 @@ function screenFor(flow: ReportFlow) {
           onUndo={flow.undoDecision}
           onBackToEdit={flow.backToEdit}
           onContinue={flow.openOutbox}
+          demo={demo}
         />
       );
     case 'outbox':
@@ -108,7 +140,7 @@ function screenFor(flow: ReportFlow) {
         <OutboxScreen state={state} onApprove={flow.approve} onBackToReview={flow.backToEdit} />
       );
     case 'approved':
-      return <ApprovedScreen state={state} onBack={flow.backToEdit} />;
+      return <ApprovedScreen state={state} onBack={flow.backToEdit} demo={demo} />;
     case 'error':
       return errorScreenFor(flow, state);
     case 'submitting':
@@ -127,10 +159,12 @@ const LEDGER_STATUSES: ReadonlySet<FlowState['status']> = new Set([
 /** /report route: the reporter's flow, one screen per state of the reducer. */
 export function ReportPage() {
   const flow = useReportFlow();
+  const { demoAi } = useServices();
   useFocusHeadingOnTransition(flow.state.status);
   return (
     <>
-      {screenFor(flow)}
+      {isCloudMode(flow.state) && <CloudModeChip demo={demoAi} />}
+      {screenFor(flow, demoAi)}
       {LEDGER_STATUSES.has(flow.state.status) && (
         <div className="mt-8">
           <PrivacyLedgerPanel />
