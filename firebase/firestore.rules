@@ -1,8 +1,65 @@
 rules_version = '2';
 
-// Deny-all until the report/message rules land with their emulator tests (Fase 4).
+// Traceless security rules (PLANO §3.5, Fase 4). Tested in tests/rules/ against the emulator.
+//
+// - Reporters (anonymous Firebase Auth) may CREATE a report with an exact, validated shape and
+//   GET one report by its id, the 128-bit case key (ADR 0003). They can never LIST reports,
+//   and never update or delete one.
+// - Handlers (uid listed in orgs/{orgId}/handlers/{uid}) may list and get the reports of their
+//   org and change only `status`.
+// - Everything else, including the messages subcollection (cut from this release), is denied.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAnonymous() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    function isHandler(orgId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/orgs/$(orgId)/handlers/$(request.auth.uid));
+    }
+
+    // Same values as CASE_STATUSES in src/domain/case/caseStatus.ts.
+    function isCaseStatus(value) {
+      return value in ['received', 'acknowledged', 'feedbackGiven', 'closed'];
+    }
+
+    // The case key: 22 base62 characters (src/domain/case/caseKey.ts).
+    function isCaseKey(id) {
+      return id.matches('^[0-9A-Za-z]{22}$');
+    }
+
+    function isValidNewReport(data) {
+      return data.keys().hasOnly(['sanitizedText', 'category', 'status', 'createdAt', 'schemaVersion'])
+        && data.keys().hasAll(['sanitizedText', 'status', 'createdAt', 'schemaVersion'])
+        && data.sanitizedText is string
+        && data.sanitizedText.size() >= 1
+        && data.sanitizedText.size() <= 6000
+        && (!('category' in data) || (data.category is string
+          && data.category.size() >= 1 && data.category.size() <= 100))
+        && data.status == 'received'
+        && data.createdAt == request.time
+        && data.schemaVersion == 1;
+    }
+
+    function changesOnlyStatus() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && isCaseStatus(request.resource.data.status);
+    }
+
+    match /orgs/{orgId}/reports/{caseKey} {
+      allow create: if isAnonymous() && isCaseKey(caseKey) && isValidNewReport(request.resource.data);
+      allow get: if signedIn();
+      allow list: if isHandler(orgId);
+      allow update: if isHandler(orgId) && changesOnlyStatus();
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

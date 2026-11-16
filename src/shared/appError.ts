@@ -48,6 +48,13 @@ export type AppError =
   | BaseError<'CloudScanDisabled'>
   /** A cloud scan was asked for without a valid, explicit consent for this exact text. */
   | BaseError<'ConsentRequired'>
+  /** The requested record (for example a case looked up by its key) does not exist. */
+  | BaseError<'NotFound'>
+  /**
+   * A send whose outcome is unknown: it timed out or failed after the write was committed to
+   * the server, so the report may have arrived. Never reported as "not sent".
+   */
+  | BaseError<'SubmitUnconfirmed'>
   | BaseError<'Unknown'>;
 
 export type AppErrorKind = AppError['kind'];
@@ -72,6 +79,8 @@ export const APP_ERROR_KINDS: readonly AppErrorKind[] = [
   'ContentBlocked',
   'CloudScanDisabled',
   'ConsentRequired',
+  'NotFound',
+  'SubmitUnconfirmed',
   'Unknown',
 ];
 
