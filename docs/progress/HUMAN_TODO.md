@@ -4,9 +4,13 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Publicar a configuração remota (2 min, quando puder).** O sistema não me deixou publicar sozinho.
-  1. No Claude Code, digite: `! npx firebase deploy --only remoteconfig --project traceless-92f85`
-  2. Deve aparecer "Deploy complete!". Não é urgente: o app funciona sem isso, porque o modo nuvem já vem ligado por padrão.
+- [ ] **Firebase: proteger o banco e publicar regras e configuração (~5 min, hoje ou amanhã).**
+  1. Abra https://console.firebase.google.com → projeto **traceless-92f85**.
+  2. Menu **Security → App Check** → aba **APIs** → linha **Cloud Firestore** → clique em **Enforce** e confirme. Deve aparecer "Enforced", como já aparece no Firebase AI Logic.
+  3. No Claude Code, digite: `! npm run deploy:rules`. Deve aparecer **"Deploy complete!"**. Isso publica as regras de segurança do banco.
+  4. Digite também: `! npm run deploy:config`. Deve aparecer **"Deploy complete!"**.
+  5. Avise no chat: "fiz o firebase".
+  - O login anônimo já está ativado (conferido em 12/11). Não precisa mexer.
 
 
 - [x] **(Concluído 16/11) Avaliação final no Chrome (16/11, ~30–45 min, pode deixar rodando sozinho). Só pode ser feita UMA vez.**
@@ -29,6 +33,12 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
   7. Avise no chat: "rodei o round 2".
   - **Não rode o preset 6 (Full evaluation / test split).** Ele só pode ser rodado uma única vez, e o manager vai pedir na hora certa.
 
+
+## Arquivos a remover (o manager não apaga nada)
+
+- `src/app/PlaceholderPage.tsx` (não é mais usado)
+- `src/features/review/ConsentPlaceholder.tsx` (não é mais usado)
+- `src/features/review/ReviewScreen.layout.snip` e `ReviewScreen.layout.tmp` (sobras)
 
 ## Concluídos
 

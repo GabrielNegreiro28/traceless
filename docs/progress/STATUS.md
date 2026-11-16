@@ -5,8 +5,8 @@ _Atualizado pelo manager a cada iteração._
 - **Data da última atualização:** 2026-11-16
 - **Plano ENXUTO (escolhido pelo participante em 16/11; ver DECISIONS.md):** faltam 5 tarefas:
   1. ✅ Modo nuvem com consentimento + checagem básica + passos para ativar o modo local (commits `79a14bd`…`8b2eadc`, 1876 testes, revisão opus + 1 rodada).
-  2. ⏳ Congelar a detecção (`v2-single2-rules` no produto, Second look obrigatório, textos honestos), implementer sonnet em andamento.
-  3. Fase 4: envio do texto limpo ao Firestore com chave do caso + `structureReport` na nuvem sobre SanitizedText (revisão opus).
+  2. ✅ Detecção congelada (`b065f9c`): `v2-single2-rules` no produto, Second look obrigatório, textos honestos.
+  3. ⏳ Fase 4: ✅ envio + chave do caso + /case + regras com testes no emulador (`9ec25f3`…`6071748`, 2008 testes + 31 de regras; revisão opus + 1 rodada). ⏳ `structureReport` híbrido (implementer opus em andamento).
   4. Deploy + um passe de polimento.
   5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable.
   - Cortado (roadmap): rights advisor, UI de quem investiga, triageCase, respostas ao denunciante.
