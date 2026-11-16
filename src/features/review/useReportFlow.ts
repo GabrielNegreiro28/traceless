@@ -9,6 +9,7 @@ import { toRawText } from '../../domain/text/brandedText';
 import { createAppError, type AppError } from '../../shared/appError';
 import { logger } from '../../shared/logger';
 import { err, type Result } from '../../shared/result';
+import { useSubmission, type Submission } from '../submit/useSubmission';
 import {
   INITIAL_FLOW_STATE,
   reportFlowReducer,
@@ -43,6 +44,8 @@ export interface ReportFlow extends StallActions, CheckOptionActions {
   /** From an approval error: reopens the review the outbox came from. */
   readonly backToReview: () => void;
   readonly reset: () => void;
+  /** Sending the approved report and the case key shown once (Fase 4). */
+  readonly submission: Submission;
 }
 
 /** The port never throws; a rejection anyway reads as "unavailable" (the safe, local-only path). */
@@ -94,6 +97,7 @@ export function useReportFlow(): ReportFlow {
   useOnDeviceScan(state, dispatch, scanReport);
   useConsentedCloudScan(state, dispatch, scanWithCloudConsent);
   const approve = useApproval(state, dispatch);
+  const submission = useSubmission(state, dispatch);
 
   const nextScanId = useCallback((): string => {
     scanCounter.current += 1;
@@ -198,6 +202,7 @@ export function useReportFlow(): ReportFlow {
     backToEdit,
     backToReview,
     reset,
+    submission,
     ...stall,
     ...options,
   };

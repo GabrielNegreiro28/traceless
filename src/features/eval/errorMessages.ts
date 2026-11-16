@@ -41,6 +41,10 @@ export function friendlyKindMessage(kind: AppErrorKind): string {
       return 'The consented cloud scan is switched off (cloud_scan_enabled).';
     case 'ConsentRequired':
       return 'A cloud scan was requested without a valid consent.';
+    case 'NotFound':
+      return 'The requested record does not exist.';
+    case 'SubmitUnconfirmed':
+      return 'The send could not be confirmed; the report may have arrived.';
     case 'Unknown':
       return 'Something went wrong. Reload the page and try again.';
   }

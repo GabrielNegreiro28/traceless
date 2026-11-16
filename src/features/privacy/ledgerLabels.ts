@@ -5,10 +5,14 @@ import type { LedgerEntry, LedgerTask } from '../../application/ports/PrivacyLed
 const TASK_LABELS: Readonly<Record<LedgerTask, string>> = {
   identityScan: 'Identity scan',
   approve: 'Approval',
+  submit: 'Sent to the organization',
 };
 
 /** Where it ran. The demo scanner is labelled so fake mode never reads as on-device AI. */
 export function whereLabel(entry: LedgerEntry): string {
+  if (entry.task === 'submit') {
+    return entry.demo ? 'demo mode, kept in this tab' : 'to the organization (Firestore)';
+  }
   switch (entry.source) {
     case 'onDevice':
       return 'on your device (on-device AI)';
@@ -23,6 +27,7 @@ export function whereLabel(entry: LedgerEntry): string {
 
 /** What happened to the text in that step. */
 export function whatLabel(entry: LedgerEntry): string {
+  if (entry.task === 'submit') return 'only the text you approved';
   if (entry.dataClass === 'SANITIZED') return 'created the text you approved';
   return entry.source === 'cloud'
     ? 'your original text, sent for this scan only'

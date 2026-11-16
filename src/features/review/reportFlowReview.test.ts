@@ -232,4 +232,21 @@ describe('reportFlowReducer: outbox, approval and submission', () => {
     expect(next).toEqual({ status: 'error', error: FAILURE, previous: approved() });
     expect(reportFlowReducer(next, { type: 'BACK_TO_EDIT' })).toEqual(approved());
   });
+
+  it('a failed send retries through approved: error → approved → submitting → submitted', () => {
+    const failed = reportFlowReducer(submitting(), { type: 'SUBMIT_FAILED', error: FAILURE });
+    expect(reportFlowReducer(failed, { type: 'SUBMIT' })).toBe(failed);
+    const retried = [{ type: 'BACK_TO_EDIT' }, { type: 'SUBMIT' }] as const;
+    const sending = retried.reduce<FlowState>(reportFlowReducer, failed);
+    expect(sending.status).toBe('submitting');
+    const sent = reportFlowReducer(sending, { type: 'SUBMIT_OK', caseKeyPresent: true });
+    expect(sent).toEqual({ status: 'submitted', caseKeyPresent: true });
+  });
+
+  it('submitted keeps no report text and no case key', () => {
+    const sent = reportFlowReducer(submitting(), { type: 'SUBMIT_OK', caseKeyPresent: true });
+    expect(JSON.stringify(sent)).not.toContain(TEXT);
+    expect(Object.keys(sent).sort()).toEqual(['caseKeyPresent', 'status']);
+    expect(reportFlowReducer(sent, { type: 'SUBMIT' })).toBe(sent);
+  });
 });

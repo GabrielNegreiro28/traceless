@@ -1,24 +1,34 @@
 import { useId } from 'react';
 import { Button } from '../../ui';
 import { CheckedBadge } from '../review/CheckedBadge';
-import type { ApprovedState } from '../review/reportFlowTypes';
+import type { ApprovedState, SubmittingState } from '../review/reportFlowTypes';
 import { ReportText } from './ReportText';
 
 export interface ApprovedScreenProps {
-  readonly state: ApprovedState;
+  /** `submitting` shows the same text while it is being sent. */
+  readonly state: ApprovedState | SubmittingState;
   /** Discards the approval and returns to the outbox. */
   readonly onBack: () => void;
+  /** Sends exactly this text to the organization. */
+  readonly onSend: () => void;
   /** True when the demo scanner stood in for the AI (never labelled as AI). */
   readonly demo?: boolean;
 }
 
+function sendNote(sending: boolean, demo: boolean): string {
+  if (sending) return 'Sending only the approved text. Keep this tab open.';
+  if (demo) return 'Demo mode: the report stays in this tab. You will get a case key to follow up.';
+  return 'Only this text is sent. You will get a case key to follow up, no account needed.';
+}
+
 /**
- * The approved (sanitized) text, exactly as the organization would receive it, with a badge
- * saying how it was checked (derived from the scan, never hardcoded). Sending is the next
- * phase: the button is shown disabled with a note and never dispatches SUBMIT.
+ * The approved (sanitized) text, exactly as the organization will receive it, with a badge
+ * saying how it was checked (derived from the scan, never hardcoded), and "Send to
+ * organization". Sending needs a connection; it signs in anonymously only at that moment.
  */
-export function ApprovedScreen({ state, onBack, demo = false }: ApprovedScreenProps) {
+export function ApprovedScreen({ state, onBack, onSend, demo = false }: ApprovedScreenProps) {
   const noteId = useId();
+  const sending = state.status === 'submitting';
   return (
     <section>
       <h1 id="screen-heading" tabIndex={-1} className="text-3xl font-bold tracking-tight">
@@ -31,14 +41,14 @@ export function ApprovedScreen({ state, onBack, demo = false }: ApprovedScreenPr
         <ReportText text={state.report.text} label="Approved text" />
       </div>
       <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-4">
-        <Button variant="secondary" onClick={onBack}>
+        <Button variant="secondary" onClick={onBack} disabled={sending}>
           Back
         </Button>
-        <Button disabled aria-describedby={noteId}>
-          Send report
+        <Button onClick={onSend} loading={sending} aria-describedby={noteId}>
+          {sending ? 'Sending…' : 'Send to organization'}
         </Button>
-        <p id={noteId} className="text-muted">
-          Sending arrives in the next version.
+        <p id={noteId} className="text-muted" aria-live="polite">
+          {sendNote(sending, demo)}
         </p>
       </div>
     </section>

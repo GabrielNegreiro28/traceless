@@ -37,6 +37,9 @@ const MESSAGES: Readonly<Record<AppErrorKind, string>> = {
     'Checking in the cloud is temporarily unavailable. Nothing was sent. You can run the basic private check instead.',
   ConsentRequired:
     'Checking in the cloud needs your explicit agreement for this exact text, so nothing was sent. Choose the cloud option again to agree.',
+  NotFound: 'Something went wrong. Please try again.',
+  SubmitUnconfirmed:
+    "We couldn't confirm your report arrived. It may have reached the organization. Your text stays in this tab.",
   Unknown: 'Something went wrong. Nothing was sent anywhere. Please try again.',
 };
 
