@@ -11,6 +11,7 @@ _Atualizado pelo manager a cada iteração._
   - Teste E2E: Playwright 1.65.1 instalado (devDependency; o roteiro de teste está em `node_modules/.walk.mjs`, não versionado). No headless, o App Check com reCAPTCHA dá 403 (esperado com robôs).
   5. README, diagrama, Devpost, roteiro do vídeo + auditoria do Fable. **Adiado pelo participante (16/11): foco no MVP primeiro.**
   - Cortado (roadmap): rights advisor, UI de quem investiga, triageCase, respostas ao denunciante.
+- **MVP verificado (16/11):** bugs do teste no navegador corrigidos (`1a43719`, 2135 testes), hosting publicado de novo; o participante testou no Chrome com Nano: análise no aparelho → organizar → enviar → chave → /case, "tudo certo".
 - **Portão da Fase 2 (16/11): SHIP WITH DISCLOSED MISS.** Teste ×3 `v2-single2-rules`: recall estrito 0,604 (meta 0,70), ACCUSED 0,046, INCIDENT 0,030, precisão 0,656, p50 10,2 s / máx 36,7 s. Detecção congelada.
 - **Prazo:** **2026-11-30 às 19:00 GMT-3**. Rascunho até 28/11; congelamento em 25/11.
 

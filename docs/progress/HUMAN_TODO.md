@@ -4,7 +4,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Publicar a versão corrigida e testar o modo LOCAL (no seu Chrome com o Gemini Nano), ~10 min.**
+- [x] **(Concluído 16/11: "tudo certo") Publicar a versão corrigida e testar o modo LOCAL (no seu Chrome com o Gemini Nano), ~10 min.**
   1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
   2. No seu Chrome **normal** (não anônimo; é nele que a flag do Gemini Nano está ligada), abra https://traceless-92f85.web.app
   3. **Try a sample report** → **Check my report**. Se aparecer "Prepare private AI", clique e espere. A análise deve rodar **no seu computador** (selo "Checked on your device"), em cerca de 10–40 s.
