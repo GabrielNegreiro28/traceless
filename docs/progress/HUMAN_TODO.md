@@ -13,7 +13,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 - [ ] **Até 23/11: decidir sobre o e-mail nos commits.** O histórico do GitHub mostra seu e-mail pessoal como autor de todos os commits. Quando o repositório ficar público, qualquer pessoa vê. Opções: (a) aceitar; (b) a partir de agora usar o e-mail "noreply" do GitHub (os commits antigos continuam com o e-mail atual, porque reescrever o histórico não é permitido). Me diga qual prefere.
 
-- [ ] **21–23/11: gravar e publicar o vídeo** (o manager vai deixar o roteiro, a lista de cenas e as legendas prontas em inglês antes disso; instruções detalhadas virão aqui).
+- [ ] **21–23/11: gravar e publicar o vídeo.** Tudo pronto em `docs/submission/`: siga o guia em português `docs/submission/recording-guide.pt.md` (OBS → Clipchamp com voz em inglês → YouTube público com as legendas `video-captions.srt`). O roteiro com as cenas está em `docs/submission/video-script.md`. No ensaio, teste a cena "offline" antes de gravar e me avise se algo falhar. Também tire as 2 capturas de tela (`docs/screenshots/review.png` e `outbox.png`, no site com o Nano) e exporte o diagrama em PNG, como explica o guia. Cole o link do YouTube no chat.
 
 - [ ] **Até 23/11: tornar o repositório público** (o manager avisa quando o README estiver pronto e manda os passos).
 
