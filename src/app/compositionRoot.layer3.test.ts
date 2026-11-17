@@ -114,4 +114,15 @@ describe('round-3 pipelines (real AI mode, SDK mocked)', () => {
     expect(sdk.generateContent).toHaveBeenCalledTimes(2);
     expect(systemPromptOf(0)).toBe(investigatorSystemPrompt(MODEL_FINDING_CATEGORIES));
   });
+
+  it('without window.LanguageModel a verify pipeline calls no model and fails OnDeviceUnavailable', async () => {
+    vi.unstubAllGlobals();
+    expect('LanguageModel' in globalThis).toBe(false);
+    const services = createVariantServices(REAL_ENV)(v3Pipeline({ base: false, verify: true }));
+    const result = await services.scanReport(REPORT);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.kind).toBe('OnDeviceUnavailable');
+    expect(sdk.getGenerativeModel).not.toHaveBeenCalled();
+    expect(sdk.generateContent).not.toHaveBeenCalled();
+  });
 });

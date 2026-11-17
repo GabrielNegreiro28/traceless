@@ -19,6 +19,8 @@ export type ScanOutcome =
       /** Raw model findings whose quote resolved to zero spans. */
       readonly unlocatedModelFindings: number;
       readonly durationMs: number;
+      /** Time in the verifier pass (0 when the scan had none). */
+      readonly verifyMs: number;
     }
   | { readonly ok: false; readonly errorKind: AppErrorKind };
 
@@ -43,6 +45,8 @@ export interface ReportCounts {
   readonly scanned: boolean;
   readonly errorKind: AppErrorKind | null;
   readonly durationMs: number | null;
+  /** Time in the verifier pass; null when the scan failed. Absent in older result files. */
+  readonly verifyMs: number | null;
   /** Gold spans of the report, counted even when the scan failed. */
   readonly goldAll: number;
   /** Gold spans of successfully scanned reports. */

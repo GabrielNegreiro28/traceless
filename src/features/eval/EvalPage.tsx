@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DevicePanel } from './DevicePanel';
 import { EvalResults } from './EvalResults';
-import { EVAL_PRESETS } from './evalPresets';
+import { EVAL_PRESETS, isHeldOutConfirmed, isHeldOutPreset } from './evalPresets';
 import { useEvalServices } from './evalServices';
 import { DEFAULT_EVAL_VARIANT, EVAL_VARIANTS, findVariant } from './evalVariants';
 import { friendlyErrorMessage } from './errorMessages';
@@ -17,7 +17,9 @@ export function EvalPage() {
   const device = useDeviceStatus(services.deviceCapability);
   const { state, start } = useEvalRunner(services);
   const [variantId, setVariantId] = useState(DEFAULT_EVAL_VARIANT.id);
+  const [typedId, setTypedId] = useState('');
   const variant = findVariant(variantId) ?? DEFAULT_EVAL_VARIANT;
+  const confirmed = isHeldOutConfirmed(typedId, variant);
   const running = state.phase === 'running';
   const canRun = device.availability === 'available' && !running;
 
@@ -56,13 +58,30 @@ export function EvalPage() {
           the shipped baseline on the held-out v2 test split (run it once only); the other presets
           run the selected one.
         </p>
+        <label className="mt-3 block text-sm font-semibold" htmlFor="v2-confirm">
+          Confirm the held-out v2 test
+        </label>
+        <input
+          id="v2-confirm"
+          type="text"
+          value={typedId}
+          disabled={running}
+          onChange={(e) => setTypedId(e.target.value)}
+          placeholder={variant.id}
+          autoComplete="off"
+          className="mt-1 w-full rounded-md border border-border bg-bg px-2 py-1"
+        />
+        <p className="mt-1 text-sm text-muted">
+          Preset 8 runs the held-out v2 test. It may be run only once. Type the selected variant id
+          exactly ({variant.id}) to enable it.
+        </p>
         <div className="mt-3 flex flex-wrap gap-3">
           {EVAL_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              disabled={!canRun}
-              onClick={() => start(preset.id, variant)}
+              disabled={!canRun || (isHeldOutPreset(preset) && !confirmed)}
+              onClick={() => start(preset.id, variant, typedId)}
               className="rounded-md bg-accent px-4 py-2 font-medium text-accent-contrast disabled:opacity-50"
             >
               {preset.label}

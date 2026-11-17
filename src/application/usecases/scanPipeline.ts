@@ -10,7 +10,8 @@ import { ok, type Result } from '../../shared/result';
 import type { Clock } from '../ports/Clock';
 import type { InferenceSourceKind } from '../ports/IdentityScanner';
 import { scanChunksSequentially, type ChunkScanFn, type ModelPass } from './scanChunks';
-import { runVerifyPass, type DisclosureVerification } from './verifyCandidatesPass';
+import type { DisclosureVerification } from '../ports/DisclosureVerification';
+import { runVerifyPass } from './verifyCandidatesPass';
 
 /**
  * INTERNAL helper of the two scan use cases (scanReport on the device, scanReportConsented
@@ -52,6 +53,8 @@ export interface ScanStats {
   /** Located model findings removed by the post-filters (0 without filters). */
   readonly suppressed: number;
   readonly retries: number;
+  /** Time spent in the verifier pass (candidate search + verifier calls); 0 without one. */
+  readonly verifyMs: number;
   readonly durationMs: number;
 }
 
@@ -99,9 +102,17 @@ function buildResult(
   };
 }
 
+/** The verify pass's outcome and how long it ran. */
+interface VerifiedPass {
+  readonly pass: ModelPass;
+  readonly verifyMs: number;
+}
+
 /**
  * Adds the verify pass (when bound) to the scan passes' model contribution: its findings
- * already carry exact spans, so they count as raw and located model findings alike.
+ * already carry exact spans, so they count as raw and located model findings alike. Its
+ * calls extend the progress total (chunks + verifier calls), so progress reaches the end only
+ * when the last verifier call is done.
  */
 async function withVerifiedCandidates(
   text: RawText,
@@ -109,18 +120,43 @@ async function withVerifiedCandidates(
   pass: ModelPass,
   settings: ScanPipelineSettings,
   options: ScanReportOptions,
-): Promise<Result<ModelPass, AppError>> {
-  if (settings.disclosure === undefined) return ok(pass);
-  const isCancelled = options.isCancelled ?? NEVER_CANCELLED;
-  const verified = await runVerifyPass(text, chunks, settings.disclosure, isCancelled);
+): Promise<Result<VerifiedPass, AppError>> {
+  if (settings.disclosure === undefined) return ok({ pass, verifyMs: 0 });
+  const startedAt = settings.clock.now();
+  const onProgress = options.onProgress ?? NO_PROGRESS;
+  const verified = await runVerifyPass(
+    text,
+    chunks,
+    settings.disclosure,
+    options.isCancelled ?? NEVER_CANCELLED,
+    (done, total) => onProgress(chunks.length + done, chunks.length + total),
+  );
   if (!verified.ok) return verified;
   const { findings, retries } = verified.value;
   return ok({
-    ...pass,
-    findings: [...pass.findings, ...findings],
-    rawModelFindings: pass.rawModelFindings + findings.length,
-    retries: pass.retries + retries,
+    pass: {
+      ...pass,
+      findings: [...pass.findings, ...findings],
+      rawModelFindings: pass.rawModelFindings + findings.length,
+      retries: pass.retries + retries,
+    },
+    verifyMs: settings.clock.now() - startedAt,
   });
+}
+
+/**
+ * Chunk-scan progress. With a verify pass bound, the total is an upper bound (chunks plus one
+ * verifier call per chunk) until the verify pass knows its exact call count, so the scan
+ * phase never reports completion.
+ */
+function scanProgress(
+  chunkCount: number,
+  settings: ScanPipelineSettings,
+  options: ScanReportOptions,
+): (done: number, total: number) => void {
+  const onProgress = options.onProgress ?? NO_PROGRESS;
+  if (settings.disclosure === undefined) return onProgress;
+  return (done, total) => onProgress(done, total + chunkCount);
 }
 
 /**
@@ -145,24 +181,26 @@ export async function runScanPipeline(
     {
       scanChunk,
       allowCloud: settings.allowCloud,
-      onProgress: options.onProgress ?? NO_PROGRESS,
+      onProgress: scanProgress(chunks.length, settings, options),
       isCancelled: options.isCancelled ?? NEVER_CANCELLED,
     },
     chunks,
   );
   if (!pass.ok) return pass;
-  const modelPass = await withVerifiedCandidates(text, chunks, pass.value, settings, options);
-  if (!modelPass.ok) return modelPass;
-  const { suppressed, ...result } = buildResult(text, modelPass.value, settings);
+  const verified = await withVerifiedCandidates(text, chunks, pass.value, settings, options);
+  if (!verified.ok) return verified;
+  const modelPass = verified.value.pass;
+  const { suppressed, ...result } = buildResult(text, modelPass, settings);
   return ok({
     ...result,
     stats: {
       chunks: chunks.length,
-      rawModelFindings: modelPass.value.rawModelFindings,
-      locatedModelFindings: modelPass.value.findings.length,
-      unlocatedModelFindings: modelPass.value.unlocated,
+      rawModelFindings: modelPass.rawModelFindings,
+      locatedModelFindings: modelPass.findings.length,
+      unlocatedModelFindings: modelPass.unlocated,
       suppressed,
-      retries: modelPass.value.retries,
+      retries: modelPass.retries,
+      verifyMs: verified.value.verifyMs,
       durationMs: settings.clock.now() - startedAt,
     },
   });

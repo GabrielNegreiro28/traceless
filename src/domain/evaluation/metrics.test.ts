@@ -40,6 +40,7 @@ function scanned(
       rawModelFindings: 5,
       unlocatedModelFindings: 1,
       durationMs: 40,
+      verifyMs: 0,
     },
   });
 }

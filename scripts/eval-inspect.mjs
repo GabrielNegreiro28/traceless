@@ -14,6 +14,7 @@ import {
   recallTable,
   resolveGold,
   resolveMustNot,
+  verifyTiming,
 } from './evalInspectHelpers.ts';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -106,13 +107,21 @@ async function main() {
   }
   const tally = {};
   const violations = new Map();
+  const counts = [];
   for (const run of runsOf(result, args.view)) {
     if (args.run !== null && run.run !== args.run) continue;
     for (const reportRun of run.reports) {
       const report = byId.get(reportRun.reportId);
       if (report === undefined || (args.report !== null && report.id !== args.report)) continue;
       inspectReport(report, run, reportRun, tally, violations);
+      if (reportRun.counts !== undefined) counts.push(reportRun.counts);
     }
+  }
+  const timing = verifyTiming(counts);
+  if (timing !== null) {
+    console.log(
+      `\n== Verifier pass time: mean ${timing.mean} ms, max ${timing.max} ms (${timing.reports} scans)`,
+    );
   }
   console.log('\n== Soft recall by category (span overlap, any category)');
   for (const line of recallTable(tally)) console.log(line);

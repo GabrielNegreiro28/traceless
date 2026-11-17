@@ -47,6 +47,7 @@ function toOutcome(
     rawModelFindings: stats.rawModelFindings,
     unlocatedModelFindings: stats.unlocatedModelFindings,
     durationMs: stats.durationMs,
+    verifyMs: stats.verifyMs,
   };
 }
 

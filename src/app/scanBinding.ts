@@ -5,7 +5,7 @@ import { STRATEGIES } from '../ai/prompts/strategies';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import { scanReport } from '../application/usecases/scanReport';
-import type { DisclosureVerification } from '../application/usecases/verifyCandidatesPass';
+import type { DisclosureVerification } from '../application/ports/DisclosureVerification';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import type { Services } from './servicesContract';
 

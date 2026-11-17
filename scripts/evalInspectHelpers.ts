@@ -145,3 +145,23 @@ export function formatFinding(text: string, finding: FindingLite, label: string)
   const quote = quoteOf(text, finding.span);
   return `  [${label}] ${finding.category} (${finding.origin}) "${quote}"`;
 }
+
+/** Mean and max of the verifier-pass time over the given per-report counts. */
+export interface VerifyTiming {
+  readonly mean: number;
+  readonly max: number;
+  readonly reports: number;
+}
+
+/**
+ * Verifier-pass timing over scanned reports that recorded `verifyMs` (result files saved
+ * before per-pass timing have none: returns null).
+ */
+export function verifyTiming(
+  counts: readonly { readonly verifyMs?: number | null }[],
+): VerifyTiming | null {
+  const times = counts.flatMap((c) => (typeof c.verifyMs === 'number' ? [c.verifyMs] : []));
+  if (times.length === 0) return null;
+  const mean = times.reduce((a, b) => a + b, 0) / times.length;
+  return { mean: Math.round(mean), max: Math.max(...times), reports: times.length };
+}

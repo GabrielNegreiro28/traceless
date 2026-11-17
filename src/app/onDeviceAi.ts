@@ -4,7 +4,7 @@ import { DEFAULT_PROMPT_MODULE } from '../ai/prompts/promptRegistry';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
-import type { DisclosureVerification } from '../application/usecases/verifyCandidatesPass';
+import type { DisclosureVerification } from '../application/ports/DisclosureVerification';
 import { disclosureVerifyModelSpec } from '../infrastructure/ai/adapters/disclosureVerifyModelSpec';
 import { OnDeviceCandidateVerifier } from '../infrastructure/ai/adapters/OnDeviceCandidateVerifier';
 import { OnDeviceIdentityScanner } from '../infrastructure/ai/adapters/OnDeviceIdentityScanner';

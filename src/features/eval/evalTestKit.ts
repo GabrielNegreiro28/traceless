@@ -33,6 +33,7 @@ export const EMPTY_SCAN: EvalScan = () =>
         unlocatedModelFindings: 0,
         suppressed: 0,
         retries: 0,
+        verifyMs: 0,
         durationMs: 5,
       },
     }),

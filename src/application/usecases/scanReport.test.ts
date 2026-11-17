@@ -73,6 +73,7 @@ describe('scanReport', () => {
       unlocatedModelFindings: 1,
       suppressed: 0,
       retries: 0,
+      verifyMs: 0,
       durationMs: 25,
     });
   });
@@ -202,6 +203,7 @@ describe('scanReport', () => {
           unlocatedModelFindings: 0,
           suppressed: 0,
           retries: 0,
+          verifyMs: 0,
           durationMs: 25,
         },
       },

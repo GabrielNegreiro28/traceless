@@ -39,6 +39,8 @@ export const EVAL_VARIANTS: readonly EvalVariant[] = [
   v2('v2-single2-rules', 'single2', 'core+firstPerson'),
   v2('v2-single3-rules', 'single3', 'core+firstPerson'),
   { id: 'v3-base+investigator', ...v3Pipeline({ base: true, verify: false }) },
+  // Eval only: when this variant's scanner is bound to the consented cloud, that scanner uses
+  // the investigator prompt (the product's cloud scanner does not).
   { id: 'v3-verifier+investigator', ...v3Pipeline({ base: false, verify: true }) },
   { id: 'v3-base+verifier+investigator', ...v3Pipeline({ base: true, verify: true }) },
 ];

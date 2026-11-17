@@ -20,6 +20,16 @@ export type PresetId =
  */
 export type EvalDatasetId = 'v1' | 'v2test';
 
+/** True for presets that read the held-out v2 test split, which may be run only once. */
+export function isHeldOutPreset(preset: EvalPreset): boolean {
+  return preset.dataset === 'v2test';
+}
+
+/** The typed confirmation a held-out run needs: exactly the selected variant's id. */
+export function isHeldOutConfirmed(typed: string | undefined, selected: EvalVariant): boolean {
+  return typed === selected.id;
+}
+
 /** In a preset's variant list: the variant chosen in the selector. */
 export const SELECTED_VARIANT = '@selected';
 

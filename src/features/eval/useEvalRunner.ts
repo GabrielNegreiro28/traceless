@@ -4,11 +4,13 @@ import {
   type EvalProgress,
   type EvalRunResult,
 } from '../../application/usecases/evaluateDetection';
-import type { AppError } from '../../shared/appError';
+import { createAppError, type AppError } from '../../shared/appError';
 import type { Dataset } from '../../domain/evaluation/datasetSchema';
 import {
   datasetForPreset,
   EVAL_PRESETS,
+  isHeldOutConfirmed,
+  isHeldOutPreset,
   presetDataset,
   variantsForPreset,
   type EvalPreset,
@@ -54,10 +56,18 @@ export type RunState =
 
 const TICK_MS = 500;
 
+const UNCONFIRMED = createAppError('Misconfigured', {
+  message: 'The held-out v2 test needs the typed variant id; nothing was run.',
+  missing: ['typed variant id'],
+});
+
 export interface EvalRunner {
   readonly state: RunState;
-  /** Runs the preset; presets that name their variants (or `all`) ignore `variant`. */
-  readonly start: (presetId: PresetId, variant: EvalVariant) => void;
+  /**
+   * Runs the preset; presets that name their variants (or `all`) ignore `variant`. A preset on
+   * the held-out v2 test split starts only when `typedVariantId` equals the selected variant's id.
+   */
+  readonly start: (presetId: PresetId, variant: EvalVariant, typedVariantId?: string) => void;
 }
 
 /** Runs an evaluation preset, one at a time, tracking progress, timing and saving. */
@@ -78,9 +88,13 @@ export function useEvalRunner(services: EvalServices): EvalRunner {
   }, [running, services.clock]);
 
   const start = useCallback(
-    (presetId: PresetId, variant: EvalVariant) => {
+    (presetId: PresetId, variant: EvalVariant, typedVariantId?: string) => {
       const preset = EVAL_PRESETS.find((p) => p.id === presetId);
       if (preset === undefined || busy.current) return;
+      if (isHeldOutPreset(preset) && !isHeldOutConfirmed(typedVariantId, variant)) {
+        setState({ phase: 'error', error: UNCONFIRMED });
+        return;
+      }
       const variants = variantsForPreset(preset, variant);
       if (!variants.ok) {
         setState({ phase: 'error', error: variants.error });

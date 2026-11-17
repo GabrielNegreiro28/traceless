@@ -9,6 +9,7 @@ import {
   recallTable,
   resolveGold,
   resolveMustNot,
+  verifyTiming,
   type DatasetReportLite,
   type FindingLite,
 } from './evalInspectHelpers.ts';
@@ -76,5 +77,20 @@ describe('eval inspect helpers', () => {
   it('prints the quote of a finding on one line', () => {
     const line = formatFinding(REPORT.text, finding('the only nurse'), 'GOLD-hit');
     expect(line).toBe('  [GOLD-hit] ROLE_UNIQUE (MODEL) "the only nurse"');
+  });
+});
+
+describe('verifyTiming', () => {
+  it('reports mean and max over the reports that recorded verifyMs', () => {
+    expect(verifyTiming([{ verifyMs: 100 }, { verifyMs: 0 }, { verifyMs: null }, {}])).toEqual({
+      mean: 50,
+      max: 100,
+      reports: 2,
+    });
+  });
+
+  it('is null for result files without per-pass timing', () => {
+    expect(verifyTiming([{}, { verifyMs: null }])).toBeNull();
+    expect(verifyTiming([])).toBeNull();
   });
 });

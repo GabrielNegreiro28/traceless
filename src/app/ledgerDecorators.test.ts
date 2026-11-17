@@ -26,6 +26,7 @@ function scanResult(source: ScanReportResult['source']): ScanReportResult {
       suppressed: 0,
       retries: 0,
       durationMs: 0,
+      verifyMs: 0,
     },
   };
 }

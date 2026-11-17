@@ -52,7 +52,13 @@ describe('scanReport with the verify pass', () => {
       deps({ disclosure: { finder: fakeFinder([]), verifier } }),
     );
     expect(calls).toEqual([]);
-    expect(empty).toEqual(plain);
+    if (!plain.ok || !empty.ok) throw new Error('scan failed');
+    // The candidate search itself takes (fake) clock ticks; everything else is identical.
+    const withoutVerifyMs = ({ stats, ...rest }: typeof plain.value) => ({
+      ...rest,
+      stats: { ...stats, verifyMs: 0, durationMs: 0 },
+    });
+    expect(withoutVerifyMs(empty.value)).toEqual(withoutVerifyMs(plain.value));
   });
 
   it('merges verified findings with the scan findings and counts them as model findings', async () => {
