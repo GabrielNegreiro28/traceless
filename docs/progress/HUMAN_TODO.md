@@ -4,7 +4,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Publicar a detecção nova e testar no seu Chrome com o Nano (~10 min).**
+- [x] **(Concluído 17/11: "deu tudo certo"; 2ª publicação depois da correção 665f14b) Publicar a detecção nova e testar no seu Chrome com o Nano (~10 min).**
   1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
   2. No seu Chrome normal, abra https://traceless-92f85.web.app → **Try a sample report** → **Check my report**.
   3. Se aparecer **"Prepare private AI"**, clique e espere (agora prepara dois modelos).
