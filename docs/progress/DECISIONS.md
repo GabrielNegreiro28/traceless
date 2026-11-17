@@ -174,3 +174,9 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 - **MUST (código):** pré-carregar o gerador de candidatos (compromise) ao abrir a página do relato; sem isso, a primeira análise offline perde a camada 2 em silêncio. Em andamento.
 - **SHOULD:** texto exato do selo de nuvem; roteiro sem o ramo "Prepare antes de Check"; caixa do Outbox "se aparecer"; mostrar o painel "What happened to your text" no vídeo; README: login anônimo só no envio, "soft precision". Em andamento.
 - **Cena offline:** a análise funciona offline; voltar para "No throttling" logo depois do selo, antes de Continue (o envio precisa de rede). Planejar várias tomadas (travamentos em ~4,5% das análises).
+
+## 17/11 — Reescrita "I logs" (sugestão que apaga o verbo)
+
+- **Causa:** a análise na nuvem sugeriu "logs" para "sign the dock safety checklist"; aceitar o cartão gerava "I logs at the start of every shift".
+- **Correção determinística:** `src/domain/review/subjectVerbGuard.ts`, chamado por `guardSuggestions`. Quando o trecho vem logo depois de "I"/"we" e a sugestão não começa com um verbo possível, o verbo original é mantido ("I sign logs…"). Vale para a nuvem e para o modo local.
+- **Prompt:** v2 e v3 pedem uma sugestão que continue sendo inglês correto no lugar do trecho e que mantenha o verbo. A string de versão não mudou (só a instrução da sugestão; a detecção não muda). O v1 fica congelado para a avaliação.

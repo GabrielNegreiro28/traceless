@@ -2,6 +2,7 @@ import type { Finding } from '../detection/types';
 import { applyDecisions } from '../rewrite/rewriteApplier';
 import type { RawText } from '../text/brandedText';
 import { countUnmatched, directRules } from './directIdentifiers';
+import { keepSubjectVerb } from './subjectVerbGuard';
 
 /**
  * Suggestions that would sign the report again (pure). A model suggestion such as "a
@@ -33,9 +34,19 @@ function introducesDirectIdentifier(
  */
 export function guardSuggestions(text: RawText, findings: readonly Finding[]): Finding[] {
   const before = directRules(text).map((f) => f.quote);
-  return findings.map((finding) =>
-    hasSuggestion(finding) && introducesDirectIdentifier(text, finding, before)
-      ? { ...finding, suggestion: null }
-      : finding,
-  );
+  return findings
+    .map(withGrammaticalSuggestion(text))
+    .map((finding) =>
+      hasSuggestion(finding) && introducesDirectIdentifier(text, finding, before)
+        ? { ...finding, suggestion: null }
+        : finding,
+    );
+}
+
+/** The finding with a suggestion that keeps "I <verb>" whole (subjectVerbGuard). */
+function withGrammaticalSuggestion(text: RawText) {
+  return (finding: Finding): Finding => {
+    const suggestion = keepSubjectVerb(text, finding);
+    return suggestion === finding.suggestion ? finding : { ...finding, suggestion };
+  };
 }
