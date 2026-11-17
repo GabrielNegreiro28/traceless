@@ -4,6 +4,19 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
+- [ ] **Hoje/amanhã (~5 min): publicar a versão em que o relato aprovado é organizado na nuvem.**
+  1. No Claude Code: `! npm run deploy:hosting` (sem ponto no final; deve terminar com "Deploy complete!").
+  2. No Chrome com o Nano: https://traceless-92f85.web.app → recarregue com Ctrl+Shift+R → **Try a sample report** → siga até o Outbox. No quadro "What the organization will receive", o selo agora deve dizer que foi organizado **na nuvem** (a análise do texto bruto continua "on your device").
+  3. Me conte o que os dois selos disseram.
+
+- [ ] **18–21/11: pedir para 2 ou 3 pessoas testarem o link** (pelo menos uma sem o Gemini Nano, por exemplo no celular ou num Chrome comum). Mande só o link https://traceless-92f85.web.app e peça: "use o relato de exemplo e me diga o que achou, o que confundiu". Anote as frases delas e **pergunte se pode citar** (com o primeiro nome ou anônimo). Cole as respostas aqui no chat.
+
+- [ ] **Até 23/11: decidir sobre o e-mail nos commits.** O histórico do GitHub mostra seu e-mail pessoal como autor de todos os commits. Quando o repositório ficar público, qualquer pessoa vê. Opções: (a) aceitar; (b) a partir de agora usar o e-mail "noreply" do GitHub (os commits antigos continuam com o e-mail atual, porque reescrever o histórico não é permitido). Me diga qual prefere.
+
+- [ ] **21–23/11: gravar e publicar o vídeo** (o manager vai deixar o roteiro, a lista de cenas e as legendas prontas em inglês antes disso; instruções detalhadas virão aqui).
+
+- [ ] **Até 23/11: tornar o repositório público** (o manager avisa quando o README estiver pronto e manda os passos).
+
 - [x] **(Concluído 17/11: "deu tudo certo"; 2ª publicação depois da correção 665f14b) Publicar a detecção nova e testar no seu Chrome com o Nano (~10 min).**
   1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
   2. No seu Chrome normal, abra https://traceless-92f85.web.app → **Try a sample report** → **Check my report**.
