@@ -167,3 +167,10 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 - **Repositório público:** manter o histórico (as datas dos commits provam o trabalho no período); manter os documentos em português (são a evidência do pré-registro), com uma linha no README explicando. Varredura de segredos (17/11, manager): nenhum token de debug no histórico (o prefixo do token real não aparece; só `.env.example`). O e-mail do autor nos commits é decisão do participante.
 - **Referência v2-single2-rules no teste v2:** opcional, baixo valor; pular.
 - **665f14b** (descartar sugestões que assinam de novo) não muda os trechos detectados, só as sugestões: as métricas medidas em `23c5f23` continuam válidas.
+
+## 2026-11-17 · Auditoria final do Fable (antes da submissão)
+- **Nada desclassificante.** Checklist §2.4 OK no código (AI Logic importado e chamado; híbrido pela política; App Check; LICENSE Apache-2.0; inglês; instruções).
+- **MUST (participante):** capturas em `docs/screenshots/`, link do vídeo (`VIDEO_URL_TBD`), citações reais de testadores ou remover `USER_QUOTES_TBD` (nunca inventar).
+- **MUST (código):** pré-carregar o gerador de candidatos (compromise) ao abrir a página do relato; sem isso, a primeira análise offline perde a camada 2 em silêncio. Em andamento.
+- **SHOULD:** texto exato do selo de nuvem; roteiro sem o ramo "Prepare antes de Check"; caixa do Outbox "se aparecer"; mostrar o painel "What happened to your text" no vídeo; README: login anônimo só no envio, "soft precision". Em andamento.
+- **Cena offline:** a análise funciona offline; voltar para "No throttling" logo depois do selo, antes de Continue (o envio precisa de rede). Planejar várias tomadas (travamentos em ~4,5% das análises).
