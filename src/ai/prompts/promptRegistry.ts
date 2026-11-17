@@ -43,7 +43,8 @@ export function getPromptModule(version: string): PromptModule | undefined {
 }
 
 /**
- * The prompt version of the shipped pipeline (SHIPPED_SCAN_PIPELINE in scanPipelines.ts):
- * v2 since docs/design/fase2-gate-iteration.md §G.1, a default by dominance, not a gate pass.
+ * The v2 prompt: the consented cloud scan's prompt (CONSENTED_CLOUD_SCAN_PASS in
+ * scanPipelines.ts) and the base pass of the v2/v3-base pipelines. The on-device product
+ * pipeline (SHIPPED_SCAN_PIPELINE) runs the v3 investigator prompt instead.
  */
 export const DEFAULT_PROMPT_MODULE: PromptModule = V2;

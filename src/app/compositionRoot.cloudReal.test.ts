@@ -1,6 +1,10 @@
 import { InferenceSource, type HybridParams } from 'firebase/ai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CLOUD_MODEL_NAME } from '../ai/policy/inferencePolicy';
+import { MODEL_CHUNK_CHARS } from '../ai/prompts/identityScan.v1';
+import { buildSystemPrompt as v2SystemPrompt } from '../ai/prompts/identityScan.v2';
+import { MODEL_FINDING_CATEGORIES } from '../ai/schemas/identityScan';
+import { chunkText } from '../domain/detection/textChunker';
 import { SAMPLE_REPORT } from '../domain/report/sampleReport';
 import { toRawText } from '../domain/text/brandedText';
 import { createServices } from './compositionRoot';
@@ -48,6 +52,7 @@ const REAL_ENV: AppEnv = {
 };
 
 const SAMPLE = toRawText(SAMPLE_REPORT);
+const chunkCount = (text: typeof SAMPLE) => chunkText(text, MODEL_CHUNK_CHARS).length;
 const MODEL_JSON = JSON.stringify({
   findings: [
     {
@@ -95,6 +100,22 @@ describe('createServices: consented cloud scan (real AI mode, SDK mocked)', () =
     expect(services.privacyLedger.entries()).toMatchObject([
       { task: 'identityScan', source: 'cloud', dataClass: 'CONSENTED_RAW', demo: false },
     ]);
+  });
+
+  it('binds the cloud scan to the v2 prompt (single2), never the shipped device pipeline', async () => {
+    const services = createServices(REAL_ENV);
+    const result = await services.scanWithCloudConsent(SAMPLE, { kind: 'sample' });
+    expect(result.ok).toBe(true);
+    const created = sdk.getGenerativeModel.mock.calls.map((_, i) => paramsOf(i));
+    const v2System = v2SystemPrompt(MODEL_FINDING_CATEGORIES);
+    expect(new Set(created.map((p) => p?.inCloudParams?.systemInstruction))).toEqual(
+      new Set([v2System]),
+    );
+    // single2: the full category list twice per chunk; no verifier call in the cloud.
+    expect(sdk.generateContent.mock.calls.length).toBe(2 * chunkCount(SAMPLE));
+    for (const [prompt] of sdk.generateContent.mock.calls) {
+      expect(String(prompt)).not.toContain('\nPhrases:\n');
+    }
   });
 
   it('refuses before any model exists when Remote Config switches the cloud scan off', async () => {

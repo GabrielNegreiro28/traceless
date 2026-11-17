@@ -1,5 +1,10 @@
 import { IDENTITY_SCAN_PROMPT_VERSION, MODEL_CHUNK_CHARS } from '../../ai/prompts/identityScan.v1';
-import { v2Pipeline, v3Pipeline, type ScanPipelineSpec } from '../../ai/prompts/scanPipelines';
+import {
+  SHIPPED_SCAN_PIPELINE,
+  v2Pipeline,
+  v3Pipeline,
+  type ScanPipelineSpec,
+} from '../../ai/prompts/scanPipelines';
 import type { StrategyName } from '../../ai/prompts/strategies';
 import type { RulePack } from '../../domain/detection/rulePacks';
 
@@ -13,6 +18,9 @@ export interface EvalVariant extends ScanPipelineSpec {
   readonly id: string;
 }
 
+/** The eval variant that is the shipped pipeline (SHIPPED_SCAN_PIPELINE). */
+export const SHIPPED_VARIANT_ID = 'v3-verifier+investigator';
+
 function v2(id: string, strategy: StrategyName, rulePack: RulePack = 'core'): EvalVariant {
   return { id, ...v2Pipeline(strategy, rulePack) };
 }
@@ -21,8 +29,8 @@ function v2(id: string, strategy: StrategyName, rulePack: RulePack = 'core'): Ev
  * Registered variants, in the order the Dev matrix runs them: M0–M3 of
  * docs/design/fase2-gate-iteration.md §E, then the §G.4 round-2 pair (v2 prompt, v2-single2
  * post-filters, core + first-person rules), then the three pre-registered round-3 cascades
- * (DECISIONS 2026-11-17). Ids are file-name safe. `v2-single2-rules` is the shipped pipeline
- * (SHIPPED_SCAN_PIPELINE, §G.5).
+ * (DECISIONS 2026-11-17). Ids are file-name safe. `v3-verifier+investigator` is the shipped
+ * pipeline (SHIPPED_SCAN_PIPELINE, DECISIONS 2026-11-17, v2 test split).
  */
 export const EVAL_VARIANTS: readonly EvalVariant[] = [
   {
@@ -39,9 +47,8 @@ export const EVAL_VARIANTS: readonly EvalVariant[] = [
   v2('v2-single2-rules', 'single2', 'core+firstPerson'),
   v2('v2-single3-rules', 'single3', 'core+firstPerson'),
   { id: 'v3-base+investigator', ...v3Pipeline({ base: true, verify: false }) },
-  // Eval only: when this variant's scanner is bound to the consented cloud, that scanner uses
-  // the investigator prompt (the product's cloud scanner does not).
-  { id: 'v3-verifier+investigator', ...v3Pipeline({ base: false, verify: true }) },
+  // The shipped pipeline itself (single source of truth): what was measured is what ships.
+  { id: SHIPPED_VARIANT_ID, ...SHIPPED_SCAN_PIPELINE },
   { id: 'v3-base+verifier+investigator', ...v3Pipeline({ base: true, verify: true }) },
 ];
 
@@ -59,7 +66,7 @@ export const MATRIX_VARIANT_IDS: readonly string[] = [
 /** The §G.4 round-2 variants, run by the "Round 2" preset (dev, 3 runs). */
 export const ROUND2_VARIANT_IDS: readonly string[] = ['v2-single2-rules', 'v2-single3-rules'];
 
-/** The shipped pipeline: the baseline of round 3 and of the final v2 test. */
+/** The pipeline shipped before round 3: the baseline of round 3 and of the v2 test. */
 export const BASELINE_VARIANT_ID = 'v2-single2-rules';
 
 /**
@@ -68,7 +75,7 @@ export const BASELINE_VARIANT_ID = 'v2-single2-rules';
  */
 export const ROUND3_VARIANT_IDS: readonly string[] = [
   'v3-base+investigator',
-  'v3-verifier+investigator',
+  SHIPPED_VARIANT_ID,
   'v3-base+verifier+investigator',
   BASELINE_VARIANT_ID,
 ];

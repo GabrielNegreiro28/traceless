@@ -2,7 +2,10 @@ import { Button, ProgressBar } from '../../ui';
 import type { ScanMode } from '../review/reportFlowTypes';
 
 export interface ScanningScreenProps {
-  /** Null until the scanner reports how many parts the report has. */
+  /**
+   * Null until the scanner reports its step count: one per model call over a part of the
+   * report (scan passes, then the on-device phrase checks when the pipeline has them).
+   */
   readonly progress: { readonly done: number; readonly total: number } | null;
   readonly onCancel: () => void;
   /** Where the scan runs; the reassurance line must match it (default: on this device). */
@@ -12,7 +15,7 @@ export interface ScanningScreenProps {
 }
 
 const REASSURANCE: Readonly<Record<ScanMode, string>> = {
-  onDevice: 'About 10–20 seconds, running on this computer. Nothing is uploaded.',
+  onDevice: 'Usually 15–40 seconds, running on this computer. Nothing is uploaded.',
   consentedCloud:
     'Checking in the cloud, as you agreed. Usually a few seconds. Traceless stores nothing.',
 };
@@ -26,7 +29,7 @@ function reassurance(mode: ScanMode, demo: boolean): string {
 
 function progressLine(progress: ScanningScreenProps['progress']): string {
   if (progress === null) return 'Getting ready to read your report.';
-  return `Checked ${String(progress.done)} of ${String(progress.total)} ${progress.total === 1 ? 'part' : 'parts'}.`;
+  return `Finished ${String(progress.done)} of ${String(progress.total)} ${progress.total === 1 ? 'step' : 'steps'}.`;
 }
 
 /** Shown while the scan runs: determinate progress once known, and a way to stop. */

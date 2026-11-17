@@ -1,21 +1,41 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SHIPPED_SCAN_PIPELINE, scanPassesOf, v3Pipeline } from '../ai/prompts/scanPipelines';
+import {
+  CONSENTED_CLOUD_SCAN_PASS,
+  SHIPPED_SCAN_PIPELINE,
+  scanPassesOf,
+  v2Pipeline,
+  v3Pipeline,
+} from '../ai/prompts/scanPipelines';
+import { STRATEGIES } from '../ai/prompts/strategies';
 import { toRawText } from '../domain/text/brandedText';
 import { ok } from '../shared/result';
 import { createLazyCandidateFinder } from './lazyCandidateFinder';
-import { resolveScanSetups, variantKey } from './scanBinding';
+import { resolveScanPass, resolveScanSetups, variantKey } from './scanBinding';
 
 describe('scan pipeline passes', () => {
-  it('an existing spec has exactly its primary pass and no verifier', () => {
-    expect(scanPassesOf(SHIPPED_SCAN_PIPELINE)).toEqual([
-      { promptVersion: 'identityScan.v2', strategy: 'single2' },
-    ]);
-    expect(SHIPPED_SCAN_PIPELINE).not.toHaveProperty('extraScans');
-    expect(SHIPPED_SCAN_PIPELINE).not.toHaveProperty('verify');
-    const setups = resolveScanSetups(SHIPPED_SCAN_PIPELINE);
+  it('a v2 spec has exactly its primary pass and no verifier', () => {
+    const spec = v2Pipeline('single2', 'core+firstPerson');
+    expect(scanPassesOf(spec)).toEqual([{ promptVersion: 'identityScan.v2', strategy: 'single2' }]);
+    expect(spec).not.toHaveProperty('extraScans');
+    expect(spec).not.toHaveProperty('verify');
+    const setups = resolveScanSetups(spec);
     expect(setups.map((s) => [s.prompt.version, s.groups.length])).toEqual([
       ['identityScan.v2', 2],
     ]);
+  });
+
+  it('the shipped spec runs the investigator pass, then the verifier', () => {
+    expect(scanPassesOf(SHIPPED_SCAN_PIPELINE)).toEqual([
+      { promptVersion: 'identityScan.v3-investigator', strategy: 'single' },
+    ]);
+    expect(SHIPPED_SCAN_PIPELINE.verify).toBe(true);
+  });
+
+  it('binds the consented cloud scan to the v2 prompt with single2, not to a pipeline pass', () => {
+    const cloud = resolveScanPass(CONSENTED_CLOUD_SCAN_PASS);
+    expect(cloud.prompt.version).toBe('identityScan.v2');
+    expect(cloud.groups).toBe(STRATEGIES.single2);
+    expect(cloud.prompt.version).not.toBe(SHIPPED_SCAN_PIPELINE.promptVersion);
   });
 
   it('resolves the round-3 passes in order', () => {
@@ -38,7 +58,7 @@ describe('scan pipeline passes', () => {
 
   it('gives every pipeline its own cache key', () => {
     const keys = [
-      SHIPPED_SCAN_PIPELINE,
+      v2Pipeline('single2', 'core+firstPerson'),
       v3Pipeline({ base: true, verify: false }),
       v3Pipeline({ base: false, verify: true }),
       v3Pipeline({ base: true, verify: true }),

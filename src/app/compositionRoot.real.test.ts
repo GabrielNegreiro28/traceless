@@ -1,6 +1,8 @@
 import { InferenceSource, type HybridParams } from 'firebase/ai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DISCLOSURE_VERIFY_V1 } from '../ai/prompts/disclosureVerify.v1';
 import { getPromptModule } from '../ai/prompts/promptRegistry';
+import { v2Pipeline } from '../ai/prompts/scanPipelines';
 import { MODEL_FINDING_CATEGORIES } from '../ai/schemas/identityScan';
 import { toRawText } from '../domain/text/brandedText';
 import { createServices, createVariantServices } from './compositionRoot';
@@ -52,6 +54,14 @@ const MODEL_JSON = JSON.stringify({
     },
   ],
 });
+
+const NO_VERDICTS = JSON.stringify({ items: [] });
+
+/** The initialPrompts the factory put in the n-th created model's createOptions. */
+function initialPromptsOf(call: number): unknown {
+  const params = sdk.getGenerativeModel.mock.calls[call]?.[1] as HybridParams | undefined;
+  return params?.onDeviceParams?.createOptions?.initialPrompts;
+}
 
 function respond(inferenceSource: InferenceSource, text = MODEL_JSON): void {
   sdk.generateContent.mockResolvedValue({ response: { inferenceSource, text: () => text } });
@@ -116,29 +126,37 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       expect(result.value.findings.map((f) => [f.quote, f.origin])).toEqual([
         ['the only night nurse', 'RULE'],
       ]);
-      expect(sdk.getGenerativeModel).toHaveBeenCalledTimes(1);
-      const [, params, requestOptions] = sdk.getGenerativeModel.mock.lastCall as [
+      expect(sdk.getGenerativeModel).toHaveBeenCalled();
+      for (const [, params, requestOptions] of sdk.getGenerativeModel.mock.calls as [
         unknown,
         HybridParams,
         unknown,
-      ];
-      expect(params.mode).toBe('only_on_device');
-      expect(requestOptions).toEqual({ baseUrl: 'https://on-device-only.invalid' });
+      ][]) {
+        expect(params.mode).toBe('only_on_device');
+        expect(requestOptions).toEqual({ baseUrl: 'https://on-device-only.invalid' });
+      }
     });
 
-    it('ships v2-single2 by default (§G.1): v2 prompts, two passes, post-filters on', async () => {
+    it('ships v3-verifier+investigator by default: investigator, verifier, post-filters on', async () => {
       const outlet = { quote: 'The head nurse', category: 'REPORTED_PERSON', reason: 'r' };
-      const v2Json = JSON.stringify({ findings: [{ ...outlet, suggestion: '' }] });
-      respond(InferenceSource.ON_DEVICE, v2Json);
+      const scanJson = JSON.stringify({ findings: [{ ...outlet, suggestion: '' }] });
+      sdk.generateContent.mockImplementation((prompt: string) =>
+        Promise.resolve({
+          response: {
+            inferenceSource: InferenceSource.ON_DEVICE,
+            text: () => (prompt.includes('\nPhrases:\n') ? NO_VERDICTS : scanJson),
+          },
+        }),
+      );
       const result = await createServices(REAL_ENV).scanReport(REPORT);
       if (!result.ok) throw new Error(result.error.kind);
-      expect(sdk.getGenerativeModel).toHaveBeenCalledTimes(1);
+      expect(sdk.getGenerativeModel).toHaveBeenCalledTimes(2);
       expect(sdk.generateContent).toHaveBeenCalledTimes(2);
-      const [, params] = sdk.getGenerativeModel.mock.lastCall as [unknown, HybridParams];
-      const v2 = getPromptModule('identityScan.v2');
-      expect(params.onDeviceParams?.createOptions?.initialPrompts).toEqual(
-        v2?.buildInitialPrompts(MODEL_FINDING_CATEGORIES),
+      const investigator = getPromptModule('identityScan.v3-investigator');
+      expect(initialPromptsOf(0)).toEqual(
+        investigator?.buildInitialPrompts(MODEL_FINDING_CATEGORIES),
       );
+      expect(initialPromptsOf(1)).toEqual(DISCLOSURE_VERIFY_V1.buildInitialPrompts());
       // Only the protectedMentions post-filter turns the outlet quote into a protected span.
       expect(result.value.protectedSpans).toEqual([{ start: 37, end: 51 }]);
     });
@@ -149,8 +167,33 @@ describe('createServices (real AI mode, SDK mocked)', () => {
       expect(!result.ok && result.error.kind).toBe('PrivacyViolation');
     });
 
-    it('prepares the model through initializeDeviceModel', async () => {
-      const result = await createServices(REAL_ENV).deviceCapability.prepare(() => undefined);
+    it('prepares every on-device task of the shipped pipeline inside one call', async () => {
+      const progress: number[] = [];
+      const finish: (() => void)[] = [];
+      sdk.initializeDeviceModel.mockImplementation((onProgress?: (p: number) => void) => {
+        onProgress?.(0.5);
+        return new Promise<void>((resolve) => finish.push(resolve));
+      });
+      const pending = createServices(REAL_ENV).deviceCapability.prepare((p) => progress.push(p));
+      await vi.waitFor(() => expect(sdk.initializeDeviceModel).toHaveBeenCalledTimes(2));
+      // Both downloads started before either settled: still within the reporter's click.
+      expect(progress).toEqual([0.25, 0.5]);
+      finish.forEach((resolve) => resolve());
+      expect((await pending).ok).toBe(true);
+      expect(initialPromptsOf(0)).toEqual(
+        getPromptModule('identityScan.v3-investigator')?.buildInitialPrompts(
+          MODEL_FINDING_CATEGORIES,
+        ),
+      );
+      expect(initialPromptsOf(1)).toEqual(DISCLOSURE_VERIFY_V1.buildInitialPrompts());
+      expect(progress.at(-1)).toBe(1);
+    });
+
+    it('a v2 pipeline without the verifier prepares only its scan model', async () => {
+      const servicesFor = createVariantServices(REAL_ENV);
+      const result = await servicesFor(v2Pipeline('single2')).deviceCapability.prepare(
+        () => undefined,
+      );
       expect(result.ok).toBe(true);
       expect(sdk.initializeDeviceModel).toHaveBeenCalledTimes(1);
     });

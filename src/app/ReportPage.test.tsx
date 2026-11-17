@@ -45,7 +45,7 @@ describe('/report flow on fake services', () => {
     const scanning = await heading('Checking your report');
     await waitFor(() => expect(scanning).toHaveFocus());
     act(() => scan.calls[0]?.onProgress?.(1, 2));
-    expect(await screen.findByText('Checked 1 of 2 parts.')).toBeVisible();
+    expect(await screen.findByText('Finished 1 of 2 steps.')).toBeVisible();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
 
     await click('Cancel');

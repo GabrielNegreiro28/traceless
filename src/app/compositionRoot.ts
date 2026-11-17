@@ -1,4 +1,8 @@
-import { SHIPPED_SCAN_PIPELINE, type ScanPipelineSpec } from '../ai/prompts/scanPipelines';
+import {
+  CONSENTED_CLOUD_SCAN_PASS,
+  SHIPPED_SCAN_PIPELINE,
+  type ScanPipelineSpec,
+} from '../ai/prompts/scanPipelines';
 import type { ConfigService } from '../application/ports/ConfigService';
 import type { ConsentedIdentityScanner } from '../application/ports/ConsentedIdentityScanner';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
@@ -31,7 +35,7 @@ import {
   type ScannerKind,
 } from './ledgerDecorators';
 import { createOnDeviceInfra, createRealAi, type AiServices } from './onDeviceAi';
-import { bindScanReport, resolveScanSetups, variantKey } from './scanBinding';
+import { bindScanReport, resolveScanPass, resolveScanSetups, variantKey } from './scanBinding';
 import type { Services } from './servicesContract';
 import { bindStructureReport, createReportStructurer } from './structureServices';
 
@@ -47,13 +51,14 @@ export type { ProgressCallback, Services } from './servicesContract';
 export type ScanVariantSpec = ScanPipelineSpec;
 
 /**
- * The product default: v2-single2 (identityScan.v2, strategy single2, the shipped chunk size,
- * post-filters protectedMentions + thirdPerson, core rules), identical to the `v2-single2` eval
- * variant. The first-person rule pack (§G.3) stays off until the test split decides (§G.4).
- * docs/design/fase2-gate-iteration.md §G.1: a default BY DOMINANCE on the dev matrix, NOT a
- * gate pass; the final default is whichever variant goes to the test split.
+ * The product default: SHIPPED_SCAN_PIPELINE, the `v3-verifier+investigator` eval variant
+ * (investigator pass + on-device candidate verifier, first-person rules, v2 post-filters),
+ * chosen by the pre-registered rule (docs/progress/DECISIONS.md, 2026-11-17).
  */
 const DEFAULT_VARIANT: ScanVariantSpec = SHIPPED_SCAN_PIPELINE;
+
+/** The consented cloud scan's pass (v2 prompt, single2), the same for every variant. */
+const CLOUD_SCAN = resolveScanPass(CONSENTED_CLOUD_SCAN_PASS);
 
 /** Test doubles for fake AI mode (ignored with real AI, except `config`). */
 export interface ServiceFakes {
@@ -152,8 +157,7 @@ export function createVariantServices(
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
     const scans = resolveScanSetups(variant);
-    const primary = scans[0];
-    if (primary === undefined) throw new Error('A scan pipeline needs a scan pass.');
+    if (scans.length === 0) throw new Error('A scan pipeline needs a scan pass.');
     const ai: VariantAi =
       infra === null
         ? {
@@ -162,8 +166,9 @@ export function createVariantServices(
           }
         : {
             ...createRealAi(env, scans, infra, variant.verify === true),
-            // The consented cloud path runs the primary pass only: verify reads RAW text.
-            consentedScanner: createConsentedCloudScanner(env, primary.groups, primary.prompt),
+            // Bound explicitly to the v2 cloud pass, never to the pipeline's passes; the
+            // verifier reads RAW text and never runs in the cloud.
+            consentedScanner: createConsentedCloudScanner(env, CLOUD_SCAN),
           };
     const services = buildServices(ai, variant, context);
     cache.set(key, services);

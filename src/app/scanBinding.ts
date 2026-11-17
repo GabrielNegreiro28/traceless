@@ -1,6 +1,10 @@
 import type { PromptModule } from '../ai/prompts/promptModule';
 import { getPromptModule } from '../ai/prompts/promptRegistry';
-import { scanPassesOf, type ScanPipelineSpec } from '../ai/prompts/scanPipelines';
+import {
+  scanPassesOf,
+  type ScanPassSpec,
+  type ScanPipelineSpec,
+} from '../ai/prompts/scanPipelines';
 import { STRATEGIES } from '../ai/prompts/strategies';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
@@ -17,13 +21,16 @@ export interface ScanSetup {
   readonly prompt: PromptModule;
 }
 
+/** One scan pass, resolved. An unregistered prompt version throws. */
+export function resolveScanPass({ promptVersion, strategy }: ScanPassSpec): ScanSetup {
+  const prompt = getPromptModule(promptVersion);
+  if (prompt === undefined) throw new Error(`Unknown prompt version: ${promptVersion}`);
+  return { groups: STRATEGIES[strategy], prompt };
+}
+
 /** Every scan pass of `variant`, in order. An unregistered prompt version throws. */
 export function resolveScanSetups(variant: ScanPipelineSpec): ScanSetup[] {
-  return scanPassesOf(variant).map(({ promptVersion, strategy }) => {
-    const prompt = getPromptModule(promptVersion);
-    if (prompt === undefined) throw new Error(`Unknown prompt version: ${promptVersion}`);
-    return { groups: STRATEGIES[strategy], prompt };
-  });
+  return scanPassesOf(variant).map(resolveScanPass);
 }
 
 /** Cache key: every field that changes what a scan does. */

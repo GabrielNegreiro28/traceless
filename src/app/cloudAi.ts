@@ -1,4 +1,3 @@
-import type { PromptModule } from '../ai/prompts/promptModule';
 import type { ScanPipelineSpec } from '../ai/prompts/scanPipelines';
 import type { ConfigService } from '../application/ports/ConfigService';
 import type { ConsentedIdentityScanner } from '../application/ports/ConsentedIdentityScanner';
@@ -12,7 +11,7 @@ import { systemClock } from '../infrastructure/clock/systemClock';
 import { createRemoteConfigService } from '../infrastructure/config/RemoteConfigService';
 import type { AppEnv } from './env';
 import { bootstrapFirebase } from './firebaseBootstrap';
-import type { ScanGroups } from './onDeviceAi';
+import type { ScanSetup } from './scanBinding';
 import type { CloudScanService } from './servicesContract';
 
 /**
@@ -20,11 +19,10 @@ import type { CloudScanService } from './servicesContract';
  * (real AI mode). Firebase is only touched on first use, never while building the services.
  */
 
-/** The cloud scanner for a variant: the same groups and prompt as the on-device scanner. */
+/** The consented cloud scanner for one scan pass (CONSENTED_CLOUD_SCAN_PASS in the product). */
 export function createConsentedCloudScanner(
   env: AppEnv,
-  groups: ScanGroups,
-  prompt: PromptModule,
+  { groups, prompt }: ScanSetup,
 ): ConsentedIdentityScanner {
   return new ConsentedCloudIdentityScanner(
     groups,

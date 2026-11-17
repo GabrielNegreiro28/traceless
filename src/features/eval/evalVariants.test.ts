@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { getPromptModule } from '../../ai/prompts/promptRegistry';
-import { SHIPPED_SCAN_PIPELINE } from '../../ai/prompts/scanPipelines';
+import { SHIPPED_SCAN_PIPELINE, v3Pipeline } from '../../ai/prompts/scanPipelines';
 import { STRATEGIES } from '../../ai/prompts/strategies';
 import { POST_FILTERS } from '../../domain/detection/postFilters';
 import { scanPassesOf } from '../../ai/prompts/scanPipelines';
-import { EVAL_VARIANTS, findVariant, ROUND2_VARIANT_IDS, ROUND3_VARIANT_IDS } from './evalVariants';
+import {
+  EVAL_VARIANTS,
+  findVariant,
+  ROUND2_VARIANT_IDS,
+  ROUND3_VARIANT_IDS,
+  SHIPPED_VARIANT_ID,
+} from './evalVariants';
 
 describe('EVAL_VARIANTS', () => {
   it('has unique file-name-safe ids, registered prompts, strategies and filters', () => {
@@ -65,7 +71,7 @@ describe('EVAL_VARIANTS', () => {
     }
   });
 
-  it('round 3 runs the three pre-registered cascades, then the shipped baseline', () => {
+  it('round 3 runs the three pre-registered cascades, then the pre-round-3 baseline', () => {
     expect(ROUND3_VARIANT_IDS).toEqual([
       'v3-base+investigator',
       'v3-verifier+investigator',
@@ -90,9 +96,18 @@ describe('EVAL_VARIANTS', () => {
     });
   });
 
-  it('v2-single2-rules is exactly the shipped pipeline (§G.5)', () => {
-    const { id, ...spec } = findVariant('v2-single2-rules') ?? { id: 'missing' };
-    expect(id).toBe('v2-single2-rules');
+  it('v3-verifier+investigator is exactly the shipped pipeline (DECISIONS 2026-11-17)', () => {
+    const { id, ...spec } = findVariant(SHIPPED_VARIANT_ID) ?? { id: 'missing' };
+    expect(id).toBe('v3-verifier+investigator');
     expect(spec).toEqual(SHIPPED_SCAN_PIPELINE);
+    expect(spec).toEqual(v3Pipeline({ base: false, verify: true }));
+    expect(SHIPPED_SCAN_PIPELINE).toMatchObject({
+      promptVersion: 'identityScan.v3-investigator',
+      strategy: 'single',
+      verify: true,
+      rulePack: 'core+firstPerson',
+      postFilters: ['protectedMentions', 'thirdPerson'],
+    });
+    expect(SHIPPED_SCAN_PIPELINE).not.toHaveProperty('extraScans');
   });
 });

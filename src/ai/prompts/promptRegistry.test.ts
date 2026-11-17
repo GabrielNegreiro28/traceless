@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MODEL_FINDING_CATEGORIES } from '../schemas/identityScan';
 import { DEFAULT_PROMPT_MODULE, getPromptModule } from './promptRegistry';
-import { SHIPPED_SCAN_PIPELINE } from './scanPipelines';
+import { CONSENTED_CLOUD_SCAN_PASS, SHIPPED_SCAN_PIPELINE } from './scanPipelines';
 
 const ALL = MODEL_FINDING_CATEGORIES;
 const OUTPUT = JSON.stringify({
@@ -18,9 +18,10 @@ describe('promptRegistry', () => {
     expect(getPromptModule('identityScan.v0')).toBeUndefined();
   });
 
-  it('ships v2, the prompt of the shipped pipeline (§G.1 default by dominance)', () => {
+  it('v2 stays the consented cloud prompt; the device pipeline ships the investigator', () => {
     expect(DEFAULT_PROMPT_MODULE.version).toBe('identityScan.v2');
-    expect(DEFAULT_PROMPT_MODULE.version).toBe(SHIPPED_SCAN_PIPELINE.promptVersion);
+    expect(DEFAULT_PROMPT_MODULE.version).toBe(CONSENTED_CLOUD_SCAN_PASS.promptVersion);
+    expect(SHIPPED_SCAN_PIPELINE.promptVersion).toBe('identityScan.v3-investigator');
   });
 
   it('v1 has no outlets: its schema and parser ignore REPORTED_PERSON/OTHER_PERSON', () => {

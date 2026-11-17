@@ -82,11 +82,25 @@ export function v3Pipeline(options: {
 }
 
 /**
- * The pipeline the product ships: exactly the `v2-single2-rules` eval variant (both are built
- * by `v2Pipeline('single2', 'core+firstPerson')`).
+ * The pipeline the product ships on the device: `v3-verifier+investigator` (the investigator
+ * pass, then the Layer-3a candidate verifier; first-person rules, v2 post-filters). The eval
+ * variant of that id IS this object (src/features/eval/evalVariants.ts), so what was measured
+ * is what ships.
  *
- * This is the variant measured on the test split (docs/progress/DECISIONS.md, 2026-11-16:
- * strict recall 0.60 against a 0.70 target, shipped with the miss disclosed), so the UI must
- * never present the check as complete.
+ * Chosen by the pre-registered round-3 rule and run once on the v2 test split
+ * (docs/progress/DECISIONS.md, 2026-11-17: strict recall 0.709, ACCUSED 0.072 in the
+ * conditional band), so the UI must never present the check as complete.
  */
-export const SHIPPED_SCAN_PIPELINE: ScanPipelineSpec = v2Pipeline('single2', 'core+firstPerson');
+export const SHIPPED_SCAN_PIPELINE: ScanPipelineSpec = v3Pipeline({ base: false, verify: true });
+
+/**
+ * The scan pass of the consented cloud scan (no Nano on this device), for every pipeline:
+ * the v2 prompt with `single2`, unchanged since it shipped (DECISIONS 2026-11-16). It is
+ * bound explicitly, never derived from a pipeline's primary pass, and the candidate verifier
+ * never runs in the cloud (`disclosureVerify` is RAW, ONLY_ON_DEVICE). The cloud scan shares
+ * the pipeline's chunk size, post-filters and rule pack.
+ */
+export const CONSENTED_CLOUD_SCAN_PASS: ScanPassSpec = {
+  promptVersion: IDENTITY_SCAN_V2_PROMPT_VERSION,
+  strategy: 'single2',
+};

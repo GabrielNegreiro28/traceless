@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { getPromptModule } from '../../../ai/prompts/promptRegistry';
-import { SHIPPED_SCAN_PIPELINE } from '../../../ai/prompts/scanPipelines';
+import { CONSENTED_CLOUD_SCAN_PASS } from '../../../ai/prompts/scanPipelines';
 import { STRATEGIES } from '../../../ai/prompts/strategies';
 import { toRawText } from '../../../domain/text/brandedText';
 import { consentedScanModelSpec } from './consentedScanModelSpec';
 import { identityScanModelSpec } from './identityScanModelSpec';
 
-const PROMPT = getPromptModule(SHIPPED_SCAN_PIPELINE.promptVersion)!;
-const GROUP = STRATEGIES[SHIPPED_SCAN_PIPELINE.strategy][0];
+const PROMPT = getPromptModule(CONSENTED_CLOUD_SCAN_PASS.promptVersion)!;
+const GROUP = STRATEGIES[CONSENTED_CLOUD_SCAN_PASS.strategy][0];
 
 describe('consentedScanModelSpec', () => {
   const cloud = consentedScanModelSpec(GROUP, PROMPT);

@@ -1,6 +1,5 @@
 import type { AI } from 'firebase/ai';
 import { DISCLOSURE_VERIFY_V1 } from '../ai/prompts/disclosureVerify.v1';
-import { DEFAULT_PROMPT_MODULE } from '../ai/prompts/promptRegistry';
 import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
@@ -19,6 +18,7 @@ import { createStuckTracker, type StuckTracker } from '../infrastructure/ai/stuc
 import type { AppEnv } from './env';
 import { bootstrapFirebase } from './firebaseBootstrap';
 import { createLazyCandidateFinder } from './lazyCandidateFinder';
+import { createPipelinePrepare, prepareSpecs } from './onDevicePrepare';
 import type { ScanSetup } from './scanBinding';
 
 /** Part of the composition root: wires Chrome's on-device model (real AI mode only). */
@@ -99,17 +99,10 @@ export function createRealAi(
     scanners.length === 1 && scanners[0] !== undefined
       ? scanners[0]
       : new SequentialIdentityScanner(scanners);
-  const first = scans[0];
   const deviceCapability: DeviceCapability = {
     check: () => infra.chrome.check(),
-    // Chrome downloads one model per browser, so the first group's model prepares all.
-    prepare: async (onProgress) => {
-      const model = createOnDeviceModel(
-        ai,
-        identityScanModelSpec(first?.groups[0] ?? [], first?.prompt ?? DEFAULT_PROMPT_MODULE),
-      );
-      return model.ok ? infra.chrome.prepare(model.value, onProgress) : model;
-    },
+    // Every on-device task of the pipeline (scan passes and verifier), inside the click.
+    prepare: createPipelinePrepare(ai, prepareSpecs(scans, verify), infra.chrome),
   };
   return {
     identityScanner,
