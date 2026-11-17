@@ -1,0 +1,131 @@
+1
+00:00:00,000 --> 00:00:04,000
+Maya (invented) is a nurse. She saw billing fraud.
+
+2
+00:00:04,000 --> 00:00:07,000
+She wants to report it anonymously.
+
+3
+00:00:07,000 --> 00:00:13,000
+But she writes: "I am the only night-shift nurse on Ward 3."
+
+4
+00:00:13,000 --> 00:00:20,000
+The hotline hides her IP address. The text still points at her.
+
+5
+00:00:20,000 --> 00:00:24,000
+Anonymity fails through content, not the channel.
+
+6
+00:00:24,000 --> 00:00:30,000
+This is Traceless. It finds what gives you away, on your device, before you send.
+
+7
+00:00:30,000 --> 00:00:35,000
+I load an invented sample report.
+
+8
+00:00:35,000 --> 00:00:40,000
+Traceless prepares Gemini Nano inside Chrome. Nothing is sent.
+
+9
+00:00:40,000 --> 00:00:44,000
+Now the proof. I turn the internet off.
+
+10
+00:00:44,000 --> 00:00:46,000
+I check my report.
+
+11
+00:00:46,000 --> 00:00:51,000
+It still works. The badge says: checked on your device.
+
+12
+00:00:51,000 --> 00:00:55,000
+The raw text never left this browser.
+
+13
+00:00:55,000 --> 00:00:58,000
+Internet back on.
+
+14
+00:00:58,000 --> 00:01:01,000
+Every finding is a card.
+
+15
+00:01:01,000 --> 00:01:05,000
+Here, a unique role and a shift.
+
+16
+00:01:05,000 --> 00:01:09,000
+I accept a safer rewrite.
+
+17
+00:01:09,000 --> 00:01:16,000
+This one names the person I accuse. It is not about me. So I click: Not about me.
+
+18
+00:01:16,000 --> 00:01:22,000
+Nothing changes unless I decide.
+
+19
+00:01:22,000 --> 00:01:29,000
+Then a second look. Traceless can miss things. So I must re-read my report, and confirm.
+
+20
+00:01:29,000 --> 00:01:34,000
+Only then can I continue.
+
+21
+00:01:34,000 --> 00:01:38,000
+In the outbox, I see the final text.
+
+22
+00:01:38,000 --> 00:01:41,000
+I approve it.
+
+23
+00:01:41,000 --> 00:01:47,000
+Now the cloud helps. Gemini organizes the approved text only.
+
+24
+00:01:47,000 --> 00:01:52,000
+The badge says so: only your approved text.
+
+25
+00:01:52,000 --> 00:01:56,000
+Category, summary, when, where.
+
+26
+00:01:56,000 --> 00:02:01,000
+I send it. I get a case key, shown once.
+
+27
+00:02:01,000 --> 00:02:08,000
+Later, I enter it at slash case, and see the status. No account needed.
+
+28
+00:02:08,000 --> 00:02:13,000
+Raw text runs on the device only. The cloud gets approved text only.
+
+29
+00:02:13,000 --> 00:02:18,000
+One policy file decides every route. Firebase AI Logic, App Check, Auth, Firestore, Remote Config and Hosting.
+
+30
+00:02:18,000 --> 00:02:23,000
+We tested on 22 new reports, written blind. Recall was 0.709.
+
+31
+00:02:23,000 --> 00:02:28,000
+But the error rate on accused people, 0.072, missed its target.
+
+32
+00:02:28,000 --> 00:02:34,000
+The data is synthetic. Traceless will miss details. It says so.
+
+33
+00:02:34,000 --> 00:02:40,000
+Traceless. Check your report before it leaves your hands. Try it now. The link is below.

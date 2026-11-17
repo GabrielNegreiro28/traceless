@@ -6,8 +6,8 @@
 - **Demo video (3 min):** VIDEO_URL_TBD
 - Built for the #BuildHybridAI hackathon (Devpost + Firebase), Web/Chrome track.
 
-![Traceless review screen](docs/screenshots/TBD-review.png)
-![Traceless on-device badge and approved report](docs/screenshots/TBD-outbox.png)
+![Traceless review screen](docs/screenshots/review.png)
+![Traceless on-device badge and approved report](docs/screenshots/outbox.png)
 
 _(Screenshots: TBD, added before submission.)_
 
