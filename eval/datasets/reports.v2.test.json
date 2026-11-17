@@ -1,0 +1,1279 @@
+{
+  "version": "reports.v2-test",
+  "reports": [
+    {
+      "id": "t01",
+      "sector": "food processing",
+      "split": "test",
+      "text": "I want to report what is happening at the Halvorsen Poultry processing plant outside Brindle Falls. Our sanitation supervisor, Derek Moffit, has been signing off the overnight hygiene checklists without anyone actually swabbing the evisceration line. I am the only microbiology tech assigned to the plant, so the swab results come to me, and for the last month the logbook shows passes on days when no samples ever reached my bench. I work the 2 p.m. to 10 p.m. block, and I have watched Moffit fill in a whole week of entries in one sitting before he leaves the building. Last Thursday a batch tested positive for listeria at the state lab, yet Derek Moffit told the line leads to keep running. Two pallets of that product were shipped to schools. I started here right after finishing my certificate at the community college, and I am worried my name is the only one he could blame.",
+      "gold": [
+        {
+          "quote": "the only microbiology tech assigned to the plant",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I work the 2 p.m. to 10 p.m. block",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "I started here right after finishing my certificate",
+          "category": "PERSONAL_EVENT_DATE"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "Our sanitation supervisor, Derek Moffit",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Moffit fill in a whole week of entries",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "before he leaves the building",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Derek Moffit told",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "signing off the overnight hygiene checklists",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the logbook shows passes",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "a batch tested positive for listeria",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Two pallets of that product were shipped to schools",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the line leads",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t02",
+      "sector": "software sales",
+      "split": "test",
+      "text": "ok so i dont even know if this is the right place but i have to say something. our VP of sales Brandon Quill has been booking fake renewals at the end of every quarter so the numbers look good for the board, he creates the contracts himself and then cancels them quietly two weeks later when nobody is watching. i know because im the person who reconciles the billing exports for the whole sales org, nobody else touches that sheet. everyone on the floor calls me Pickles because of the jar on my desk lol so if this gets back to him he will know. i sit right next to the printer by the kitchen and i have literally seen Brandon print the fake signature pages himself. last quarter it was around 1.4 million in phantom bookings. also i just came back from my medical leave in the spring and honestly i cant afford to lose this job. Brandon told the finance director that the cancellations were customer churn.",
+      "gold": [
+        {
+          "quote": "who reconciles the billing exports for the whole sales org",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "nobody else touches that sheet",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "everyone on the floor calls me Pickles",
+          "category": "DIRECT_IDENTIFIER"
+        },
+        {
+          "quote": "i sit right next to the printer by the kitchen",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "i just came back from my medical leave in the spring",
+          "category": "PERSONAL_EVENT_DATE"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "VP of sales Brandon Quill",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Brandon print the fake signature pages himself",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Brandon told",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "booking fake renewals at the end of every quarter",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "cancels them quietly two weeks later",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "around 1.4 million in phantom bookings",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the cancellations were customer churn",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the finance director",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t03",
+      "sector": "water utility",
+      "split": "test",
+      "text": "To the Office of the Inspector General: I am submitting this report regarding the Corwin County Water Authority. The plant superintendent, Ms. Lorraine Achebe, has directed staff to dilute turbidity samples with distilled water before they are logged for the monthly compliance filing. This practice began after the filter beds failed inspection last winter. I am one of a two-person instrumentation crew at the north treatment plant, and the analyzers we calibrate show readings well above the permitted limit on most mornings. I am normally the one on the Saturday and Sunday rotation, which is when Ms. Achebe sends the altered numbers to the state portal from her home login. The reported figures and the raw analyzer logs differ on at least nineteen days in the last quarter. I can provide the raw files on request. Respectfully, Employee ID CWA-40719",
+      "gold": [
+        {
+          "quote": "a two-person instrumentation crew",
+          "category": "TEAM_SIZE"
+        },
+        {
+          "quote": "at the north treatment plant",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "on the Saturday and Sunday rotation",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "Employee ID CWA-40719",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The plant superintendent, Ms. Lorraine Achebe",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Ms. Achebe sends the altered numbers to the state portal",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "from her home login",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "dilute turbidity samples with distilled water",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "after the filter beds failed inspection last winter",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "readings well above the permitted limit",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "differ on at least nineteen days",
+          "kind": "INCIDENT_FACT"
+        }
+      ]
+    },
+    {
+      "id": "t04",
+      "sector": "warehouse",
+      "split": "test",
+      "text": "Staff at the Greenmark Grocers distribution center in Ellery are being pressured to skip forklift safety checks. The shift manager, Paul Venter, tells new hires that the pre-use inspection forms are optional and that anyone who stops to fill them out will lose hours. Several forklifts have faulty brakes and one has a cracked mast. Two workers were injured in separate incidents over the past few months, and in both cases Venter recorded the injuries as slips in the break room instead of equipment failures. The inspection binders in the dispatch office are blank for most of the year. Workers are afraid to raise this because Venter controls the schedules for the whole warehouse.",
+      "gold": [],
+      "mustNotFlag": [
+        {
+          "quote": "The shift manager, Paul Venter",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Venter recorded the injuries as slips",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Venter controls the schedules",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "skip forklift safety checks",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the pre-use inspection forms are optional",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "one has a cracked mast",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Two workers were injured in separate incidents",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "blank for most of the year",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "new hires",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t05",
+      "sector": "university research",
+      "split": "test",
+      "text": "I am a postdoc in the Kessler lab at Northvale University, and I need to report data fabrication in our grant progress reports. Professor Anton Kessler has been replacing failed western blot images with images from an old paper. He does this late at night in the imaging room after everyone has left. I am the only person in the lab trained on the confocal microscope, so when he claims new confocal data I know it never came from our machine, because the booking calendar shows no sessions. I joined the group three months after defending my thesis, and I am here on a J-1 visa, which is why I am terrified. The latest report to the funding agency includes four figures that I am sure were duplicated. Kessler also told our lab manager, Ruth, to delete the original raw files from the shared drive.",
+      "gold": [
+        {
+          "quote": "the only person in the lab trained on the confocal microscope",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I joined the group three months after defending my thesis",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "I am here on a J-1 visa",
+          "category": "PERSONAL_TRAIT"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "the Kessler lab",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Professor Anton Kessler",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "late at night in the imaging room",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Kessler also told",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "replacing failed western blot images",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the booking calendar shows no sessions",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "four figures that I am sure were duplicated",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "delete the original raw files",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "our lab manager, Ruth",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t06",
+      "sector": "airport ground operations",
+      "split": "test",
+      "text": "Reporting a safety issue with de-icing at Port Halden regional airport. The ramp lead on nights, Gus Ferreira, has been signing de-icing certificates for flights that were never sprayed, to keep departures on time. This happens mostly on the first wave of departures when the fluid truck is low. I'm on the 11 p.m. to 7 a.m. ramp crew and I usually work from the de-icing pad at gate 14, so I see which aircraft actually go through. Ferreira stays in the heated ops trailer most of the night and fills in the sheets from there. At least six aircraft left with frost on the wings last week. I am the oldest guy on the ramp by about twenty years, so everyone will know it was me if this comes out. If you need more, text me at 555-218-4473.",
+      "gold": [
+        {
+          "quote": "I'm on the 11 p.m. to 7 a.m. ramp crew",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "from the de-icing pad at gate 14",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "the oldest guy on the ramp by about twenty years",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "text me at 555-218-4473",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The ramp lead on nights, Gus Ferreira",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Ferreira stays in the heated ops trailer",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "fills in the sheets from there",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "signing de-icing certificates for flights that were never sprayed",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the first wave of departures",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "At least six aircraft left with frost on the wings",
+          "kind": "INCIDENT_FACT"
+        }
+      ]
+    },
+    {
+      "id": "t07",
+      "sector": "elementary school",
+      "split": "test",
+      "text": "i teach at Willowmere Elementary and i cant keep quiet anymore. the principal mr Harlan Dobbs has been taking money from the field trip fund for months, parents pay cash and he keeps the envelopes in his desk drawer and only deposits part of it. im one of only two special ed teachers in the building so if i get named its a coin flip lol. i went on maternity leave right before the spring trip and when i came back the receipts for my class were all gone. Dobbs said the bus company raised its price but i called them and it was the same price as always. probably around 3000 dollars is missing just from this year. i also have a hearing aid and everyone knows im the teacher who asks people to repeat themselves so please be careful what details you share. the secretary Mrs. Olin saw him count the envelopes too.",
+      "gold": [
+        {
+          "quote": "one of only two special ed teachers in the building",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "i went on maternity leave right before the spring trip",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "i also have a hearing aid",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "the teacher who asks people to repeat themselves",
+          "category": "PERSONAL_TRAIT"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "the principal mr Harlan Dobbs",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "keeps the envelopes in his desk drawer",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Dobbs said the bus company raised its price",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "taking money from the field trip fund",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "only deposits part of it",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the receipts for my class were all gone",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "around 3000 dollars is missing",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the secretary Mrs. Olin",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t08",
+      "sector": "hospital pharmacy",
+      "split": "test",
+      "text": "Subject: Controlled substance discrepancies, St. Abelard Medical Center\n\nOver the past two months, the automated dispensing cabinet on the cardiac step-down unit has recorded repeated wastage of hydromorphone that was never witnessed. The overrides are entered under the credentials of the unit's charge nurse, Kevin Strand. He typically pulls the vials near the end of his shift, after the evening medication pass. I am the pharmacy technician who restocks that cabinet on Tuesday and Friday mornings, and the counts I find do not match the waste records. I keep my own tally on the clipboard in the pharmacy satellite on the fifth floor. Kevin Strand has also asked newer nurses to co-sign wastes they did not see. I have been here for nearly eighteen years and have never seen numbers like this.\n\nSigned, J.T.R.",
+      "gold": [
+        {
+          "quote": "the pharmacy technician who restocks that cabinet",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "on Tuesday and Friday mornings",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "in the pharmacy satellite on the fifth floor",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "I have been here for nearly eighteen years",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "Signed, J.T.R.",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "the unit's charge nurse, Kevin Strand",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "pulls the vials near the end of his shift",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Kevin Strand has also asked",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "repeated wastage of hydromorphone that was never witnessed",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "after the evening medication pass",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the counts I find do not match the waste records",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "co-sign wastes they did not see",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "newer nurses",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t09",
+      "sector": "construction",
+      "split": "test",
+      "text": "Hello, I work for Bayline Builders on the Marrow Street apartment tower. The project manager, Craig Odell, has been approving concrete pours without the required cylinder tests, and the test reports in the file were copied from a different job. I grew up in Cebu and I translate the morning safety briefings for the drywall crew, which nobody else on site can do. Odell signs the inspection cards in his truck before the inspector even arrives. Two floors were poured last month with rebar spacing that does not match the drawings. I was hired the same week the tower crane went up and I'm on site from six every morning, so I have seen every pour. You can reach me at rgsantos.work@mailbox.example if you need photos.",
+      "gold": [
+        {
+          "quote": "I grew up in Cebu",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "I translate the morning safety briefings for the drywall crew",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I was hired the same week the tower crane went up",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "I'm on site from six every morning",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "reach me at rgsantos.work@mailbox.example",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The project manager, Craig Odell",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Odell signs the inspection cards in his truck",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "approving concrete pours without the required cylinder tests",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "copied from a different job",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Two floors were poured last month",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "rebar spacing that does not match the drawings",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the inspector",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t10",
+      "sector": "retail banking",
+      "split": "test",
+      "text": "I'm writing about the Fairhaven Savings branch on Colter Road. The branch manager, Denise Paley, has been opening credit card accounts in customers' names without their consent to hit her sales targets. Elderly customers are the main targets, especially those who come in to cash pension checks. Our branch has just three tellers, and I cover the drive-through window, so most of the complaints about mystery cards come to me first. I'm only in Monday, Wednesday and Thursday because I'm part time. Paley usually does the enrollments in her office after the lobby closes. I counted at least forty accounts this year that customers say they never asked for. The regional auditor, Mr. Bose, visited in the summer but Denise Paley showed him only the clean files.",
+      "gold": [
+        {
+          "quote": "Our branch has just three tellers",
+          "category": "TEAM_SIZE"
+        },
+        {
+          "quote": "I cover the drive-through window",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "I'm only in Monday, Wednesday and Thursday",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "because I'm part time",
+          "category": "SCHEDULE"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The branch manager, Denise Paley",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Paley usually does the enrollments in her office after the lobby closes",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Denise Paley showed him only the clean files",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "opening credit card accounts in customers' names without their consent",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "at least forty accounts this year",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Elderly customers",
+          "kind": "OTHER_PERSON"
+        },
+        {
+          "quote": "The regional auditor, Mr. Bose",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t11",
+      "sector": "telecom call center",
+      "split": "test",
+      "text": "I'm one of the customer service agents at the Brightwave Telecom contact center, which employs several hundred people. Our operations director, Philippa Grange, has ordered team leads to add a premium support package to accounts whenever a customer calls in about a billing error, without telling the customer. The add-on costs twelve dollars a month. I take these calls all day like everyone else on the floor, and the script we were given tells us not to mention the add-on unless asked directly. Customers find it on their next bill and call back angry. Grange presented the revenue jump at the last town hall as an organic upsell success. Thousands of accounts are affected.",
+      "gold": [],
+      "mustNotFlag": [
+        {
+          "quote": "Our operations director, Philippa Grange",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Grange presented the revenue jump",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "add a premium support package to accounts",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "The add-on costs twelve dollars a month",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "tells us not to mention the add-on",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Thousands of accounts are affected",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "team leads",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t12",
+      "sector": "charity",
+      "split": "test",
+      "text": "Dear Ethics Committee,\n\nI am writing about the Larkspur Children's Foundation. Our executive director, Gordon Wrenfield, has been charging personal travel to the restricted scholarship grant. Last year he billed a family holiday to the coast as a donor visit, and the invoices were coded under program costs. I handle the grant reconciliations as the foundation's sole part-time bookkeeper, so every receipt passes through my hands. I am in my sixties and came back to work after my husband passed away, so this job means a lot to me. I first noticed the problem the week I returned from my hip replacement, when the backlog of receipts was on my desk. Mr. Wrenfield told the board treasurer that the trip was approved. I do not believe any board member has seen the receipts.\n\nKind regards, Marjorie",
+      "gold": [
+        {
+          "quote": "the foundation's sole part-time bookkeeper",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I am in my sixties",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "came back to work after my husband passed away",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "the week I returned from my hip replacement",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "Kind regards, Marjorie",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "Our executive director, Gordon Wrenfield",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Mr. Wrenfield told",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "charging personal travel to the restricted scholarship grant",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "billed a family holiday to the coast as a donor visit",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "coded under program costs",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the trip was approved",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the board treasurer",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t13",
+      "sector": "automotive manufacturing",
+      "split": "test",
+      "text": "this is about the paint shop at Corliss Auto Components, plant 2. our area supervisor Rick Tamblyn makes us switch off the booth ventilation alarms because he says they slow the line, and we end up breathing solvent fumes for hours. three people have gone to the clinic with headaches and nosebleeds this month alone. im the only woman on the paint crew and i run the touch-up booth at the very end of the line, so i get the worst of the fumes. i work the weekend overtime shift too because i need the money. Tamblyn keeps the alarm override key on his lanyard and turns it every morning at the start of first shift. i reported it on the internal portal under my login dvolkova_p2 and nothing happened, he just got more angry. please dont use that.",
+      "gold": [
+        {
+          "quote": "im the only woman on the paint crew",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "i run the touch-up booth at the very end of the line",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "i work the weekend overtime shift too",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "under my login dvolkova_p2",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "our area supervisor Rick Tamblyn",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Tamblyn keeps the alarm override key on his lanyard",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "turns it every morning at the start of first shift",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "switch off the booth ventilation alarms",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "breathing solvent fumes for hours",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "three people have gone to the clinic",
+          "kind": "INCIDENT_FACT"
+        }
+      ]
+    },
+    {
+      "id": "t14",
+      "sector": "city government",
+      "split": "test",
+      "text": "I am reporting suspected bribery in the Building Permits Division of the City of Ashcombe. Deputy Director Simon Varga has been fast-tracking permits for Keystone Ridge Developments in exchange for payments. Applications from that developer skip the zoning review queue entirely and are approved within days, while other applicants wait several months. I am the sole zoning reviewer for the eastern district, and the files that bypass me are always Keystone's. Our review unit is a team of four. Mr. Varga meets the developer's representative for lunch on Fridays at a restaurant across from City Hall, and approvals follow the next Monday. I raised the issue in my annual review meeting with Mr. Varga in the autumn, the only time I have spoken to him one-on-one, and since then my workload has been cut in half.",
+      "gold": [
+        {
+          "quote": "the sole zoning reviewer for the eastern district",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "Our review unit is a team of four",
+          "category": "TEAM_SIZE"
+        },
+        {
+          "quote": "I raised the issue in my annual review meeting",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "the only time I have spoken to him one-on-one",
+          "category": "PERSONAL_EVENT_DATE"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "Deputy Director Simon Varga",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Mr. Varga meets the developer's representative for lunch on Fridays",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Mr. Varga",
+          "kind": "ACCUSED",
+          "occurrence": 2
+        },
+        {
+          "quote": "fast-tracking permits for Keystone Ridge Developments",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "skip the zoning review queue entirely",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "approvals follow the next Monday",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "other applicants",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t15",
+      "sector": "container terminal",
+      "split": "test",
+      "text": "To whom it may concern,\n\nI am writing to report a pattern of cargo fraud and safety violations at the Tessaly Point container terminal, which is run by Orrin Maritime Services. I have tried to raise this internally for almost a year without any result, so I am putting everything I know into this report and I will try to be as precise as I can.\n\nThe terminal operations manager, Haldor Brisk, has been instructing crane and yard staff to reclassify refrigerated containers whose temperature recorders show a cold chain break. Instead of flagging them for inspection, the containers are relabeled as dry cargo in the yard system and released to trucks the same day. Most of these containers hold frozen seafood and vaccines bound for regional clinics. When the cold chain is broken on vaccines, there is no way for the clinic to tell by looking at the boxes.\n\nI work the graveyard rotation, four nights on and four off, so I see most of the late releases. My post is the reefer monitoring booth at the end of row K, where the plug-in panels for the refrigerated stacks are. From that booth I can see every alarm come in on the monitor and I log them on a paper sheet as well as on the computer. On a typical week there are between ten and twenty alarms, and lately almost none of them result in an inspection hold.\n\nMr. Brisk normally leaves the terminal around eight in the evening, but on nights when a large vessel is being worked he stays late in the operations tower and calls the yard planners directly. On those nights the alarm records in the yard system are edited before the morning report is generated. I have compared my paper sheets against the system printout on at least thirty occasions and the alarm entries simply disappear. The edits are made under a shared supervisor login that Haldor Brisk controls.\n\nThere is also a safety problem. The straddle carrier drivers are being pushed to exceed the yard speed limit to meet his turnaround targets. Two near misses with pedestrians happened in the last two months, one involving a lashing crew member who was nearly pinned between two stacks. Neither was entered in the incident register. The safety officer, Ingrid Paulsen, was told by Brisk that reporting the near misses would trigger an audit and cost the terminal its insurance discount.\n\nI want to be clear that I am not making this up out of a grudge. I have kept copies of the paper alarm sheets, photographs of the temperature recorder screens, and the printouts showing the edited entries. I can make all of this available to an investigator, and I can explain how the alarm codes work if that helps anyone reading the logs.\n\nI am worried about being identified. I was moved to the reefer booth only after I came back from a long sick leave following a back injury on the quay, and everybody at the terminal knows that story. Before that I was a lasher for six years. I am also the only person on nights who has the reefer technician certificate, so there is nobody else who could have noticed the pattern in the alarm logs. On my days off I am not at the terminal at all, which also narrows it down, because the edits I have documented all happened on nights I was working.\n\nPlease handle this carefully.",
+      "gold": [
+        {
+          "quote": "I work the graveyard rotation",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "four nights on and four off",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "the reefer monitoring booth at the end of row K",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "I was moved to the reefer booth",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "I came back from a long sick leave",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "following a back injury on the quay",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "Before that I was a lasher for six years",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "the only person on nights who has the reefer technician certificate",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "On my days off I am not at the terminal at all",
+          "category": "SCHEDULE"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The terminal operations manager, Haldor Brisk",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Mr. Brisk normally leaves the terminal around eight in the evening",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "he stays late in the operations tower",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "calls the yard planners directly",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "a shared supervisor login that Haldor Brisk controls",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "told by Brisk",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "reclassify refrigerated containers",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "relabeled as dry cargo in the yard system",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "released to trucks the same day",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "frozen seafood and vaccines bound for regional clinics",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "between ten and twenty alarms",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the alarm records in the yard system are edited",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the alarm entries simply disappear",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "exceed the yard speed limit",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Two near misses with pedestrians",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Neither was entered in the incident register",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "cost the terminal its insurance discount",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "The straddle carrier drivers",
+          "kind": "OTHER_PERSON"
+        },
+        {
+          "quote": "a lashing crew member",
+          "kind": "OTHER_PERSON"
+        },
+        {
+          "quote": "The safety officer, Ingrid Paulsen",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t16",
+      "sector": "hotel",
+      "split": "test",
+      "text": "Housekeeping staff at the Seabright Grand Hotel are being forced to clean rooms off the clock. Our executive housekeeper, Ms. Tanya Rourke, clocks us out at the end of the official shift and then hands out a second list of checkout rooms that must be done before we leave. Most nights that is another two hours unpaid. I'm the night laundry attendant, and I'm down in the basement laundry room from 6 p.m. until 2 a.m., so I see everyone come down still working long after the time clock says they left. Rourke edits the timesheets herself on the computer in her office behind the front desk. My badge number is 7724 if you need to verify that I work here. Two women quit last month after complaining to Ms. Rourke and were told they would not get references.",
+      "gold": [
+        {
+          "quote": "I'm the night laundry attendant",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "down in the basement laundry room",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "from 6 p.m. until 2 a.m.",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "My badge number is 7724",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "Our executive housekeeper, Ms. Tanya Rourke",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Rourke edits the timesheets herself",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "in her office behind the front desk",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Ms. Rourke",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "clean rooms off the clock",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "a second list of checkout rooms",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "another two hours unpaid",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Two women",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t17",
+      "sector": "metal finishing",
+      "split": "test",
+      "text": "A chemical plating company, Dunmore Metal Finishing, is discharging untreated rinse water into Cobb Creek behind its facility on Route 9. The plant owner, Victor Hale, had the drain valve on the holding tank welded open so the tank never needs to be pumped out. The discharge happens mostly on weekend nights when the office is empty. Residents downstream have reported dead fish and a green film on the water several times this year. Hale has told the county that the tank is serviced every month, but the hauling company has not been on site in over a year. Water samples taken near the outfall would confirm the problem.",
+      "gold": [],
+      "mustNotFlag": [
+        {
+          "quote": "The plant owner, Victor Hale",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Hale has told the county",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "discharging untreated rinse water into Cobb Creek",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the drain valve on the holding tank welded open",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "mostly on weekend nights when the office is empty",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "dead fish and a green film on the water",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "has not been on site in over a year",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Residents downstream",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t18",
+      "sector": "fitness app startup",
+      "split": "test",
+      "text": "I work at Lumenpath, a fitness app startup. Our CTO, Marcus Oyelaran, has been selling users' precise location histories to a data broker even though the privacy policy says we never share location data. He set up a nightly export job that sends the files to an outside server, and the job is hidden under a name that looks like a backup. I'm the one who keeps the data pipeline running, and I'm the only engineer on the team with access to the export logs besides Marcus. It's just me and one other developer on the data side. I'm also the newest hire, I started in the summer straight out of a bootcamp. The broker contract is worth around two hundred thousand dollars a year. My name is Wen, and I'm scared he'll figure out it was me.",
+      "gold": [
+        {
+          "quote": "I'm the one who keeps the data pipeline running",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "the only engineer on the team with access to the export logs",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "It's just me and one other developer on the data side",
+          "category": "TEAM_SIZE"
+        },
+        {
+          "quote": "I'm also the newest hire",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "I started in the summer straight out of a bootcamp",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "My name is Wen",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "Our CTO, Marcus Oyelaran",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "besides Marcus",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "selling users' precise location histories to a data broker",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "a nightly export job",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "hidden under a name that looks like a backup",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "around two hundred thousand dollars a year",
+          "kind": "INCIDENT_FACT"
+        }
+      ]
+    },
+    {
+      "id": "t19",
+      "sector": "quarry",
+      "split": "test",
+      "text": "Safety concerns at the Redcliff Quarry operated by Granton Aggregates. The site foreman, Bill Esterhuizen, has been sending crews into the north pit after blasting without waiting for the dust and fume clearance time. He also disabled the backup alarm on the haul truck he drives because he finds it annoying. I'm the blaster's helper, the only one on site, and twice he told me to radio the all-clear early. I'm stationed at the shot box on the east bench during every blast. I'm nineteen, so I didn't push back. One loader operator was hospitalized for breathing problems in the autumn. Esterhuizen writes the clearance times into the blast log afterwards to make them look right.",
+      "gold": [
+        {
+          "quote": "the blaster's helper, the only one on site",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I'm stationed at the shot box on the east bench",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "I'm nineteen",
+          "category": "PERSONAL_TRAIT"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The site foreman, Bill Esterhuizen",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "disabled the backup alarm on the haul truck he drives",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Esterhuizen writes the clearance times into the blast log afterwards",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "sending crews into the north pit after blasting",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "told me to radio the all-clear early",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "hospitalized for breathing problems",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "One loader operator",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t20",
+      "sector": "senior living",
+      "split": "test",
+      "text": "I'm a caregiver at Maple Hollow Senior Living and I'm honestly sick about this. The night supervisor, Corinne Babbage, sedates residents who wander or call out at night so she can sleep in the staff lounge. She gives them extra doses of a liquid sedative that isn't on their charts. Morning staff find residents so groggy they can't eat breakfast. I work the overnight shift with her three nights a week, Sunday through Tuesday, and I'm the only aide on the memory care wing on those nights. I came back from bereavement leave just before it started getting really bad, so maybe she thought I wouldn't notice. Babbage keeps the bottle in her coat in the lounge. Mrs. Halloway in room 12 fell twice last month. I'm the one who speaks Polish with Mr. Nowak's family, so they'd know it's me if this gets out.",
+      "gold": [
+        {
+          "quote": "I work the overnight shift with her",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "three nights a week, Sunday through Tuesday",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "I'm the only aide",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "on the memory care wing",
+          "category": "LOCATION"
+        },
+        {
+          "quote": "I came back from bereavement leave",
+          "category": "PERSONAL_EVENT_DATE"
+        },
+        {
+          "quote": "the one who speaks Polish",
+          "category": "PERSONAL_TRAIT"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The night supervisor, Corinne Babbage",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "so she can sleep in the staff lounge",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Babbage keeps the bottle in her coat in the lounge",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "extra doses of a liquid sedative that isn't on their charts",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "so groggy they can't eat breakfast",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "fell twice last month",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "Mrs. Halloway in room 12",
+          "kind": "OTHER_PERSON"
+        },
+        {
+          "quote": "Mr. Nowak's family",
+          "kind": "OTHER_PERSON"
+        }
+      ]
+    },
+    {
+      "id": "t21",
+      "sector": "law firm",
+      "split": "test",
+      "text": "Confidential submission regarding Pryce & Hollander LLP. Senior partner Elliot Pryce has been billing clients for hours that associates never worked, by inflating time entries after the monthly close. I discovered this because I am the only paralegal who prepares the pre-bills for his litigation group, and the entries I submit are changed before invoices go out. The discrepancies on the Morrow Shipping matter alone exceed 300 hours. Mr. Pryce makes the edits from his own terminal late on Sunday evenings, when the billing system shows him as the only active user. I am a native Korean speaker and handle all Korean-language document review for the firm, which makes me easy to identify. I am happy to provide copies through counsel.\n\nSubmitted by M.K.L.",
+      "gold": [
+        {
+          "quote": "the only paralegal who prepares the pre-bills",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I am a native Korean speaker",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "handle all Korean-language document review for the firm",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "Submitted by M.K.L.",
+          "category": "DIRECT_IDENTIFIER"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "Senior partner Elliot Pryce",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Mr. Pryce makes the edits from his own terminal",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "late on Sunday evenings",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "billing clients for hours that associates never worked",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "inflating time entries after the monthly close",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "the entries I submit are changed",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "exceed 300 hours",
+          "kind": "INCIDENT_FACT"
+        }
+      ]
+    },
+    {
+      "id": "t22",
+      "sector": "restaurant",
+      "split": "test",
+      "text": "Reporting wage theft at Bellacasa Trattoria in the Old Mill district. The owner, Sal Ferraro, takes a cut of every server's tips at the end of the night and calls it a house fee. We are also paid for 30 hours a week no matter how long we stay. I'm the only dishwasher, and I've been here since the place opened eleven years ago. I close every night except Monday, so I'm usually the last one out with Sal. The kitchen is only me and two cooks. I'm also hard of hearing, so Sal talks to me by writing on the order pad, and I've kept some of those notes where he tells me to clock out early. He counts the tip jar in the back office by the walk-in fridge.",
+      "gold": [
+        {
+          "quote": "I'm the only dishwasher",
+          "category": "ROLE_UNIQUE"
+        },
+        {
+          "quote": "I've been here since the place opened eleven years ago",
+          "category": "PERSONAL_TRAIT"
+        },
+        {
+          "quote": "I close every night except Monday",
+          "category": "SCHEDULE"
+        },
+        {
+          "quote": "The kitchen is only me and two cooks",
+          "category": "TEAM_SIZE"
+        },
+        {
+          "quote": "I'm also hard of hearing",
+          "category": "PERSONAL_TRAIT"
+        }
+      ],
+      "mustNotFlag": [
+        {
+          "quote": "The owner, Sal Ferraro",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "with Sal",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "Sal talks to me by writing on the order pad",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "counts the tip jar in the back office",
+          "kind": "ACCUSED"
+        },
+        {
+          "quote": "takes a cut of every server's tips",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "calls it a house fee",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "paid for 30 hours a week no matter how long we stay",
+          "kind": "INCIDENT_FACT"
+        },
+        {
+          "quote": "where he tells me to clock out early",
+          "kind": "INCIDENT_FACT"
+        }
+      ]
+    }
+  ]
+}
