@@ -4,6 +4,15 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
+- [ ] **Rodada 3 no Chrome (17/11 ou 18/11, ~1h30, pode deixar rodando sozinho).** Compara as 3 versões novas da detecção com a atual.
+  1. Deixe o Claude Code aberto (o servidor local já está ligado). Se a página não abrir, avise no chat.
+  2. No seu **Chrome normal** (com o Gemini Nano), abra: `http://localhost:5174/eval` (atenção: porta **5174**).
+  3. No seletor de preset, escolha **"7. Round 3: dev pool (all 24 v1 reports) x 3 runs, 4 variants"** e clique para rodar.
+  4. **Não feche nem minimize a aba** até terminar (não deixe o computador dormir).
+  5. Se aparecer **OnDeviceStuck** ou a página travar por mais de 5 minutos: recarregue e rode o preset 7 de novo, do começo.
+  6. **Não rode o preset 8** (ele só pode ser rodado uma única vez; o manager pede na hora certa).
+  7. Avise no chat: "rodei o round 3".
+
 - [x] **(Concluído 16/11: "tudo certo") Publicar a versão corrigida e testar o modo LOCAL (no seu Chrome com o Gemini Nano), ~10 min.**
   1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
   2. No seu Chrome **normal** (não anônimo; é nele que a flag do Gemini Nano está ligada), abra https://traceless-92f85.web.app
