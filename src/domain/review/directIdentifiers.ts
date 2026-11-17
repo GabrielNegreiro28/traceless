@@ -25,7 +25,8 @@ interface ClassifiedIdentifier {
   readonly status: IdentifierStatus;
 }
 
-function directRules(text: RawText): Finding[] {
+/** The direct identifiers the deterministic rules find in `text`. */
+export function directRules(text: RawText): Finding[] {
   return detectByRules(text).filter((f) => f.category === 'DIRECT_IDENTIFIER');
 }
 
@@ -53,7 +54,10 @@ function classify(identifier: Finding, context: ReviewContext): IdentifierStatus
 }
 
 /** Final identifiers left over after matching, by exact quote, one for one, to `allowed`. */
-function countUnmatched(finalIdentifiers: readonly Finding[], allowed: readonly string[]): number {
+export function countUnmatched(
+  finalIdentifiers: readonly Finding[],
+  allowed: readonly string[],
+): number {
   const allowance = new Map<string, number>();
   for (const quote of allowed) allowance.set(quote, (allowance.get(quote) ?? 0) + 1);
   let unmatched = 0;

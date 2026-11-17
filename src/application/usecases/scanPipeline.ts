@@ -2,6 +2,7 @@ import { mergeFindings } from '../../domain/detection/findingMerger';
 import { applyPostFilters, type PostFilterName } from '../../domain/detection/postFilters';
 import { detectByRules } from '../../domain/detection/ruleDetector';
 import type { RulePack } from '../../domain/detection/rulePacks';
+import { guardSuggestions } from '../../domain/review/suggestionGuard';
 import { chunkText, type TextChunk } from '../../domain/detection/textChunker';
 import type { Finding, TextSpan } from '../../domain/detection/types';
 import type { RawText } from '../../domain/text/brandedText';
@@ -90,10 +91,10 @@ function buildResult(
   const postFilters = settings.postFilters ?? [];
   const filtered = applyPostFilters(text, pass.findings, pass.protectedQuotes, postFilters);
   return {
-    findings: mergeFindings([...ruleFindings, ...filtered.kept]),
+    findings: guardSuggestions(text, mergeFindings([...ruleFindings, ...filtered.kept])),
     modelFindings: filtered.kept,
     raw: {
-      findings: mergeFindings([...ruleFindings, ...pass.findings]),
+      findings: guardSuggestions(text, mergeFindings([...ruleFindings, ...pass.findings])),
       modelFindings: pass.findings,
     },
     protectedSpans: filtered.protectedSpans,
@@ -164,7 +165,8 @@ function scanProgress(
  * on-device inference is serial), quotes located per chunk and shifted to report offsets;
  * protected quotes from ALL chunks are collected first, then the enabled post-filters run
  * over the full text (so a person introduced in chunk 1 is protected in chunk 2); finally the
- * deterministic rule findings (full text) are merged in. A model failure on any chunk fails
+ * deterministic rule findings (full text) are merged in; a suggestion that would add a direct
+ * identifier is dropped (guardSuggestions). A model failure on any chunk fails
  * the scan; there is no silent rules-only downgrade. Unless `allowCloud`, the first chunk that
  * did not run ON_DEVICE fails the scan with PrivacyViolation and discards every finding.
  * `text` is only read locally here, so it is typed RawText, the most restrictive class.
