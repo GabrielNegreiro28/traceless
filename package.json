@@ -24,6 +24,7 @@
     "verify:no-eval": "node scripts/verify-no-eval-in-dist.mjs",
     "eval": "vite --open /eval",
     "eval:inspect": "node scripts/eval-inspect.mjs",
+    "eval:bootstrap": "node scripts/eval-bootstrap.mjs",
     "verify:prod-config": "node scripts/verify-prod-config.mjs",
     "emulators": "firebase emulators:start --project demo-traceless",
     "deploy:hosting": "npm run verify:prod-config && npm run build && firebase deploy --only hosting --project traceless-92f85",
