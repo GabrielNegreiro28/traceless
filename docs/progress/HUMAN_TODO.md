@@ -4,7 +4,19 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Teste final novo (preset 8) no Chrome, ~40 min. SÓ PODE SER FEITO UMA VEZ.**
+- [ ] **Publicar a detecção nova e testar no seu Chrome com o Nano (~10 min).**
+  1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
+  2. No seu Chrome normal, abra https://traceless-92f85.web.app → **Try a sample report** → **Check my report**.
+  3. Se aparecer **"Prepare private AI"**, clique e espere (agora prepara dois modelos).
+  4. A análise deve levar cerca de 15–40 s, com o selo "Checked on your device". Siga até enviar e abrir o caso com a chave.
+  5. Me conte quantos cartões apareceram e se algum era sobre o acusado ou estava estranho.
+
+- [ ] **(OPCIONAL, ~30 min, pode rodar já) Medir a versão antiga no teste novo, só para comparar no README.** Na rodada final ela não foi medida: o Chrome travou o modelo antes dela começar.
+  1. Feche a aba do /eval. Abra uma aba nova em `http://localhost:5174/eval`.
+  2. Variant: **`v2-single2-rules`**. Preset: **"8. Final v2 test…"**. Digite `v2-single2-rules` na confirmação e rode.
+  3. Não feche a aba até terminar. Avise: "rodei a referência".
+
+- [x] **(Concluído 17/11) Teste final novo (preset 8) no Chrome, ~40 min. SÓ PODE SER FEITO UMA VEZ.**
   1. Deixe o Claude Code aberto. No seu Chrome normal, abra `http://localhost:5174/eval` (porta **5174**). Recarregue a página antes de começar.
   2. No seletor **Variant**, escolha **`v3-verifier+investigator`** (confira duas vezes).
   3. No seletor de preset, escolha **"8. Final v2 test (x 3, once)…"**.
