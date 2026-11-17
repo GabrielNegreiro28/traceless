@@ -139,3 +139,17 @@ _Formato: data · pergunta · opções · recomendação (quem) · decisão fina
 - **Split de teste novo commitado antes de qualquer mudança no detector:** `eval/datasets/reports.v2.test.json`, 22 relatos, 87 gold, 68 ACCUSED, 89 INCIDENT_FACT, 20 OTHER_PERSON; escrito por um agente cego (não viu regras, prompts, resultados nem esta discussão). **SHA-256 `66435e6ce2036074e037535df064f97619eb3c0ec10e0423182d6e9030e55662`.** O manager não leu o texto.
 - **Pré-registro (antes de qualquer dado das variantes novas):** variantes `v3-base+investigator`, `v3-verifier+investigator`, `v3-base+verifier+investigator`, rodadas no pool de dev (v1 inteiro, 24 relatos) ×3. Escolha: maior recall estrito com ACCUSED ≤ 0,05, INCIDENT_FACT ≤ 0,10, precisão ≥ 0,35, p50 ≤ 20 s, máx ≤ 60 s; empate → menos chamadas; se nenhuma superar `v2-single2-rules` no mesmo pool por ≥ 0,05, fica a atual. Depois, teste v2 ×3 **uma única vez** com a escolhida (e também com `v2-single2-rules` como referência, na mesma sessão), resultado publicado qualquer que seja. Meta do portão inalterada (recall ≥ 0,70).
 - Prazo: código até 19/11; rodadas do participante 20–21/11; se atrasar, fica a detecção atual com o número divulgado.
+
+## 2026-11-17 · Rodada 3 (pool de dev ×3) → escolha da variante (consulta ao Fable), ANTES do teste v2
+- **Resultados (pooled, 24 relatos v1 ×3, commit `abc061a`):**
+  | variante | recall estrito | ACCUSED | INCIDENT | OTHER | softPrec | p50 | máx |
+  |---|---|---|---|---|---|---|---|
+  | v2-single2-rules (atual) | 0,561 | 0,061 | 0,074 | 0,067 | 0,650 | 10,1 s | 44,8 s |
+  | v3-base+investigator | 0,689 | 0,054 | 0,112 | 0,156 | 0,553 | 12,7 s | 46,3 s |
+  | v3-verifier+investigator | 0,731 | 0,068 | 0,089 | 0,067 | 0,587 | 12,7 s | 41,5 s |
+  | v3-base+verifier+investigator | 0,716 | 0,048 | 0,109 | 0,044 | 0,567 | 18,4 s | 58,1 s |
+- **Leitura literal da regra pré-registrada:** nenhuma variante elegível; a própria atual falha ACCUSED (0,061 > 0,05). A regra estava mal especificada (não previa a linha de base falhando uma guarda).
+- **Desvio (recomendação do Fable, aceita):** uma guarda que a linha de base também falha vira **não inferioridade** (tolerância ≈ 1 trecho por relato-execução); as demais guardas continuam absolutas. Só `v3-verifier+investigator` fica elegível (as outras duas v3 falham INCIDENT, que a atual passa). Precedentes: 14/11 (ACCUSED "não piorar a linha de base") e 13/11 (faixa 0,05–0,15 = go condicional com chips de confirmação). **Escolhida: `v3-verifier+investigator`** (+0,17 de recall). Rejeitado: escolher no teste.
+- **Aborto pré-registrado agora:** no teste v2 ×3 (uma vez, escolhida + `v2-single2-rules` como referência), se o ACCUSED pooled da escolhida passar de **0,15**, o produto fica com `v2-single2-rules`. Os dois resultados são publicados de qualquer forma; nenhuma nova rodada.
+- **Se não abortar:** o produto passa a usar `v3-verifier+investigator`; o portão (recall ≥ 0,70 etc.) é julgado no teste v2 e divulgado como está.
+- **README deve divulgar:** a regra pré-registrada e este desvio; os números de dev das 4 variantes; os números de teste das duas, com IC 95% por bootstrap por relato e a pior execução; que a guarda 0,05 está a ~1 trecho dos valores medidos; os chips de confirmação como mitigação de ACCUSED; que o dataset foi escrito por LLM.
