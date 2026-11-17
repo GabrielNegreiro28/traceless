@@ -118,6 +118,7 @@ function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppCont
     structureReport: structure,
     privacyLedger: ledgerView(ledger),
     config,
+    preloadAnalysers: ai.preload ?? (() => undefined),
     demoAi: kind === 'demo',
   };
 }

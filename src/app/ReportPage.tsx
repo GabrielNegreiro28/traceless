@@ -181,11 +181,27 @@ function usePrefillSample(flow: ReportFlow): void {
   }, [wanted, setText]);
 }
 
+/** Warms the lazy text analyser once the browser is idle, while the reporter is still writing. */
+function usePreloadAnalysers(): void {
+  const { preloadAnalysers } = useServices();
+  useEffect(() => {
+    const idle = typeof requestIdleCallback === 'function';
+    const handle = idle
+      ? requestIdleCallback(() => preloadAnalysers())
+      : window.setTimeout(preloadAnalysers, 0);
+    return () => {
+      if (idle) cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
+    };
+  }, [preloadAnalysers]);
+}
+
 /** /report route: the reporter's flow, one screen per state of the reducer. */
 export function ReportPage() {
   const flow = useReportFlow();
   const { demoAi } = useServices();
   usePrefillSample(flow);
+  usePreloadAnalysers();
   useFocusHeadingOnTransition(flow.state.status);
   useNavigationLock(flow.state.status === 'submitting');
   return (

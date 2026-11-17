@@ -40,6 +40,8 @@ the reporter decide, and says plainly that the list may be incomplete (see
 5. **Cloud step on approved text only**: Gemini structures the report (category, summary, when,
    where). It is submitted to Firestore under a random 128-bit case key, which the reporter keeps to
    check the status later at `/case`.
+6. **Privacy ledger**: a "What happened to your text" panel lists every step so far and where it
+   ran (device or cloud), never the words; it lives in the tab's memory only.
 
 ### Hybrid inference strategy
 
@@ -96,7 +98,8 @@ that small models degrade on complex prompts (so each Nano call is short and sin
 
 Strict recall = gold identifying spans matched by a finding that is not oversized for that span,
 out of all gold spans. A scan that fails or hangs counts as **missed**. The ACCUSED violation rate is
-the share of "must not flag" spans about an accused person that the detector flagged anyway. Both are
+the share of "must not flag" spans about an accused person that the detector flagged anyway. Soft precision = findings
+that match a gold span without being oversized for it, out of all findings. All are
 pooled over 3 runs. Gate thresholds: strict recall >= 0.70, ACCUSED <= 0.05, INCIDENT_FACT <= 0.10,
 precision >= 0.35, median scan <= 20 s, slowest <= 60 s. Confidence intervals are per-report
 bootstrap (10,000 resamples, fixed seed): `npm run eval:bootstrap -- <result file>`.
@@ -111,7 +114,7 @@ Detector `v2-single2-rules`, 3 runs. Result file:
 | Strict recall         | 0.604           | 0.508 to 0.721     | 0.566     |
 | ACCUSED violation     | 0.046           | 0.000 to 0.126     | 0.069     |
 | INCIDENT_FACT         | 0.030           |                    |           |
-| Precision             | 0.656           |                    |           |
+| Soft precision        | 0.656           |                    |           |
 | Median / slowest scan | 10.2 s / 36.7 s |                    |           |
 
 Gate **not met** (recall below 0.70). Decision recorded then: ship with the disclosed miss, make the
@@ -140,7 +143,7 @@ pass). Result file: `eval/results/v3-verifier+investigator-v2test-2026-11-17T14-
 | ACCUSED violation               | **0.072**       | 0.033 to 0.117     | 0.088     | <= 0.05, **not met**                                                |
 | INCIDENT_FACT violation         | 0.070           |                    | 0.103     | <= 0.10, met                                                        |
 | OTHER_PERSON violation          | 0.103           |                    |           | none                                                                |
-| Precision                       | 0.662           |                    | 0.655     | >= 0.35, met                                                        |
+| Soft precision                  | 0.662           |                    | 0.655     | >= 0.35, met                                                        |
 | Scan failures                   | 0.045           |                    | 0.136     | <= 0.05, met (3 terminal stalls, all in one run, counted as missed) |
 | Median / slowest scan           | 14.3 s / 36.0 s |                    |           | <= 20 s / <= 60 s, met                                              |
 
@@ -201,8 +204,8 @@ Full record: `docs/progress/DECISIONS.md` (in Portuguese).
 
 ## Try it
 
-1. Open **https://traceless-92f85.web.app** in desktop Chrome. No account: you are signed in
-   anonymously.
+1. Open **https://traceless-92f85.web.app** in desktop Chrome. No account: an anonymous
+   sign-in happens only when you send a report or look up a case.
 2. Click **Try a sample report** to load an invented report, then **Check my report**.
 3. **Without Gemini Nano** (what most visitors have): the app explains this and offers a
    **consented cloud scan**: raw text goes to the cloud for that one scan only after you agree.

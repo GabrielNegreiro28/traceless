@@ -17,8 +17,9 @@ A reporter pastes a report (or loads an invented sample). Traceless then:
 1. **Scans on the device.** Rules, grammar-based candidates, then Gemini Nano verifies each candidate, and a second "HR investigator" pass asks what a colleague could deduce. The badge reads "Checked on your device".
 2. **Shows every finding as a card.** The reporter chooses Accept, Edit, Keep anyway or "Not about me". There is deliberately no "accept all", and nothing changes silently.
 3. **Forces a Second look.** The reporter must confirm they re-read the report for details only they would know.
-4. **Approves in the Outbox.** Only then does the cloud get involved: Gemini organizes the approved text (category, summary, when, where). The badge reads "Organized in the cloud, only your approved text".
-5. **Sends and returns.** The reporter gets a random 128-bit case key, shown once, and can check status later at `/case`.
+4. **Approves in the Outbox.** Only then does the cloud get involved: Gemini organizes the approved text (category, summary, when, where). The badge reads "Organized in the cloud — only your approved text".
+5. **Shows what happened.** A "What happened to your text" panel lists every step so far and where it ran (device or cloud), never the words themselves, and lives in the tab's memory only.
+6. **Sends and returns.** The reporter gets a random 128-bit case key, shown once, and can check status later at `/case`.
 
 It works with one click and no account. On a browser without Gemini Nano, a per-scan consent dialog offers a cloud scan, or a pattern-only check that stays on the device.
 
@@ -36,7 +37,7 @@ Firebase products:
 
 - **Firebase AI Logic (hybrid inference):** the core. Nano for raw text, cloud Gemini for approved text, `inferenceSource` shown in the UI. `src/infrastructure/ai/aiService.ts`, `modelFactory.ts`, `hybridModel.ts`.
 - **App Check:** required by AI Logic; reCAPTCHA Enterprise in production. `src/infrastructure/firebase/appCheck.ts`.
-- **Authentication (anonymous):** no account for reporters or judges. `src/infrastructure/firebase/anonymousAuth.ts`.
+- **Authentication (anonymous):** no account for reporters or judges; the anonymous sign-in happens only when you send a report or look up a case. `src/infrastructure/firebase/anonymousAuth.ts`.
 - **Firestore + rules:** stores the approved report; reporters can create and get by key, never list, update or delete. `src/infrastructure/firebase/reportSubmit.ts`, `firebase/firestore.rules`.
 - **Remote Config:** a cloud-scan kill switch, plus the acknowledgement (7 days) and feedback (90 days) deadlines from EU Directive 2019/1937. `src/infrastructure/config/RemoteConfigService.ts`.
 - **Hosting:** the live app with a strict CSP. `firebase.json`.
@@ -57,7 +58,7 @@ Stack: React, TypeScript, Vite, zod for model output. Full diagram: `docs/archit
 - Honest evaluation. We wrote a new 22-report held-out set (87 gold spans) with a blind LLM author, committed its hash before touching the detector, and ran it once with unchanged thresholds.
   - Strict recall **0.709** (95% CI 0.642 to 0.784), target 0.70: met, but unstable (worst run 0.655).
   - Wrongly flagging accused people: **0.072** against a 0.05 target: **not met**. This is why every finding needs a click and "Not about me" exists.
-  - Precision 0.662; median scan 14.3 s.
+  - Soft precision 0.662 (findings that match a gold span without being oversized, out of all findings); median scan 14.3 s.
   - Disclosures: the data is synthetic and LLM-written; the baseline comparison on this split was lost to a stalled run, so detector comparisons rest on the development pool only; one late commit changed rewrite suggestions, not detection.
 - Traceless never claims the list is complete, and never promises anonymity.
 

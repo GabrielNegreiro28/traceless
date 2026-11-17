@@ -20,12 +20,15 @@ Meta: um vídeo de 2:40 (nunca mais que 2:50), em inglês, público no YouTube. 
 ## 3. Ensaio (dry run)
 
 1. Sem gravar, siga a tabela do roteiro, cena por cena. Treine a parte offline: F12 > aba **Network** > menu "No throttling" > **Offline**. Depois volte para **No throttling**.
+   - Antes de gravar a cena offline, faça um scan online na mesma aba (isso carrega o analisador de texto) e deixe **Disable cache** (aba Network) desmarcado.
+   - Volte para **No throttling** logo depois do selo "Checked on your device", antes de clicar em **Continue**.
+   - Planeje várias tomadas: o scan no aparelho pode travar.
 2. Cronometre. Se estourar 2:50, corte cenas curtas, nunca a parte offline.
 
 ## 4. Gravar cada cena
 
 1. No OBS, clique em **Iniciar gravação**. Grave **uma cena por vez**, com 2 segundos de pausa antes e depois (facilita o corte). Pode regravar quantas vezes quiser.
-2. Cenas: (1) tela inicial e cartão de abertura; (2) **Try a sample report** e **Prepare private AI** (se o modelo não estiver pronto); (3) offline + **Check my report**; (4) cartões de revisão: **Accept** e **Not about me**; (5) **Second look**; (6) Outbox, **Approve this text**; (7) **Send to organization**, chave do caso e página `/case`.
+2. Cenas: (1) tela inicial e cartão de abertura; (2) **Try a sample report**; (3) offline + **Check my report** (**Prepare private AI** só aparece depois desse clique, se o modelo não estiver pronto, e já inicia o scan); (4) cartões de revisão: **Accept** e **Not about me**; (5) **Second look**, depois abra o painel **What happened to your text** por 5 segundos; (6) Outbox, **Approve this text**; (7) **Send to organization**, chave do caso e página `/case`.
 3. Os slides (abertura, números, final) podem ser feitos no próprio Clipchamp com texto sobre fundo escuro, usando o texto do roteiro.
 4. Clique em **Parar gravação** ao fim de cada cena. Os arquivos ficam na pasta que você anotou.
 

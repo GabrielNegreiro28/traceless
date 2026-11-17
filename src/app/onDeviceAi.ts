@@ -27,6 +27,8 @@ export interface AiServices {
   readonly deviceCapability: DeviceCapability;
   /** Only for pipelines with the verify pass (real AI mode). */
   readonly disclosure?: DisclosureVerification;
+  /** Starts loading lazy modules early (best effort; never throws). */
+  readonly preload?: () => void;
 }
 
 /** Caller-facing limit for one on-device call; to be tuned from eval latency (p50/max). */
@@ -64,12 +66,13 @@ function runnerFactory(infra: OnDeviceInfra) {
  * stuck tracker as the scan passes (one Chrome session at a time, same stall recovery).
  */
 function createDisclosure(ai: AI, runnerFor: ReturnType<typeof runnerFactory>) {
+  const finder = createLazyCandidateFinder();
   const spec = disclosureVerifyModelSpec(DISCLOSURE_VERIFY_V1);
   const verifier = new OnDeviceCandidateVerifier(
     runnerFor(() => createOnDeviceModel(ai, spec)),
     DISCLOSURE_VERIFY_V1,
   );
-  return { finder: createLazyCandidateFinder(), verifier } satisfies DisclosureVerification;
+  return { finder, verifier, preload: finder.preload };
 }
 
 /**
@@ -101,9 +104,17 @@ export function createRealAi(
     // Every on-device task of the pipeline (scan passes and verifier), inside the click.
     prepare: createPipelinePrepare(ai, prepareSpecs(scans, verify), infra.chrome),
   };
+  const disclosure = verify ? createDisclosure(ai, runnerFor) : null;
+  const disclosureServices =
+    disclosure === null
+      ? {}
+      : {
+          disclosure: { finder: disclosure.finder, verifier: disclosure.verifier },
+          preload: disclosure.preload,
+        };
   return {
     identityScanner,
     deviceCapability,
-    ...(verify ? { disclosure: createDisclosure(ai, runnerFor) } : {}),
+    ...disclosureServices,
   };
 }

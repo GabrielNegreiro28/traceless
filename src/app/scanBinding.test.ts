@@ -81,6 +81,28 @@ describe('createLazyCandidateFinder', () => {
     expect(find).toHaveBeenCalledTimes(2);
   });
 
+  it('preload starts the load once, and find reuses the same promise', async () => {
+    const find = vi.fn(() => Promise.resolve(ok([])));
+    const load = vi.fn(() => Promise.resolve({ find }));
+    const finder = createLazyCandidateFinder(load);
+    finder.preload();
+    finder.preload();
+    await finder.find(TEXT);
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('a failed preload is harmless and a later find retries', async () => {
+    const load = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ find: () => Promise.resolve(ok([])) });
+    const finder = createLazyCandidateFinder(load);
+    finder.preload();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await finder.find(TEXT)).toEqual(ok([]));
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it('answers an error when the module fails to load, and retries next time', async () => {
     const load = vi
       .fn()

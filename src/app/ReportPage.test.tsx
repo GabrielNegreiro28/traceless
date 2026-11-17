@@ -2,7 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SAMPLE_REPORT } from '../features/compose/sampleReport';
 import { controllableScan, settle } from '../features/review/useReportFlow.testKit';
 import { FakeDeviceCapability } from '../infrastructure/fakes/FakeDeviceCapability';
@@ -19,6 +19,13 @@ const heading = (name: string) => screen.findByRole('heading', { level: 1, name 
 const click = (name: string) => userEvent.click(screen.getByRole('button', { name }));
 
 describe('/report flow on fake services', () => {
+  it('preloads the lazy analysers when the page mounts', async () => {
+    const preloadAnalysers = vi.fn();
+    openReport({ preloadAnalysers });
+    await heading('Write your report');
+    await waitFor(() => expect(preloadAnalysers).toHaveBeenCalledTimes(1));
+  });
+
   it('goes from the sample through the scan to the review', async () => {
     openReport();
     await heading('Write your report');

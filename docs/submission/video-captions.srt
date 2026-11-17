@@ -28,7 +28,7 @@ I load an invented sample report.
 
 8
 00:00:35,000 --> 00:00:40,000
-Traceless prepares Gemini Nano inside Chrome. Nothing is sent.
+Traceless checks it with Gemini Nano inside Chrome. Nothing is sent.
 
 9
 00:00:40,000 --> 00:00:44,000
@@ -100,32 +100,36 @@ Category, summary, when, where.
 
 26
 00:01:56,000 --> 00:02:01,000
-I send it. I get a case key, shown once.
+Every step that touched my text is listed, with where it ran. Never my words.
 
 27
-00:02:01,000 --> 00:02:08,000
-Later, I enter it at slash case, and see the status. No account needed.
+00:02:01,000 --> 00:02:06,000
+I send it. I get a case key, shown once.
 
 28
-00:02:08,000 --> 00:02:13,000
-Raw text runs on the device only. The cloud gets approved text only.
+00:02:06,000 --> 00:02:11,000
+Later, I enter it at slash case, and see the status. No account needed.
 
 29
-00:02:13,000 --> 00:02:18,000
-One policy file decides every route. Firebase AI Logic, App Check, Auth, Firestore, Remote Config and Hosting.
+00:02:11,000 --> 00:02:16,000
+Raw text runs on the device only. The cloud gets approved text only.
 
 30
-00:02:18,000 --> 00:02:23,000
-We tested on 22 new reports, written blind. Recall was 0.709.
+00:02:16,000 --> 00:02:21,000
+One policy file decides every route. Firebase AI Logic, App Check, Auth, Firestore, Remote Config and Hosting.
 
 31
-00:02:23,000 --> 00:02:28,000
-But the error rate on accused people, 0.072, missed its target.
+00:02:21,000 --> 00:02:26,000
+We tested on 22 new reports, written blind. Recall was 0.709.
 
 32
-00:02:28,000 --> 00:02:34,000
-The data is synthetic. Traceless will miss details. It says so.
+00:02:26,000 --> 00:02:31,000
+But the error rate on accused people, 0.072, missed its target.
 
 33
-00:02:34,000 --> 00:02:40,000
+00:02:31,000 --> 00:02:37,000
+The data is synthetic. Traceless will miss details. It says so.
+
+34
+00:02:37,000 --> 00:02:43,000
 Traceless. Check your report before it leaves your hands. Try it now. The link is below.

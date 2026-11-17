@@ -75,6 +75,11 @@ export interface Services {
   readonly privacyLedger: PrivacyLedgerView;
   /** Remote Config (the `cloud_scan_enabled` kill switch); `load()` never rejects. */
   readonly config: ConfigService;
+  /**
+   * Best-effort early load of lazy analysers (the Layer-2 text analyser), so a first scan made
+   * offline still has them. Never throws; a failed load is retried by the next scan.
+   */
+  readonly preloadAnalysers: () => void;
   /** True when deterministic demo scanners stand in for the AI (fake AI mode). */
   readonly demoAi: boolean;
 }
