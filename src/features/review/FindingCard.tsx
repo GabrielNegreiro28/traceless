@@ -57,13 +57,16 @@ function outcomeText(props: FindingCardProps): string {
   }
 }
 
+/**
+ * A RULE finding may be a model span the merger relabeled (it swallowed a rule match), so in an
+ * AI scan the chip says "Rules + AI"; only the demo scanner or a basic check is rules alone.
+ */
 function Origin(props: { readonly origin: Finding['origin']; readonly modelBadge: SourceLabel }) {
   const { origin, modelBadge } = props;
-  return origin === 'MODEL' ? (
-    <SourceBadge variant={modelBadge.variant} label={modelBadge.label} />
-  ) : (
-    <SourceBadge variant="rules" />
-  );
+  if (origin === 'MODEL')
+    return <SourceBadge variant={modelBadge.variant} label={modelBadge.label} />;
+  const aiScan = modelBadge.variant !== 'rules';
+  return <SourceBadge variant="rules" {...(aiScan && { label: 'Rules + AI' })} />;
 }
 
 function Resolved(props: FindingCardProps) {

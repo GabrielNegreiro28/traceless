@@ -25,6 +25,7 @@ export function checkedBadge(checks: ScanChecks, demo: boolean): SourceLabel {
 /** The origin label of a model finding (a rule finding always reads "Pattern rule"). */
 export function modelFindingBadge(checks: ScanChecks, demo: boolean): SourceLabel {
   if (demo) return { variant: 'rules', label: 'Demo scanner' };
+  if (checks === 'basic') return { variant: 'rules', label: 'Pattern rule' };
   return checks === 'cloud'
     ? { variant: 'cloud', label: 'Cloud AI' }
     : { variant: 'onDevice', label: 'On-device AI' };

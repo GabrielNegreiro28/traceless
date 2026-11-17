@@ -22,6 +22,7 @@ describe('modelFindingBadge', () => {
     ['cloud', false, 'cloud', 'Cloud AI'],
     ['full', true, 'rules', 'Demo scanner'],
     ['cloud', true, 'rules', 'Demo scanner'],
+    ['basic', false, 'rules', 'Pattern rule'],
   ] as const)('%s checks (demo: %s) read as %s', (checks, demo, variant, label) => {
     expect(modelFindingBadge(checks, demo)).toEqual({ variant, label });
   });

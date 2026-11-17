@@ -128,10 +128,10 @@ describe('ReviewScreen layout', () => {
     expect(within(cardOf('Dock B')).getByText('On-device AI')).toBeVisible();
   });
 
-  it('shows rule findings with the pattern-rule badge', () => {
+  it('shows rule findings with the rules-and-AI badge in an AI scan', () => {
     const ruleFinding = { ...reviewing.findings[1], origin: 'RULE' as const };
     renderReview({ ...reviewing, findings: [ruleFinding] as typeof reviewing.findings });
-    expect(within(cardOf('Dock B')).getByText('Pattern rule')).toBeVisible();
+    expect(within(cardOf('Dock B')).getByText('Rules + AI')).toBeVisible();
   });
 
   it('marks every finding in the text with a hidden category label, never color alone', () => {

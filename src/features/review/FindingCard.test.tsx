@@ -7,11 +7,16 @@ import type { FindingState } from './reviewModel';
 const TEXT = 'I am the night lead at Dock B.';
 const DOCK = findingOf(TEXT, 'Dock B');
 
-function renderCard(state: FindingState, identical: number) {
+function renderCard(
+  state: FindingState,
+  identical: number,
+  finding = DOCK,
+  modelBadge: FindingCardProps['modelBadge'] = { variant: 'onDevice', label: 'On-device AI' },
+) {
   const props: FindingCardProps = {
-    finding: DOCK,
-    modelBadge: { variant: 'onDevice', label: 'On-device AI' },
-    decision: { findingId: DOCK.id, action: 'ACCEPTED' },
+    finding,
+    modelBadge,
+    decision: { findingId: finding.id, action: 'ACCEPTED' },
     state,
     replacement: '[place]',
     selected: false,
@@ -38,5 +43,19 @@ describe('FindingCard: identical mentions line', () => {
   it('is hidden when the card is covered by a wider change', () => {
     renderCard('covered', 2);
     expect(screen.queryByText(/Also applied to/)).toBeNull();
+  });
+});
+
+describe('FindingCard: rule chip', () => {
+  const rule = { ...DOCK, origin: 'RULE' as const };
+
+  it('reads "Rules + AI" in an AI scan, where a rule span may come from the model', () => {
+    renderCard('pending', 0, rule);
+    expect(screen.getByText('Rules + AI')).toBeVisible();
+  });
+
+  it('reads "Pattern rule" when only rules ran', () => {
+    renderCard('pending', 0, rule, { variant: 'rules', label: 'Demo scanner' });
+    expect(screen.getByText('Pattern rule')).toBeVisible();
   });
 });
