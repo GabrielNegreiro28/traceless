@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  datasetTag,
   MAX_BODY_BYTES,
   parseResultMeta,
   resultFileName,
@@ -41,6 +42,31 @@ describe('variant ids', () => {
 
   it.each([{ id: '../x' }, { id: 3 }, null, {}])('rejects an unsafe variant %j', (variant) => {
     expect(parseResultMeta(body({ variant }))).toBeNull();
+  });
+});
+
+describe('dataset tags (round 3 and the final v2 test)', () => {
+  it('names the dataset in the file: v1 dev pool and v2 test split', () => {
+    const round3 = parseResultMeta(
+      body({ split: 'all', datasetVersion: 'reports.v1', variant: { id: 'v3-base+investigator' } }),
+    );
+    expect(resultFileName(round3 ?? META, NOW)).toBe(
+      'v3-base+investigator-v1all-2026-11-13T03-51-34.123Z.json',
+    );
+    const final = parseResultMeta(
+      body({ datasetVersion: 'reports.v2-test', variant: { id: 'v2-single2-rules' } }),
+    );
+    expect(resultFileName(final ?? META, NOW)).toBe(
+      'v2-single2-rules-v2test-2026-11-13T03-51-34.123Z.json',
+    );
+  });
+
+  it('maps dataset versions to short tags and rejects unsafe ones', () => {
+    expect(datasetTag('reports.v1')).toBe('v1');
+    expect(datasetTag('reports.v2-test')).toBe('v2');
+    expect(datasetTag('test-v1')).toBe('test');
+    expect(datasetTag(undefined)).toBe('');
+    expect(parseResultMeta(body({ datasetVersion: '../x' }))).toBeNull();
   });
 });
 

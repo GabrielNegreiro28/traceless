@@ -58,8 +58,8 @@ async function scanGroup<I>(
   return attempt < MAX_RETRIES ? scanGroup(pass, parse, input, isCancelled, attempt + 1) : parsed;
 }
 
-/** Union across groups: the same quote with the same category is kept once. */
-function uniqueFindings(findings: readonly ModelFinding[]): ModelFinding[] {
+/** Union across groups (and scanners): the same quote with the same category is kept once. */
+export function uniqueFindings(findings: readonly ModelFinding[]): ModelFinding[] {
   const byKey = new Map<string, ModelFinding>();
   for (const finding of findings) {
     const key = `${finding.category}\u0000${finding.quote}`;

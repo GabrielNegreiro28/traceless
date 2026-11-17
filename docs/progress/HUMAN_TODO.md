@@ -47,13 +47,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Arquivos a remover (o manager não apaga nada)
 
-- `src/scratch.repro.test.ts` e `src/features/review/scratch.ui.test.tsx` (rascunhos de teste)
-- `scratch-p.mjs` (rascunho na raiz do projeto)
-
-- `src/app/PlaceholderPage.tsx` (não é mais usado)
-- `src/features/review/ConsentPlaceholder.tsx` (não é mais usado)
-- `src/features/review/ReviewPlaceholder.tsx` (não é mais usado; apagar junto o caso de teste dele em `flowPanels.test.tsx`)
-- `src/features/review/ReviewScreen.layout.snip` e `ReviewScreen.layout.tmp` (sobras)
+- (nenhum no momento; os 8 da lista anterior foram removidos pelo participante em 17/11)
 
 ## Concluídos
 

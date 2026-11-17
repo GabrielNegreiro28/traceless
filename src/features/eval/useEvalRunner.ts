@@ -5,9 +5,11 @@ import {
   type EvalRunResult,
 } from '../../application/usecases/evaluateDetection';
 import type { AppError } from '../../shared/appError';
+import type { Dataset } from '../../domain/evaluation/datasetSchema';
 import {
   datasetForPreset,
   EVAL_PRESETS,
+  presetDataset,
   variantsForPreset,
   type EvalPreset,
   type PresetId,
@@ -84,8 +86,15 @@ export function useEvalRunner(services: EvalServices): EvalRunner {
         setState({ phase: 'error', error: variants.error });
         return;
       }
+      const datasets = { v1: services.dataset, ...optionalV2(services) };
+      const dataset = presetDataset(datasets, preset);
+      if (!dataset.ok) {
+        setState({ phase: 'error', error: dataset.error });
+        return;
+      }
       busy.current = true;
-      void execute(services, preset, variants.value, startedAt, setState).finally(() => {
+      const plan: RunPlan = { preset, variants: variants.value, dataset: dataset.value };
+      void execute(services, plan, startedAt, setState).finally(() => {
         busy.current = false;
       });
     },
@@ -95,18 +104,29 @@ export function useEvalRunner(services: EvalServices): EvalRunner {
   return { state, start };
 }
 
+function optionalV2(services: EvalServices): { v2test?: Dataset } {
+  return services.v2TestDataset === undefined ? {} : { v2test: services.v2TestDataset };
+}
+
+/** What one click runs: the preset, its variants in order, and the dataset it reads. */
+interface RunPlan {
+  readonly preset: EvalPreset;
+  readonly variants: readonly EvalVariant[];
+  readonly dataset: Dataset;
+}
+
 async function execute(
   services: EvalServices,
-  preset: EvalPreset,
-  variants: readonly EvalVariant[],
+  plan: RunPlan,
   startedAt: { current: number },
   setState: (state: RunState) => void,
 ): Promise<void> {
+  const { preset, variants } = plan;
   startedAt.current = services.clock.now();
   const outcomes: VariantOutcome[] = [];
   for (const [index, variant] of variants.entries()) {
     const position = { id: variant.id, index: index + 1, total: variants.length };
-    const outcome = await runVariant(services, preset, variant, position, startedAt, setState);
+    const outcome = await runVariant(services, plan, variant, position, startedAt, setState);
     if (!outcome.ok) return setState({ phase: 'error', error: outcome.error });
     outcomes.push(outcome.value);
   }
@@ -117,13 +137,14 @@ type VariantRun = { ok: true; value: VariantOutcome } | { ok: false; error: AppE
 
 async function runVariant(
   services: EvalServices,
-  preset: EvalPreset,
+  plan: RunPlan,
   variant: EvalVariant,
   position: VariantPosition,
   startedAt: { current: number },
   setState: (state: RunState) => void,
 ): Promise<VariantRun> {
   const { clock } = services;
+  const { preset } = plan;
   let lastTick = clock.now();
   const running = (progress: EvalProgress | null, now: number, lastLatencyMs: number | null) =>
     setState({
@@ -136,7 +157,7 @@ async function runVariant(
     });
   running(null, lastTick, null);
   const result = await evaluateDetection({
-    dataset: datasetForPreset(services.dataset, preset),
+    dataset: datasetForPreset(plan.dataset, preset),
     split: preset.split,
     scan: services.scanFor(variant),
     clock,

@@ -10,7 +10,10 @@ import type { EvalVariant } from './evalVariants';
 /** Everything the evaluation page needs; built in src/app so features stay adapter-free. */
 export interface EvalServices {
   readonly deviceCapability: DeviceCapability;
+  /** reports.v1: the dev split, the old test split, and together the round-3 dev pool. */
   readonly dataset: Dataset;
+  /** The held-out v2 test split (preset 8 only); absent in tests that do not need it. */
+  readonly v2TestDataset?: Dataset;
   readonly clock: Clock;
   /** Scan function for a variant (wraps the real or fake scanner, shared on-device queue). */
   readonly scanFor: (variant: EvalVariant) => EvalScan;

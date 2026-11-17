@@ -64,6 +64,12 @@ describe('INFERENCE_POLICY', () => {
       dataClass: 'CONSENTED_RAW',
       mode: 'only_in_cloud',
     });
+    expect(policyFor('disclosureVerify')).toMatchObject({
+      dataClass: 'RAW',
+      mode: 'only_on_device',
+      tools: [],
+      multiTurn: false,
+    });
   });
 
   it('documents every row with a short English rationale', () => {
@@ -109,7 +115,9 @@ describe('INFERENCE_POLICY', () => {
       assertType<Equals<TaskOfDataClass<'CONSENTED_RAW'>, 'identityScanConsented'>>(true),
     ).toBe(true);
     expect(
-      assertType<Equals<TaskOfDataClass<'RAW'>, 'identityScan' | 'styleNeutralize'>>(true),
+      assertType<
+        Equals<TaskOfDataClass<'RAW'>, 'identityScan' | 'styleNeutralize' | 'disclosureVerify'>
+      >(true),
     ).toBe(true);
     expect(
       assertType<

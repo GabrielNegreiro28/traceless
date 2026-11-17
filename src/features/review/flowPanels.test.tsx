@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_KINDS, createAppError } from '../../shared/appError';
 import { cloudScanErrorMessage } from './cloudScanErrorMessages';
 import { FlowErrorPanel } from './FlowErrorPanel';
-import { ReviewPlaceholder } from './ReviewPlaceholder';
 
 describe('FlowErrorPanel', () => {
   it('shows a friendly alert for the error kind and retries', async () => {
@@ -53,20 +52,6 @@ describe('FlowErrorPanel after a consented cloud scan', () => {
     if (!['CloudScanDisabled', 'ConsentRequired'].includes(kind)) {
       expect(message).not.toMatch(/nothing was sent anywhere/i);
     }
-  });
-});
-
-describe('ReviewPlaceholder', () => {
-  it.each([
-    [0, '0 details found'],
-    [1, '1 detail found'],
-    [7, '7 details found'],
-  ])('with %d findings says "%s" and offers Back to edit', async (count, text) => {
-    const onBackToEdit = vi.fn();
-    render(<ReviewPlaceholder findingCount={count} onBackToEdit={onBackToEdit} />);
-    expect(screen.getByText(text)).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Back to edit' }));
-    expect(onBackToEdit).toHaveBeenCalledOnce();
   });
 });
 

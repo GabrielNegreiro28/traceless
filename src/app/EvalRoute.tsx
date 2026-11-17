@@ -1,4 +1,4 @@
-import { parseDataset } from '../domain/evaluation/datasetSchema';
+import { parseDataset, type Dataset } from '../domain/evaluation/datasetSchema';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import { EvalPage } from '../features/eval/EvalPage';
 import type { EvalServices } from '../features/eval/evalServices';
@@ -7,6 +7,9 @@ import { EvalServicesProvider } from '../features/eval/EvalServicesContext';
 import { createAppError, type AppError } from '../shared/appError';
 import { err, ok, type Result } from '../shared/result';
 import datasetText from '../../eval/datasets/reports.v1.json?raw';
+// The held-out v2 test split (information barrier: only this route and its test loader may
+// reference it, src/test/datasetBarrier.test.ts). Read by preset 8 only.
+import v2TestText from '../../eval/datasets/reports.v2.test.json?raw';
 import { createVariantServices } from './compositionRoot';
 import { readEnv } from './env';
 import { saveEvalResult } from './evalResultsClient';
@@ -16,22 +19,29 @@ import { saveEvalResult } from './evalResultsClient';
  * below), separate from the root services provided by ServicesProvider. The eval feature must
  * never call useServices() for scanning: two queues would mean two Chrome sessions at once.
  */
-function buildEvalServices(): Result<EvalServices, AppError> {
-  const env = readEnv();
-  if (!env.ok) return env;
+function loadDataset(text: string): Result<Dataset, AppError> {
   let json: unknown;
   try {
-    json = JSON.parse(datasetText);
+    json = JSON.parse(text);
   } catch {
     return err(createAppError('Misconfigured', { message: 'Dataset is not JSON.', missing: [] }));
   }
-  const dataset = parseDataset(json);
+  return parseDataset(json);
+}
+
+function buildEvalServices(): Result<EvalServices, AppError> {
+  const env = readEnv();
+  if (!env.ok) return env;
+  const dataset = loadDataset(datasetText);
   if (!dataset.ok) return dataset;
+  const v2Test = loadDataset(v2TestText);
+  if (!v2Test.ok) return v2Test;
   // One factory, hence one shared on-device queue and stuck tracker, for every variant.
   const servicesFor = createVariantServices(env.value);
   return ok({
     deviceCapability: servicesFor(DEFAULT_EVAL_VARIANT).deviceCapability,
     dataset: dataset.value,
+    v2TestDataset: v2Test.value,
     clock: systemClock,
     scanFor: (variant) => (text) => servicesFor(variant).scanReport(text),
     saveResult: saveEvalResult,

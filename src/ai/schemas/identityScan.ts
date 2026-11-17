@@ -99,7 +99,8 @@ export interface IdentityScanOutput {
 
 const FENCED = /^\s*```(?:json)?\s*([\s\S]*?)\s*```\s*$/i;
 
-function stripCodeFence(text: string): string {
+/** The JSON inside a ```json fence, or the text unchanged (shared by every model parser). */
+export function stripCodeFence(text: string): string {
   return FENCED.exec(text)?.[1] ?? text;
 }
 

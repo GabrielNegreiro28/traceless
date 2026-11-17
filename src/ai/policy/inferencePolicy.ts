@@ -34,6 +34,7 @@ export const AI_TASKS = [
   'draftReply',
   'caseChat',
   'identityScanConsented',
+  'disclosureVerify',
 ] as const;
 
 export type AiTask = (typeof AI_TASKS)[number];
@@ -119,6 +120,14 @@ export const INFERENCE_POLICY = {
     tools: [],
     multiTurn: false,
     rationale: 'Only with explicit consent for one scan, when this device cannot run on-device AI.',
+  },
+  disclosureVerify: {
+    dataClass: 'RAW',
+    mode: 'only_on_device',
+    tools: [],
+    multiTurn: false,
+    rationale:
+      'Checking which candidate phrases reveal the writer reads the raw report, so it stays on the device.',
   },
 } as const satisfies Readonly<Record<AiTask, PolicyRow>>;
 

@@ -4,8 +4,8 @@ import { join } from 'node:path';
 /** Largest accepted result body (a full evaluation is well under 1 MB). */
 export const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
-/** Only plain label characters may reach the file name (no path separators). */
-const LABEL = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+/** Only plain label characters may reach the file name (no path separators; '+' is safe). */
+const LABEL = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/;
 
 export interface ResultMeta {
   readonly promptVersion: string;
@@ -13,6 +13,8 @@ export interface ResultMeta {
   readonly split: string;
   /** From `variant.id`; names the file when present (older results have no variant). */
   readonly variantId?: string;
+  /** From `datasetVersion` (e.g. reports.v1, reports.v2-test); older files may lack it. */
+  readonly datasetVersion?: string;
 }
 
 export interface SaveOutcome {
@@ -33,19 +35,40 @@ export function parseResultMeta(text: string): ResultMeta | null {
     return null;
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
-  const { promptVersion, strategy, split, variant } = parsed as Record<string, unknown>;
+  const record = parsed as Record<string, unknown>;
+  const { promptVersion, strategy, split, variant, datasetVersion } = record;
   if (!isLabel(promptVersion) || !isLabel(strategy) || !isLabel(split)) return null;
-  if (variant === undefined) return { promptVersion, strategy, split };
+  if (datasetVersion !== undefined && !isLabel(datasetVersion)) return null;
+  const base = {
+    promptVersion,
+    strategy,
+    split,
+    ...(datasetVersion === undefined ? {} : { datasetVersion }),
+  };
+  if (variant === undefined) return base;
   const id: unknown =
     typeof variant === 'object' && variant !== null ? Reflect.get(variant, 'id') : null;
-  return isLabel(id) ? { promptVersion, strategy, split, variantId: id } : null;
+  return isLabel(id) ? { ...base, variantId: id } : null;
 }
 
-/** Server-chosen name; ':' is replaced so the name is valid on Windows. */
+/**
+ * Short dataset tag for file names: `reports.v1` -> `v1`, `reports.v2-test` -> `v2`; any
+ * other version keeps its own label; none without a dataset version.
+ */
+export function datasetTag(datasetVersion: string | undefined): string {
+  if (datasetVersion === undefined) return '';
+  const short = datasetVersion.replace(/^reports\./, '');
+  return short.split('-')[0] ?? short;
+}
+
+/**
+ * Server-chosen name; ':' is replaced so the name is valid on Windows. The split carries the
+ * dataset tag when known (`-v1all-`, `-v2test-`), so results on different datasets never mix.
+ */
 export function resultFileName(meta: ResultMeta, now: Date): string {
   const stamp = now.toISOString().replaceAll(':', '-');
   const name = meta.variantId ?? `${meta.promptVersion}-${meta.strategy}`;
-  return `${name}-${meta.split}-${stamp}.json`;
+  return `${name}-${datasetTag(meta.datasetVersion)}${meta.split}-${stamp}.json`;
 }
 
 function failure(status: number, error: string): SaveOutcome {

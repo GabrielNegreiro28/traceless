@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
 /**
- * Information barrier of the fresh test split (DECISIONS 2026-11-17): only its loader and the
- * dataset harness test may reference it, so no detector code or tuning test can read it.
+ * Information barrier of the fresh test split (DECISIONS 2026-11-17): only its loader, the
+ * dataset harness test and the /eval route wiring may reference it, so no detector code or
+ * tuning test can read it.
  * Scans source file contents for the file name; never opens the dataset itself.
  */
 const NEEDLE = ['reports.v2', 'test.json'].join('.');
-const ALLOWED = new Set(['/src/test/evalDatasetV2.ts', '/src/domain/evaluation/datasetV2.test.ts']);
+const ALLOWED = new Set([
+  '/src/test/evalDatasetV2.ts',
+  '/src/domain/evaluation/datasetV2.test.ts',
+  // The /eval route wiring: preset 8 (final v2 test, run once by the owner).
+  '/src/app/EvalRoute.tsx',
+]);
 
 const sources = import.meta.glob<string>('/src/**/*.{ts,tsx,js,jsx,mjs}', {
   eager: true,
@@ -19,7 +25,7 @@ describe('fresh test split barrier', () => {
     expect(Object.keys(sources).length).toBeGreaterThan(50);
   });
 
-  it('is referenced only by its loader and the dataset harness test', () => {
+  it('is referenced only by its loader, the dataset harness test and the eval route', () => {
     const offenders = Object.entries(sources)
       .filter(([path, text]) => text.includes(NEEDLE) && !ALLOWED.has(path))
       .map(([path]) => path);

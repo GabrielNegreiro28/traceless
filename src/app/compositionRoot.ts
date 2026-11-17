@@ -1,13 +1,10 @@
-import { getPromptModule } from '../ai/prompts/promptRegistry';
 import { SHIPPED_SCAN_PIPELINE, type ScanPipelineSpec } from '../ai/prompts/scanPipelines';
-import { STRATEGIES } from '../ai/prompts/strategies';
 import type { ConfigService } from '../application/ports/ConfigService';
 import type { ConsentedIdentityScanner } from '../application/ports/ConsentedIdentityScanner';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import type { PrivacyLedger } from '../application/ports/PrivacyLedger';
 import type { ReportStructurer } from '../application/ports/ReportStructurer';
 import { approveReport } from '../application/usecases/approveReport';
-import { scanReport } from '../application/usecases/scanReport';
 import { scanReportRulesOnly } from '../application/usecases/scanReportRulesOnly';
 import { systemClock } from '../infrastructure/clock/systemClock';
 import { FakeConfigService } from '../infrastructure/fakes/FakeConfigService';
@@ -33,7 +30,8 @@ import {
   withScanLedger,
   type ScannerKind,
 } from './ledgerDecorators';
-import { createOnDeviceInfra, createRealAi, type AiServices, type ScanGroups } from './onDeviceAi';
+import { createOnDeviceInfra, createRealAi, type AiServices } from './onDeviceAi';
+import { bindScanReport, resolveScanSetups, variantKey } from './scanBinding';
 import type { Services } from './servicesContract';
 import { bindStructureReport, createReportStructurer } from './structureServices';
 
@@ -83,22 +81,6 @@ function createFakeAi(scanner?: IdentityScanner): AiServices {
   };
 }
 
-function bindScanReport(
-  scanner: IdentityScanner,
-  variant: ScanVariantSpec,
-): Services['scanReport'] {
-  const { chunkChars, postFilters, rulePack } = variant;
-  return (text, onProgress, isCancelled) =>
-    scanReport(
-      text,
-      { scanner, clock: systemClock, chunkChars, postFilters, rulePack },
-      {
-        ...(onProgress === undefined ? {} : { onProgress }),
-        ...(isCancelled === undefined ? {} : { isCancelled }),
-      },
-    );
-}
-
 /** Shared by every variant: one ledger and one config per app, and whether AI is the demo. */
 interface AppContext {
   readonly ledger: PrivacyLedger;
@@ -117,7 +99,7 @@ interface VariantAi extends AiServices {
 function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppContext): Services {
   const { ledger, kind, config, cases, structure } = context;
   const { consentedScanner, ...onDevice } = ai;
-  const scan = bindScanReport(ai.identityScanner, variant);
+  const scan = bindScanReport(ai.identityScanner, variant, ai.disclosure);
   const cloudScan = bindCloudScan(consentedScanner, config, variant);
   const approve: Services['approveReport'] = (input) =>
     approveReport(input, { clock: systemClock });
@@ -133,10 +115,6 @@ function buildServices(ai: VariantAi, variant: ScanVariantSpec, context: AppCont
     config,
     demoAi: kind === 'demo',
   };
-}
-
-function variantKey(v: ScanVariantSpec): string {
-  return `${v.promptVersion}|${v.strategy}|${v.chunkChars}|${v.postFilters.join(',')}|${v.rulePack}`;
 }
 
 function appContext(env: AppEnv, demo: boolean, fakes: ServiceFakes): AppContext {
@@ -173,9 +151,9 @@ export function createVariantServices(
     const key = variantKey(variant);
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
-    const prompt = getPromptModule(variant.promptVersion);
-    if (prompt === undefined) throw new Error(`Unknown prompt version: ${variant.promptVersion}`);
-    const groups: ScanGroups = STRATEGIES[variant.strategy];
+    const scans = resolveScanSetups(variant);
+    const primary = scans[0];
+    if (primary === undefined) throw new Error('A scan pipeline needs a scan pass.');
     const ai: VariantAi =
       infra === null
         ? {
@@ -183,8 +161,9 @@ export function createVariantServices(
             consentedScanner: fakes.fakeConsentedScanner ?? new FakeConsentedIdentityScanner(),
           }
         : {
-            ...createRealAi(env, groups, prompt, infra),
-            consentedScanner: createConsentedCloudScanner(env, groups, prompt),
+            ...createRealAi(env, scans, infra, variant.verify === true),
+            // The consented cloud path runs the primary pass only: verify reads RAW text.
+            consentedScanner: createConsentedCloudScanner(env, primary.groups, primary.prompt),
           };
     const services = buildServices(ai, variant, context);
     cache.set(key, services);

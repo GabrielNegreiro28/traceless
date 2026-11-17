@@ -1,7 +1,8 @@
 // Developer tool: prints, per report and run, every finding of an evaluation result with
 // its quote and label, then missed gold, per-category recall and ACCUSED violations.
 // Usage: npm run eval:inspect -- <resultFile> [--report rXX] [--run N] [--view raw|filtered]
-// Stdout only; reads the (synthetic) dataset and the result file; writes nothing.
+// Stdout only; reads the (synthetic) dataset the result names and the result file; writes
+// nothing. A v2 test result prints held-out text: owner and manager only.
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,14 +77,29 @@ function inspectReport(report, run, reportRun, tally, violations) {
   addRecall(tally, gold, missed);
 }
 
+/**
+ * The dataset a result was measured on: the held-out v2 test split for its result files
+ * (`datasetVersion` reports.v2-test, file names with `-v2test-`), reports.v1 otherwise.
+ * Prints dataset text: for the owner and the manager only, never for detector implementers.
+ */
+function datasetFileFor(result) {
+  return result.datasetVersion === 'reports.v2-test'
+    ? 'eval/datasets/reports.v2.test.json'
+    : 'eval/datasets/reports.v1.json';
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.file === null) fail('A result file is required.');
-  const dataset = await readJson(resolve(root, 'eval/datasets/reports.v1.json'));
   const result = await readJson(resolve(process.cwd(), args.file));
+  const datasetFile = datasetFileFor(result);
+  const dataset = await readJson(resolve(root, datasetFile));
+  if (dataset.version !== result.datasetVersion && result.datasetVersion !== undefined) {
+    fail(`The result was measured on ${result.datasetVersion}, not ${dataset.version}.`);
+  }
   const byId = new Map(dataset.reports.map((r) => [r.id, r]));
   const name = result.variant?.id ?? `${result.promptVersion}/${result.strategy}`;
-  console.log(`variant: ${name}, split: ${result.split}`);
+  console.log(`variant: ${name}, dataset: ${datasetFile}, split: ${result.split}`);
   // `stalls` exists since stuck recovery (§G.2); older result files simply lack it.
   if (result.stalls !== undefined) {
     console.log(`stalls: ${result.stalls.recovered} recovered, ${result.stalls.terminal} terminal`);

@@ -2,7 +2,7 @@ import { mergeFindings } from '../../domain/detection/findingMerger';
 import { applyPostFilters, type PostFilterName } from '../../domain/detection/postFilters';
 import { detectByRules } from '../../domain/detection/ruleDetector';
 import type { RulePack } from '../../domain/detection/rulePacks';
-import { chunkText } from '../../domain/detection/textChunker';
+import { chunkText, type TextChunk } from '../../domain/detection/textChunker';
 import type { Finding, TextSpan } from '../../domain/detection/types';
 import type { RawText } from '../../domain/text/brandedText';
 import type { AppError } from '../../shared/appError';
@@ -10,6 +10,7 @@ import { ok, type Result } from '../../shared/result';
 import type { Clock } from '../ports/Clock';
 import type { InferenceSourceKind } from '../ports/IdentityScanner';
 import { scanChunksSequentially, type ChunkScanFn, type ModelPass } from './scanChunks';
+import { runVerifyPass, type DisclosureVerification } from './verifyCandidatesPass';
 
 /**
  * INTERNAL helper of the two scan use cases (scanReport on the device, scanReportConsented
@@ -26,6 +27,12 @@ export interface ScanPipelineSettings {
   readonly postFilters?: readonly PostFilterName[];
   /** Which deterministic rules run over the full text (default `core`, §G.3). */
   readonly rulePack?: RulePack;
+  /**
+   * Layers 2 + 3a: candidate phrases checked by the on-device verifier, one more call per
+   * chunk with candidates (none by default). Its findings join the model findings before the
+   * post-filters. Only the on-device use case binds it; RAW text never goes to the cloud.
+   */
+  readonly disclosure?: DisclosureVerification;
 }
 
 export interface ScanReportOptions {
@@ -93,6 +100,30 @@ function buildResult(
 }
 
 /**
+ * Adds the verify pass (when bound) to the scan passes' model contribution: its findings
+ * already carry exact spans, so they count as raw and located model findings alike.
+ */
+async function withVerifiedCandidates(
+  text: RawText,
+  chunks: readonly TextChunk[],
+  pass: ModelPass,
+  settings: ScanPipelineSettings,
+  options: ScanReportOptions,
+): Promise<Result<ModelPass, AppError>> {
+  if (settings.disclosure === undefined) return ok(pass);
+  const isCancelled = options.isCancelled ?? NEVER_CANCELLED;
+  const verified = await runVerifyPass(text, chunks, settings.disclosure, isCancelled);
+  if (!verified.ok) return verified;
+  const { findings, retries } = verified.value;
+  return ok({
+    ...pass,
+    findings: [...pass.findings, ...findings],
+    rawModelFindings: pass.rawModelFindings + findings.length,
+    retries: pass.retries + retries,
+  });
+}
+
+/**
  * Detection pipeline for one report (PLANO §3.4): the bound scanner on chunks (sequentially;
  * on-device inference is serial), quotes located per chunk and shifted to report offsets;
  * protected quotes from ALL chunks are collected first, then the enabled post-filters run
@@ -120,16 +151,18 @@ export async function runScanPipeline(
     chunks,
   );
   if (!pass.ok) return pass;
-  const { suppressed, ...result } = buildResult(text, pass.value, settings);
+  const modelPass = await withVerifiedCandidates(text, chunks, pass.value, settings, options);
+  if (!modelPass.ok) return modelPass;
+  const { suppressed, ...result } = buildResult(text, modelPass.value, settings);
   return ok({
     ...result,
     stats: {
       chunks: chunks.length,
-      rawModelFindings: pass.value.rawModelFindings,
-      locatedModelFindings: pass.value.findings.length,
-      unlocatedModelFindings: pass.value.unlocated,
+      rawModelFindings: modelPass.value.rawModelFindings,
+      locatedModelFindings: modelPass.value.findings.length,
+      unlocatedModelFindings: modelPass.value.unlocated,
       suppressed,
-      retries: pass.value.retries,
+      retries: modelPass.value.retries,
       durationMs: settings.clock.now() - startedAt,
     },
   });
