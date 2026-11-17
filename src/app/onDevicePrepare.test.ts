@@ -40,6 +40,19 @@ describe('prepareModels', () => {
     expect(progress.at(-1)).toBe(1);
   });
 
+  it('starts every prepare synchronously, inside the click (before any await)', () => {
+    const first: DeviceModel = { initializeDeviceModel: () => Promise.resolve() };
+    const second: DeviceModel = { initializeDeviceModel: () => Promise.resolve() };
+    const chrome = {
+      prepare: vi.fn<(model: DeviceModel, onProgress: (f: number) => void) => Promise<never>>(
+        () => new Promise<never>(() => undefined),
+      ),
+    };
+    void prepareModels(chrome, [first, second], () => undefined);
+    expect(chrome.prepare).toHaveBeenCalledTimes(2);
+    expect(chrome.prepare.mock.calls.map((call) => call[0])).toEqual([first, second]);
+  });
+
   it('answers the first failure', async () => {
     const chrome = {
       prepare: vi.fn().mockResolvedValueOnce(ok(undefined)).mockResolvedValueOnce(err(FAILED)),

@@ -6,6 +6,7 @@ import {
   INFERENCE_MODES,
   INFERENCE_POLICY,
   policyFor,
+  shippedTasks,
   type AllowedModes,
   type InferenceModeName,
   type PolicyRow,
@@ -50,7 +51,7 @@ describe('INFERENCE_POLICY', () => {
     });
     expect(policyFor('structureReport')).toMatchObject({
       dataClass: 'SANITIZED',
-      mode: 'prefer_on_device',
+      mode: 'prefer_in_cloud',
     });
     expect(policyFor('adviseRights')).toMatchObject({
       dataClass: 'SANITIZED',
@@ -72,6 +73,29 @@ describe('INFERENCE_POLICY', () => {
     });
   });
 
+  it('prefers the cloud for approved text only, and only the device for raw text', () => {
+    for (const row of Object.values(INFERENCE_POLICY)) {
+      const hybrid: readonly InferenceModeName[] = ['prefer_in_cloud', 'prefer_on_device'];
+      if (hybrid.includes(row.mode)) {
+        expect(row.dataClass).toBe('SANITIZED');
+      }
+    }
+    expect(policyFor('structureReport').rationale).toMatch(/falls back to the on-device model/);
+  });
+
+  it('marks the unshipped tasks as roadmap rows', () => {
+    expect(shippedTasks()).toEqual([
+      'identityScan',
+      'structureReport',
+      'identityScanConsented',
+      'disclosureVerify',
+    ]);
+    const roadmap = AI_TASKS.filter((task) => !INFERENCE_POLICY[task].shipped);
+    expect(roadmap.sort()).toEqual(
+      ['adviseRights', 'caseChat', 'draftReply', 'styleNeutralize', 'triageCase'].sort(),
+    );
+  });
+
   it('documents every row with a short English rationale', () => {
     for (const row of Object.values(INFERENCE_POLICY)) {
       expect(row.rationale.length).toBeGreaterThan(20);
@@ -89,6 +113,7 @@ describe('INFERENCE_POLICY', () => {
       mode: 'only_in_cloud',
       tools: [],
       multiTurn: false,
+      shipped: false,
       rationale: 'never valid',
     };
     expect([rawPrefer, badRow.mode]).toHaveLength(2);
@@ -105,6 +130,7 @@ describe('INFERENCE_POLICY', () => {
       mode: 'prefer_on_device',
       tools: [],
       multiTurn: false,
+      shipped: false,
       rationale: 'never valid',
     };
     expect([consentedPrefer, badRow.mode]).toHaveLength(2);

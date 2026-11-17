@@ -1,4 +1,4 @@
-import { HarmBlockThreshold, type AI } from 'firebase/ai';
+import { HarmBlockThreshold, InferenceMode, type AI } from 'firebase/ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CLOUD_MODEL_NAME } from '../../ai/policy/inferencePolicy';
 import { approvedText } from '../../application/usecases/submitReport.testKit';
@@ -23,8 +23,10 @@ beforeEach(() => {
 });
 
 describe('hybridModelConfig', () => {
-  it('runs PREFER_ON_DEVICE: a real hybrid for approved text', () => {
-    expect(hybridModelConfig(SPEC).params.mode).toBe('prefer_on_device');
+  it('runs PREFER_IN_CLOUD for approved text, with the on-device model as offline fallback', () => {
+    const { params } = hybridModelConfig(SPEC);
+    expect(params.mode).toBe(InferenceMode.PREFER_IN_CLOUD);
+    expect(params.onDeviceParams).toBeDefined();
   });
 
   it('declares English text in and out on the device, with the schema as constraint', () => {
@@ -75,7 +77,7 @@ describe('createHybridModel', () => {
     await created.value.generateContent(approvedText('Invoices were doubled.'));
     expect(sdk.getGenerativeModel).toHaveBeenCalledWith(
       AI_INSTANCE,
-      expect.objectContaining({ mode: 'prefer_on_device' }),
+      expect.objectContaining({ mode: 'prefer_in_cloud' }),
       { timeout: CLOUD_REQUEST_TIMEOUT_MS },
     );
     expect(sdk.generateContent).toHaveBeenCalledWith('<report>\nInvoices were doubled.\n</report>');

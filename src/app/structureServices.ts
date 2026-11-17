@@ -19,7 +19,7 @@ import type { Services } from './servicesContract';
 /** Upper bound for one structuring call, on the device or in the cloud. */
 export const STRUCTURE_TIMEOUT_MS = 45_000;
 
-/** The real structurer: the hybrid model (PREFER_ON_DEVICE) on the shared AI instance. */
+/** The real structurer: the hybrid model (PREFER_IN_CLOUD, on-device fallback) on the shared AI instance. */
 export function createReportStructurer(env: AppEnv): ReportStructurer {
   return new HybridReportStructurer(
     () => createHybridModel(getAiService(bootstrapFirebase(env)), structureReportModelSpec()),

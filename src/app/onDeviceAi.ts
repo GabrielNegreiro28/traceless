@@ -1,6 +1,5 @@
 import type { AI } from 'firebase/ai';
 import { DISCLOSURE_VERIFY_V1 } from '../ai/prompts/disclosureVerify.v1';
-import type { ModelFindingCategory } from '../ai/schemas/identityScan';
 import type { DeviceCapability } from '../application/ports/DeviceCapability';
 import type { IdentityScanner } from '../application/ports/IdentityScanner';
 import type { DisclosureVerification } from '../application/ports/DisclosureVerification';
@@ -29,8 +28,6 @@ export interface AiServices {
   /** Only for pipelines with the verify pass (real AI mode). */
   readonly disclosure?: DisclosureVerification;
 }
-
-export type ScanGroups = readonly (readonly ModelFindingCategory[])[];
 
 /** Caller-facing limit for one on-device call; to be tuned from eval latency (p50/max). */
 const ON_DEVICE_TIMEOUT_MS = 120_000;

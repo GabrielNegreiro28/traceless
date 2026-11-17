@@ -12,7 +12,7 @@ export interface StructureOutcome {
 
 /**
  * Organizes APPROVED text into category, summary, when and where (the `structureReport`
- * task: SANITIZED data, PREFER_ON_DEVICE). Accepts SanitizedText only, so neither RawText nor
+ * task: SANITIZED data, PREFER_IN_CLOUD). Accepts SanitizedText only, so neither RawText nor
  * ConsentedRawText can reach this hybrid (cloud-capable) model by type. Never throws.
  */
 export interface ReportStructurer {

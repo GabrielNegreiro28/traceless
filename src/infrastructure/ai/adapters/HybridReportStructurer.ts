@@ -31,7 +31,7 @@ function sourceOf(inferenceSource: InferenceSource | undefined): InferenceSource
 }
 
 /**
- * ReportStructurer on the hybrid model (PREFER_ON_DEVICE): one call, zod-validated output,
+ * ReportStructurer on the hybrid model (PREFER_IN_CLOUD): one call, zod-validated output,
  * and where it really ran from `response.inferenceSource`. The model is created on first use
  * and reused. A transient cloud failure (HTTP 5xx) is retried with a short backoff, within
  * the same deadline. `timeoutMs` bounds the on-device path too (the cloud has its own timeout).

@@ -111,9 +111,9 @@ interface VerifiedPass {
 
 /**
  * Adds the verify pass (when bound) to the scan passes' model contribution: its findings
- * already carry exact spans, so they count as raw and located model findings alike. Its
- * calls extend the progress total (chunks + verifier calls), so progress reaches the end only
- * when the last verifier call is done.
+ * already carry exact spans, so they count as raw and located model findings alike. Progress
+ * keeps the scan phase's total (see verifyProgress), so progress reaches the end only when
+ * the last verifier call is done.
  */
 async function withVerifiedCandidates(
   text: RawText,
@@ -130,7 +130,7 @@ async function withVerifiedCandidates(
     chunks,
     settings.disclosure,
     options.isCancelled ?? NEVER_CANCELLED,
-    (done, total) => onProgress(chunks.length + done, chunks.length + total),
+    verifyProgress(chunks.length, onProgress),
   );
   if (!verified.ok) return verified;
   const { findings, retries } = verified.value;
@@ -143,6 +143,22 @@ async function withVerifiedCandidates(
     },
     verifyMs: settings.clock.now() - startedAt,
   });
+}
+
+/**
+ * Verify-pass progress on the total the scan phase showed (chunks plus one verifier call per
+ * chunk), so the displayed total never shrinks: chunks that need no verifier call count as
+ * finished steps as soon as the call count is known.
+ */
+export function verifyProgress(
+  chunkCount: number,
+  onProgress: (done: number, total: number) => void,
+): (done: number, calls: number) => void {
+  const total = chunkCount * 2;
+  return (done, calls) => {
+    const skipped = Math.max(0, chunkCount - calls);
+    onProgress(Math.min(total, chunkCount + skipped + done), total);
+  };
 }
 
 /**

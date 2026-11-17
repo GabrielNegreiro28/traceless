@@ -58,6 +58,11 @@ export type PolicyRow<D extends DataClass = DataClass> = D extends DataClass
       readonly mode: AllowedModes<D>;
       readonly tools: readonly AiTool[];
       readonly multiTurn: boolean;
+      /**
+       * True when the product calls this task today. False marks a roadmap row: the routing is
+       * decided, but nothing ships it yet, so docs list only shipped rows as working features.
+       */
+      readonly shipped: boolean;
       /** Short English explanation; rendered in the README routing table. */
       readonly rationale: string;
     }
@@ -69,6 +74,7 @@ export const INFERENCE_POLICY = {
     mode: 'only_on_device',
     tools: [],
     multiTurn: false,
+    shipped: true,
     rationale:
       'Raw report text is the most dangerous data; a silent cloud fallback would be a privacy failure.',
   },
@@ -77,20 +83,24 @@ export const INFERENCE_POLICY = {
     mode: 'only_on_device',
     tools: [],
     multiTurn: false,
+    shipped: false,
     rationale: 'Rewriting the writing style still reads the raw report, so it stays on the device.',
   },
   structureReport: {
     dataClass: 'SANITIZED',
-    mode: 'prefer_on_device',
+    mode: 'prefer_in_cloud',
     tools: [],
     multiTurn: false,
-    rationale: 'Approved text is safe to share; on-device is free and fast, the cloud is a backup.',
+    shipped: true,
+    rationale:
+      'Approved, sanitized text only; the cloud model structures it better; falls back to the on-device model when offline.',
   },
   adviseRights: {
     dataClass: 'SANITIZED',
     mode: 'only_in_cloud',
     tools: ['googleSearch'],
     multiTurn: false,
+    shipped: false,
     rationale: 'Grounding legal guidance with Google Search is only available in the cloud.',
   },
   triageCase: {
@@ -98,6 +108,7 @@ export const INFERENCE_POLICY = {
     mode: 'only_in_cloud',
     tools: [],
     multiTurn: false,
+    shipped: false,
     rationale: 'Handler-side triage needs long context over approved text only.',
   },
   draftReply: {
@@ -105,6 +116,7 @@ export const INFERENCE_POLICY = {
     mode: 'only_in_cloud',
     tools: [],
     multiTurn: false,
+    shipped: false,
     rationale: 'Handler-side reply drafting needs long context over approved text only.',
   },
   caseChat: {
@@ -112,6 +124,7 @@ export const INFERENCE_POLICY = {
     mode: 'only_in_cloud',
     tools: [],
     multiTurn: true,
+    shipped: false,
     rationale: 'Multi-turn chat is not supported by the on-device model.',
   },
   identityScanConsented: {
@@ -119,6 +132,7 @@ export const INFERENCE_POLICY = {
     mode: 'only_in_cloud',
     tools: [],
     multiTurn: false,
+    shipped: true,
     rationale: 'Only with explicit consent for one scan, when this device cannot run on-device AI.',
   },
   disclosureVerify: {
@@ -126,6 +140,7 @@ export const INFERENCE_POLICY = {
     mode: 'only_on_device',
     tools: [],
     multiTurn: false,
+    shipped: true,
     rationale:
       'Checking which candidate phrases reveal the writer reads the raw report, so it stays on the device.',
   },
@@ -147,6 +162,11 @@ export type TaskOfDataClass<D extends DataClass> = {
  * never change which model receives consented raw text.
  */
 export const CLOUD_MODEL_NAME = 'gemini-3.5-flash-lite';
+
+/** The tasks the product calls today (roadmap rows have `shipped: false`), in table order. */
+export function shippedTasks(): readonly AiTask[] {
+  return AI_TASKS.filter((task) => INFERENCE_POLICY[task].shipped);
+}
 
 /** The routing rule for a task. */
 export function policyFor<T extends AiTask>(task: T): InferencePolicy[T] {

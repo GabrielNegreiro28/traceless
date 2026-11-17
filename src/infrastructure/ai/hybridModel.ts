@@ -46,8 +46,9 @@ export interface HybridModelConfig {
 }
 
 /**
- * The arguments for `getGenerativeModel`: the policy's mode for the task (PREFER_ON_DEVICE
- * for structureReport: the device when Gemini Nano is ready, the cloud otherwise), English
+ * The arguments for `getGenerativeModel`: the policy's mode for the task (PREFER_IN_CLOUD
+ * for structureReport: the cloud model, and the SDK falls back to the on-device model on a
+ * network or API error, e.g. offline), English
  * text in and out on the device, the pinned cloud model, and JSON output with the same schema
  * on both paths. Fresh objects on every call: the SDK keeps and may mutate its params.
  */

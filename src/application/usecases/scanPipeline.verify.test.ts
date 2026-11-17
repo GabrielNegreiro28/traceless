@@ -37,7 +37,7 @@ describe('scan pipeline verify pass', () => {
     expect((await result).ok).toBe(true);
     expect(calls).toHaveLength(2);
     const last = progress[progress.length - 1]!;
-    expect(last).toEqual([5, 5]);
+    expect(last).toEqual([6, 6]);
     // While chunks are scanned the total is an upper bound: never complete before the verifier.
     const scanPhase = progress.slice(0, 4);
     expect(scanPhase).toEqual([
@@ -49,10 +49,29 @@ describe('scan pipeline verify pass', () => {
     expect(progress.filter(([done, total]) => done === total)).toEqual([last]);
   });
 
+  it('never shrinks the displayed total nor moves progress backwards', async () => {
+    const { result, progress } = run(['the night rotation']);
+    await result;
+    expect(progress).toEqual([
+      [0, 6],
+      [1, 6],
+      [2, 6],
+      [3, 6],
+      [5, 6],
+      [6, 6],
+    ]);
+    for (const [index, [done, total]] of progress.entries()) {
+      const [prevDone, prevTotal] = progress[index - 1] ?? [0, 0];
+      expect(done).toBeGreaterThanOrEqual(prevDone);
+      expect(total).toBeGreaterThanOrEqual(prevTotal);
+    }
+  });
+
   it('reaches the end once the scan is done when no candidate needs a verifier call', async () => {
     const { result, progress } = run([]);
     await result;
-    expect(progress[progress.length - 1]).toEqual([3, 3]);
+    expect(progress[progress.length - 1]).toEqual([6, 6]);
+    expect(progress.every(([, total]) => total === 6)).toBe(true);
   });
 
   it('records verifyMs (the verifier pass time) in the stats', async () => {

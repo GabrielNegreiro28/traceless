@@ -64,7 +64,7 @@ export interface Services {
   ) => Promise<Result<SubmittedReport, AppError>>;
   /**
    * Organizes the approved text (category, summary, when, where) on the hybrid model:
-   * PREFER_ON_DEVICE, so on the device when Gemini Nano is ready, in the cloud otherwise.
+   * PREFER_IN_CLOUD, so in the cloud, falling back to the device when the cloud is unreachable.
    * Accepts only SanitizedText; optional, never blocks sending. Recorded in the privacy ledger
    * with where it really ran.
    */
