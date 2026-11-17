@@ -4,7 +4,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Hoje/amanhã (~5 min): publicar a versão em que o relato aprovado é organizado na nuvem.**
+- [x] **(Concluído 17/11) Hoje/amanhã (~5 min): publicar a versão em que o relato aprovado é organizado na nuvem.**
   1. No Claude Code: `! npm run deploy:hosting` (sem ponto no final; deve terminar com "Deploy complete!").
   2. No Chrome com o Nano: https://traceless-92f85.web.app → recarregue com Ctrl+Shift+R → **Try a sample report** → siga até o Outbox. No quadro "What the organization will receive", o selo agora deve dizer que foi organizado **na nuvem** (a análise do texto bruto continua "on your device").
   3. Me conte o que os dois selos disseram.
@@ -15,7 +15,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 - [ ] **21–23/11: gravar e publicar o vídeo.** Tudo pronto em `docs/submission/`: siga o guia em português `docs/submission/recording-guide.pt.md` (OBS → Clipchamp com voz em inglês → YouTube público com as legendas `video-captions.srt`). O roteiro com as cenas está em `docs/submission/video-script.md`. No ensaio, teste a cena "offline" antes de gravar e me avise se algo falhar. Também tire as 2 capturas de tela (`docs/screenshots/review.png` e `outbox.png`, no site com o Nano) e exporte o diagrama em PNG, como explica o guia. Cole o link do YouTube no chat.
 
-- [ ] **Até 23/11: tornar o repositório público** (o manager avisa quando o README estiver pronto e manda os passos).
+- [x] **(Concluído 17/11) Tornar o repositório público.** Verificado: PUBLIC, licença Apache-2.0 reconhecida pelo GitHub, descrição, site e tópicos configurados; CI verde.
 
 - [x] **(Concluído 17/11: "deu tudo certo"; 2ª publicação depois da correção 665f14b) Publicar a detecção nova e testar no seu Chrome com o Nano (~10 min).**
   1. No Claude Code: `! npm run deploy:hosting` (deve terminar com "Deploy complete!").
