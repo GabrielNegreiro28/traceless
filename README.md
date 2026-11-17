@@ -3,13 +3,16 @@
 > For whistleblowers, Traceless finds the details in a report that could reveal who wrote it, on the device, before anything is sent. Only text the reporter has reviewed and approved ever reaches the cloud.
 
 - **Live app (one click, no sign-up):** https://traceless-92f85.web.app
-- **Demo video (3 min):** VIDEO_URL_TBD
+- **Demo video (3 min):** link added before submission (VIDEO_URL_TBD)
 - Built for the #BuildHybridAI hackathon (Devpost + Firebase), Web/Chrome track.
 
 ![Traceless review screen](docs/screenshots/review.png)
-![Traceless on-device badge and approved report](docs/screenshots/outbox.png)
 
-_(Screenshots: TBD, added before submission.)_
+_Review screen (screenshot from a consented cloud scan of the invented sample report; with Gemini Nano the same scan runs on the device)._
+
+![Traceless approved report and structure preview](docs/screenshots/outbox.png)
+
+_Approved text and the structure preview the organization will receive (same consented cloud scan; the structure step only ever sees the approved text)._
 
 ## The problem and who it is for
 
@@ -58,7 +61,9 @@ task with any mode but `ONLY_ON_DEVICE`. Shipped tasks:
 Roadmap rows exist in the policy but are not shipped (see [Roadmap](#roadmap)). The UI shows where
 each result was computed (on device or in the cloud) using the SDK's `inferenceSource`.
 
-The full diagram and the file map are in [`docs/architecture.md`](docs/architecture.md). In short:
+![Traceless architecture: reporter flow and trust boundary](docs/architecture.png)
+
+The Mermaid source and the file map are in [`docs/architecture.md`](docs/architecture.md). In short:
 
 ```mermaid
 flowchart LR

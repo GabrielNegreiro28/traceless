@@ -8,7 +8,7 @@ Live app (no sign-up): https://traceless-92f85.web.app Â· Video: VIDEO_URL_TBD Â
 
 Anonymous reporting channels protect the sender. The report itself often gives the reporter away: "the only night-shift nurse on Ward 3", "the Tuesday after my surgery", "I was the one who trained the new hire". A hotline can strip IP addresses and still hand the employer a text that points at one person. Anonymity fails through content, not the channel.
 
-That creates a paradox for AI: the text that needs the most protection is exactly the text you should not upload to analyze. Hybrid inference resolves it. USER_QUOTES_TBD
+That creates a paradox for AI: the text that needs the most protection is exactly the text you should not upload to analyze. Hybrid inference resolves it. A friend tested the live link on their phone (no Gemini Nano, so the consented cloud scan): the full flow, from scan to review, approval, sending and case lookup, worked end to end.
 
 ## What it does
 
