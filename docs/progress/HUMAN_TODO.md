@@ -4,7 +4,16 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 
 ## Pendentes
 
-- [ ] **Rodada 3 no Chrome (17/11 ou 18/11, ~1h30, pode deixar rodando sozinho).** Compara as 3 versões novas da detecção com a atual.
+- [ ] **Teste final novo (preset 8) no Chrome, ~40 min. SÓ PODE SER FEITO UMA VEZ.**
+  1. Deixe o Claude Code aberto. No seu Chrome normal, abra `http://localhost:5174/eval` (porta **5174**). Recarregue a página antes de começar.
+  2. No seletor **Variant**, escolha **`v3-verifier+investigator`** (confira duas vezes).
+  3. No seletor de preset, escolha **"8. Final v2 test (x 3, once)…"**.
+  4. Na caixa de confirmação, digite exatamente `v3-verifier+investigator` e clique para rodar.
+  5. Não feche nem minimize a aba; não deixe o computador dormir. Não olhe nem compartilhe números parciais.
+  6. Se travar por causa do computador (OnDeviceStuck, aba congelada > 5 min): recarregue e rode do passo 2, **uma única vez**.
+  7. Avise no chat: "rodei o teste final".
+
+- [x] **(Concluído 17/11) Rodada 3 no Chrome (17/11 ou 18/11, ~1h30, pode deixar rodando sozinho).** Compara as 3 versões novas da detecção com a atual.
   1. Deixe o Claude Code aberto (o servidor local já está ligado). Se a página não abrir, avise no chat.
   2. No seu **Chrome normal** (com o Gemini Nano), abra: `http://localhost:5174/eval` (atenção: porta **5174**).
   3. No seletor de preset, escolha **"7. Round 3: dev pool (all 24 v1 reports) x 3 runs, 4 variants"** e clique para rodar.
