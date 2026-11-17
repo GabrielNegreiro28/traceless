@@ -36,6 +36,7 @@
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
+    "compromise": "14.20.0",
     "firebase": "13.3.0",
     "lucide-react": "1.60.0",
     "react": "19.3.1",

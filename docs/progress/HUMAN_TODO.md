@@ -48,6 +48,7 @@ _O manager adiciona itens aqui com instruções passo a passo em português. Mar
 ## Arquivos a remover (o manager não apaga nada)
 
 - `src/scratch.repro.test.ts` e `src/features/review/scratch.ui.test.tsx` (rascunhos de teste)
+- `scratch-p.mjs` (rascunho na raiz do projeto)
 
 - `src/app/PlaceholderPage.tsx` (não é mais usado)
 - `src/features/review/ConsentPlaceholder.tsx` (não é mais usado)

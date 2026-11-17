@@ -2,7 +2,8 @@
 
 _Atualizado pelo manager a cada iteração._
 
-- **Data da última atualização:** 2026-11-16
+- **Data da última atualização:** 2026-11-17
+- **AGORA (17/11): melhoria da detecção baseada em pesquisa** (plano aprovado pelo participante: `C:\Users\Gabriel\.claude\plans\zippy-floating-parasol.md`; resumo e pré-registro em DECISIONS 17/11). ✅ split de teste novo cego `eval/datasets/reports.v2.test.json` (`511f3bb`, SHA-256 registrado). ⏳ Camada 2 (candidatos gramaticais com compromise 14.20.0, implementer opus em andamento). Depois: camada 3 (verificador Nano + passe investigador), revisão opus, participante roda Round 3 (dev ×3) e teste v2 ×3 uma vez (20–21/11).
 - **Plano ENXUTO (escolhido pelo participante em 16/11; ver DECISIONS.md):** faltam 5 tarefas:
   1. ✅ Modo nuvem com consentimento + checagem básica + passos para ativar o modo local (commits `79a14bd`…`8b2eadc`, 1876 testes, revisão opus + 1 rodada).
   2. ✅ Detecção congelada (`b065f9c`): `v2-single2-rules` no produto, Second look obrigatório, textos honestos.
