@@ -2,7 +2,7 @@
 
 **For whistleblowers, Traceless finds the details in a report that could reveal who wrote it, on the device, before anything is sent, so only text the reporter has reviewed and approved ever reaches the cloud.**
 
-Live app (no sign-up): https://traceless-92f85.web.app · Video: VIDEO_URL_TBD · Code: Apache 2.0, public repository
+Live app (no sign-up): https://traceless-92f85.web.app · Video: https://youtu.be/8pGeiE8gD4U · Code: Apache 2.0, public repository
 
 ## Inspiration
 

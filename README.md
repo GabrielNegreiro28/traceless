@@ -3,7 +3,7 @@
 > For whistleblowers, Traceless finds the details in a report that could reveal who wrote it, on the device, before anything is sent. Only text the reporter has reviewed and approved ever reaches the cloud.
 
 - **Live app (one click, no sign-up):** https://traceless-92f85.web.app
-- **Demo video (3 min):** link added before submission (VIDEO_URL_TBD)
+- **Demo video (2:49):** https://youtu.be/8pGeiE8gD4U
 - Built for the #BuildHybridAI hackathon (Devpost + Firebase), Web/Chrome track.
 
 ![Traceless review screen](docs/screenshots/review.png)
