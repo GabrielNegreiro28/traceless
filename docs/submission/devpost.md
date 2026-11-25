@@ -139,7 +139,7 @@ so the key itself is the only credential, and no identity is needed.
 - **Hybrid works best as a data policy, not a performance trick.** The question isn't "which model is faster?" but "which data is allowed to go where?"
 - **Reporting your own misses builds more trust than a headline number.**
 
-## What's next
+## What's next for Traceless
 
 - Rights advice grounded with Google Search (cloud only, approved text only).
 - A triage view for investigators.
