@@ -6,9 +6,22 @@
 - **Demo video (2:49):** https://youtu.be/8pGeiE8gD4U
 - Built for the #BuildHybridAI hackathon (Devpost + Firebase), Web/Chrome track.
 
-![Traceless review screen](docs/screenshots/review.png)
+![Traceless review screen, checked on the device with the network set to Offline](docs/screenshots/offline-review.png)
 
-_Review screen (screenshot from a consented cloud scan of the invented sample report; with Gemini Nano the same scan runs on the device)._
+_A frame from the demo video's final test: Chrome DevTools has the network set to **Offline**, and the invented sample report has just been "Checked on your device" by Gemini Nano._
+
+## The story in six steps
+
+1. **Problem:** anonymous channels hide the sender, but the text gives you away ("I'm the only night-shift nurse on Ward 3").
+2. **Solution:** AI that flags your role, your shift and your dates before you hit send.
+3. **Problem:** analyzing the report means uploading the most dangerous text you own. **Solution:** Gemini Nano on the device, `ONLY_ON_DEVICE`.
+4. **Problem:** in the SDK version we use, `ONLY_ON_DEVICE` silently falls back to the cloud on browsers without Nano. **Solution:** three fail-closed locks, plus types that make sending raw text to the cloud a compile error.
+5. **Problem:** the local model is small. **Solution:** rules and grammar find candidates, Nano only verifies them, and every finding is a card the reporter confirms ([Evaluation](#evaluation)).
+6. **Problem:** most people don't have Nano, and the cloud is better at some jobs. **Solution:** the hybrid. Raw text stays on the device, only approved text goes to the cloud, and a consented cloud scan is available for devices without Nano.
+
+![Traceless review screen from a consented cloud scan](docs/screenshots/review.png)
+
+_The same review screen from a consented cloud scan, the path for browsers without Gemini Nano._
 
 ![Traceless approved report and structure preview](docs/screenshots/outbox.png)
 
