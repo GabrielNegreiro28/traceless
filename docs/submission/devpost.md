@@ -67,7 +67,7 @@ So sending raw text to the cloud doesn't compile.
 Our first version asked Nano to do the whole job. It found about 60% of identifying details and wrongly flagged details about the _accused_ 63% of the time. So we split the work into a cascade:
 
 $$
-\underbrace{\text{rules}}_{\text{deterministic}} \;\rightarrow\; \underbrace{\text{grammar candidates}}_{\text{cheap, high recall}} \;\rightarrow\; \underbrace{\text{Nano verifies}}_{\text{short, single-purpose prompts}} \;\rightarrow\; \underbrace{\text{"HR investigator" pass}}_{\text{what could a colleague deduce?}}
+\underset{\text{deterministic}}{\text{rules}} \;\rightarrow\; \underset{\text{cheap, high recall}}{\text{grammar candidates}} \;\rightarrow\; \underset{\text{short prompts}}{\text{Nano verifies}} \;\rightarrow\; \underset{\text{what could a colleague deduce?}}{\text{HR investigator pass}}
 $$
 
 Each Nano call is short and has one purpose, and every output is validated with zod.
@@ -106,19 +106,18 @@ so the key itself is the only credential, and no identity is needed.
 ## Challenges we ran into
 
 - **The silent fallback.** Finding it meant reading the SDK source instead of trusting the mode's name. It changed our design question from "pick the right mode" to "make the wrong path impossible".
-- **Measuring honestly.** A finding $f$ counts as matching a gold span $g$ when
-
-  $$
-  \frac{|f \cap g|}{\min(|f|, |g|)} \ge 0.5,
-  \qquad
-  \text{recall} = \frac{\#\{\text{gold spans matched}\}}{\#\{\text{gold spans}\}}.
-  $$
-
-  The hard part was not the formula. It was resisting the urge to tune on the test set. We wrote a fresh held-out set of 22 reports (87 gold spans) with a blind LLM author, committed its hash before touching the detector, and ran it once.
-
+- **Measuring honestly.** The hard part was not the formula (below). It was resisting the urge to tune on the test set. We wrote a fresh held-out set of 22 reports (87 gold spans) with a blind LLM author, committed its hash before touching the detector, and ran it once.
 - **The accused-person problem.** A report is full of details about the wrongdoer, and flagging those as "identifying you" is worse than useless. That is why _Not about me_ exists.
 - **Stalls.** Some on-device scans hang. A hung scan counts as a miss in our metric, and the UI offers recovery without ever retrying silently.
 - **Language.** Nano's supported languages don't include Portuguese, the builder's own language, so Traceless is English-only for now.
+
+How we score a finding against a gold span:
+
+$$
+\text{match} \iff \frac{\lvert \text{finding} \cap \text{gold} \rvert}{\min(\lvert \text{finding} \rvert, \lvert \text{gold} \rvert)} \ge 0.5,
+\qquad
+\text{recall} = \frac{\text{matched gold spans}}{\text{all gold spans}}
+$$
 
 ## Accomplishments that we're proud of
 
